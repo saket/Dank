@@ -28,6 +28,7 @@ import me.saket.dank.ui.submission.events.SubmissionNsfwContentFiltered;
 import me.saket.dank.ui.submission.events.SubmissionRequestChanged;
 import me.saket.dank.ui.submission.events.SubmissionVideoLoadStarted;
 import me.saket.dank.ui.submission.events.SubmissionVideoLoadSucceeded;
+import me.saket.dank.ui.submission.events.SubmissionViewFullCommentsClicked;
 import me.saket.dank.utils.DankSubmissionRequest;
 import me.saket.dank.utils.Optional;
 import me.saket.dank.utils.Pair;
@@ -57,7 +58,7 @@ public class SubmissionController implements ObservableTransformer<UiEvent, UiCh
         changeSortPopupShows(replayedEvents),
         sortModeChanges(replayedEvents),
         manualRefreshes(replayedEvents),
-//        fullThreadLoads(replayedEvents),
+        fullThreadLoads(replayedEvents),
         markMessageAsReads(replayedEvents)
     );
   }
@@ -180,54 +181,41 @@ public class SubmissionController implements ObservableTransformer<UiEvent, UiCh
                 .andThen(Observable.never()));
   }
 
-//  private Observable<UiChange<SubmissionUi>> fullThreadLoads(Observable<UiEvent> events) {
-//    Observable<DankSubmissionRequest> requestChanges = events
-//        .ofType(SubmissionRequestChanged.class)
-//        .map(event -> event.request());
-//
-//    Observable<Submission> submissionChanges = events
-//        .ofType(SubmissionChanged.class)
-//        .map(event -> event.optionalSubmission())
-//        .filter(Optional::isPresent)
-//        .map(Optional::get);
-//
-//    Observable<SubmissionViewFullCommentsClicked> viewFullThreadClicks = events
-//        .ofType(SubmissionViewFullCommentsClicked.class);
-//
-//    Observable<UiChange<SubmissionUi>> resetComments = viewFullThreadClicks
-//        .withLatestFrom(submissionChanges, (__, sub) -> sub)
-//        .map(submission -> new Submission(submission.getDataNode()))
-//        .map(submissionWithoutComments -> (UiChange<SubmissionUi>) ui -> ui.acceptSubmission(submissionWithoutComments));
-//
-//    Observable<Boolean> openedFromMessages = events
-//        .ofType(MarkMessageAsReadRequested.class)
-//        .map(o -> true)
-//        .startWith(false);
-//
-//    Observable<UiChange<SubmissionUi>> fetchNewRequests = viewFullThreadClicks
-//        .withLatestFrom(requestChanges, (__, request) -> request)
-//        .map(request -> request.toBuilder()
-//            .focusCommentId(null)
-//            .contextCount(null)
-//            .build())
-//        .withLatestFrom(openedFromMessages, Pair::create)
-//        .flatMap(pair -> {
-//          DankSubmissionRequest updatedRequest = pair.first();
-//          Boolean wasSubmissionOpenedFromMessages = pair.second();
-//
-//          // If the user is viewing a focused comment, the comments must have
-//          // gotten updated, so they're being force invalidated here.
-//          if (wasSubmissionOpenedFromMessages) {
-//            return submissionRepository.get()
-//                .clearCachedSubmissionWithComments(updatedRequest)
-//                .andThen(Observable.just(ui -> ui.acceptRequest(updatedRequest)));
-//          } else {
-//            return Observable.just(ui -> ui.acceptRequest(updatedRequest));
-//          }
-//        });
-//
-//    return resetComments.mergeWith(fetchNewRequests);
-//  }
+  private Observable<UiChange<SubmissionUi>> fullThreadLoads(Observable<UiEvent> events) {
+    Observable<DankSubmissionRequest> requestChanges = events
+        .ofType(SubmissionRequestChanged.class)
+        .map(event -> event.request());
+
+    Observable<SubmissionViewFullCommentsClicked> viewFullThreadClicks = events
+        .ofType(SubmissionViewFullCommentsClicked.class);
+
+    Observable<Boolean> openedFromMessages = events
+        .ofType(MarkMessageAsReadRequested.class)
+        .map(o -> true)
+        .startWith(false);
+
+    return viewFullThreadClicks
+        .withLatestFrom(requestChanges, (__, request) -> request)
+        .map(request -> request.toBuilder()
+            .focusCommentId(null)
+            .contextCount(null)
+            .build())
+        .withLatestFrom(openedFromMessages, Pair::create)
+        .flatMap(pair -> {
+          DankSubmissionRequest updatedRequest = pair.first();
+          Boolean wasSubmissionOpenedFromMessages = pair.second();
+
+          // If the user is viewing a focused comment, the comments must have
+          // gotten updated, so they're being force invalidated here.
+          if (wasSubmissionOpenedFromMessages) {
+            return submissionRepository.get()
+                .clearCachedSubmissionComments(updatedRequest)
+                .andThen(Observable.just(ui -> ui.acceptRequest(updatedRequest)));
+          } else {
+            return Observable.just(ui -> ui.acceptRequest(updatedRequest));
+          }
+        });
+  }
 
   private Observable<UiChange<SubmissionUi>> markMessageAsReads(Observable<UiEvent> events) {
     Observable<Message> readRequests = events
