@@ -2,6 +2,7 @@ package me.saket.dank.reddit.jraw
 
 import io.reactivex.subjects.BehaviorSubject
 import me.saket.dank.reddit.Reddit
+import me.saket.dank.ui.user.UserSessionRepository
 import net.dean.jraw.RedditClient
 import net.dean.jraw.android.SharedPreferencesTokenStore
 import net.dean.jraw.http.LogAdapter
@@ -11,6 +12,7 @@ import timber.log.Timber
 import javax.inject.Inject
 
 class JrawReddit @Inject constructor(
+    userSessionRepository: UserSessionRepository,
     private val accountHelper: AccountHelper,
     private val clientSubject: BehaviorSubject<RedditClient>,
     tokenStore: SharedPreferencesTokenStore
@@ -21,8 +23,14 @@ class JrawReddit @Inject constructor(
     Timber.i("Existing usernames: ${tokenStore.usernames}")
     when {
       tokenStore.usernames.isNotEmpty() -> {
-        Timber.i("Switching to user: ${tokenStore.usernames.first()}")
-        accountHelper.switchToUser(tokenStore.usernames.first())
+        val loggedInUserName = userSessionRepository.loggedInUserName()
+
+        if (!tokenStore.usernames.contains(loggedInUserName)) {
+          Timber.e(AssertionError("Logged-in username in session repository is not contained in JRAW's store"))
+        }
+
+        Timber.i("Switching to user: $loggedInUserName")
+        accountHelper.switchToUser(loggedInUserName)
       }
       else -> {
         Timber.i("Switching to userless")

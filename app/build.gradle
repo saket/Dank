@@ -165,7 +165,7 @@ dependencies {
   implementation "org.threeten:threetenbp:1.3.6:no-tzdb"
   implementation "com.gabrielittner.threetenbp:lazythreetenbp:0.3.0"
 
-  implementation 'com.github.saket:jraw:c4169035d1d'
+  implementation 'com.github.saket:jraw:e7577508d2b'
   implementation ("net.dean.jraw:JRAW-Android:1.0.0") {
     exclude group: 'net.dean.jraw'
   }
