@@ -37,7 +37,6 @@ import me.saket.dank.R;
 import me.saket.dank.data.InboxRepository;
 import me.saket.dank.ui.user.UserSessionRepository;
 import me.saket.dank.ui.user.messages.InboxMessageType;
-import me.saket.dank.utils.JrawUtils2;
 import me.saket.dank.utils.Strings;
 import me.saket.dank.utils.markdown.Markdown;
 import timber.log.Timber;
@@ -294,7 +293,7 @@ public class MessagesNotificationManager {
             .setContentText(markdownStrippedBody)
             .setStyle(new NotificationCompat.BigTextStyle().bigText(markdownStrippedBody))
             .setShowWhen(true)
-            .setWhen(JrawUtils2.INSTANCE.createdTimeUtc(unreadMessage))
+            .setWhen(unreadMessage.getCreated().getTime())
             .setSmallIcon(R.drawable.ic_status_bar_24dp)
             .setGroup(NotificationConstants.UNREAD_MESSAGE_BUNDLE_NOTIFS_GROUP_KEY)
             .setAutoCancel(true)

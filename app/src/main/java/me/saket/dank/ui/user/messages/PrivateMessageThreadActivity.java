@@ -179,7 +179,7 @@ public class PrivateMessageThreadActivity extends DankPullCollapsibleActivity {
         .subscribe(message -> {
           threadSubjectView.setText(message.getSubject());
 
-          List<Message> messageReplies = JrawUtils2.INSTANCE.messageReplies(message);
+          List<Message> messageReplies = JrawUtils2.messageReplies(message);
           if (messageReplies.isEmpty()) {
             latestMessageStream.accept(message);
           } else {
@@ -192,7 +192,7 @@ public class PrivateMessageThreadActivity extends DankPullCollapsibleActivity {
     Observable.combineLatest(messageThread, pendingSyncRepliesStream, Pair::create)
         .map(pair -> {
           Message parentMessage = pair.first();
-          List<Message> messageReplies = JrawUtils2.INSTANCE.messageReplies(parentMessage);
+          List<Message> messageReplies = JrawUtils2.messageReplies(parentMessage);
           List<PendingSyncReply> pendingSyncReplies = pair.second();
           String loggedInUserName = userSessionRepository.loggedInUserName();
           return constructUiModels(parentMessage, messageReplies, pendingSyncReplies, loggedInUserName);
@@ -362,7 +362,7 @@ public class PrivateMessageThreadActivity extends DankPullCollapsibleActivity {
     List<PrivateMessageUiModel> uiModels = new ArrayList<>(1 + threadedReplies.size() + pendingSyncReplies.size());
 
     // 1. Parent message.
-    long parentCreatedTimeMillis = JrawUtils2.INSTANCE.createdTimeUtc(parentMessage);
+    long parentCreatedTimeMillis = parentMessage.getCreated().getTime();
     PrivateMessageUiModel.Direction parentDirection = loggedInUserName.equals(parentMessage.getAuthor())
         ? PrivateMessageUiModel.Direction.SENT
         : PrivateMessageUiModel.Direction.RECEIVED;
@@ -384,7 +384,7 @@ public class PrivateMessageThreadActivity extends DankPullCollapsibleActivity {
 
     // 2. Replies.
     for (Message threadedReply : threadedReplies) {
-      long createdTimeMillis = JrawUtils2.INSTANCE.createdTimeUtc(threadedReply);
+      long createdTimeMillis = threadedReply.getCreated().getTime();
       PrivateMessageUiModel.Direction direction = loggedInUserName.equals(threadedReply.getAuthor())
           ? PrivateMessageUiModel.Direction.SENT
           : PrivateMessageUiModel.Direction.RECEIVED;

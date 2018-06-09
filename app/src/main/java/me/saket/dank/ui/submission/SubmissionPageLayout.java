@@ -815,7 +815,7 @@ public class SubmissionPageLayout extends ExpandablePageLayout implements Expand
 
     // Thread continuations.
     commentsAdapter.streamLoadMoreCommentsClicks()
-        .filter(loadMoreClickEvent -> JrawUtils2.INSTANCE.isThreadContinuation(loadMoreClickEvent.parentCommentNode()))
+        .filter(loadMoreClickEvent -> JrawUtils2.isThreadContinuation(loadMoreClickEvent.parentCommentNode()))
         .withLatestFrom(submissionRequestStream, Pair::create)
         .takeUntil(lifecycle().onDestroy())
         .subscribe(pair -> {
@@ -826,7 +826,7 @@ public class SubmissionPageLayout extends ExpandablePageLayout implements Expand
 
     // Load-more-comment clicks.
     commentsAdapter.streamLoadMoreCommentsClicks()
-        .filter(loadMoreClickEvent -> !JrawUtils2.INSTANCE.isThreadContinuation(loadMoreClickEvent.parentCommentNode()))
+        .filter(loadMoreClickEvent -> !JrawUtils2.isThreadContinuation(loadMoreClickEvent.parentCommentNode()))
         // This filter() is important. Stupid JRAW inserts new comments directly into
         // the comment tree so if multiple API calls are made, it'll insert duplicate
         // items and result in a crash because RecyclerView expects stable IDs.

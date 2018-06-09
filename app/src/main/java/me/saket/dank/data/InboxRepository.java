@@ -187,7 +187,7 @@ public class InboxRepository {
 
             // Private messages can have nested replies. Go through them and find the last one.
             if (!lastMessage.isComment()) {
-              List<Message> lastMessageReplies = JrawUtils2.INSTANCE.messageReplies(lastMessage);
+              List<Message> lastMessageReplies = JrawUtils2.messageReplies(lastMessage);
               //noinspection ConstantConditions
               if (!lastMessageReplies.isEmpty()) {
                 // Replies are present.
@@ -210,11 +210,11 @@ public class InboxRepository {
       for (Message fetchedMessage : fetchedMessages) {
         long latestMessageTimestamp;
         if (fetchedMessage.isComment()) {
-          latestMessageTimestamp = JrawUtils2.INSTANCE.createdTimeUtc(fetchedMessage);
+          latestMessageTimestamp = fetchedMessage.getCreated().getTime();
         } else {
-          List<Message> messageReplies = JrawUtils2.INSTANCE.messageReplies(fetchedMessage);
+          List<Message> messageReplies = JrawUtils2.messageReplies(fetchedMessage);
           Message latestMessage = messageReplies.isEmpty() ? fetchedMessage : messageReplies.get(messageReplies.size() - 1);
-          latestMessageTimestamp = JrawUtils2.INSTANCE.createdTimeUtc(latestMessage);
+          latestMessageTimestamp = latestMessage.getCreated().getTime();
         }
         CachedMessage cachedMessage = CachedMessage.create(fetchedMessage.getFullName(), fetchedMessage, latestMessageTimestamp, folder);
         messagesValuesToStore.add(cachedMessage.toContentValues(moshi));

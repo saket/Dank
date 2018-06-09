@@ -206,7 +206,7 @@ public class UrlParser {
 
   private static Link createRedditHostedVideoLink(String url, Optional<Submission> optionalSubmission) {
     return optionalSubmission
-        .flatMap(submission -> JrawUtils2.INSTANCE.redditVideoDashPlaylistUrl(submission))
+        .flatMap(submission -> JrawUtils2.redditVideoDashPlaylistUrl(submission))
         .map(playlist -> RedditHostedVideoLink.create(url, playlist))
         // Or else, probably just a "v.redd.it" link to a submission.
         // TODO v2: treat this as an unresolved reddit video link.

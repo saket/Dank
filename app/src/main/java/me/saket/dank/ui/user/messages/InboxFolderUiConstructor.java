@@ -58,7 +58,7 @@ public class InboxFolderUiConstructor {
     String title;
     String byline;
     String senderInformation;
-    String timestamp = Dates.createTimestamp(c.getResources(), JrawUtils2.INSTANCE.createdTimeUtc(message)).toString();
+    String timestamp = Dates.createTimestamp(c.getResources(), message.getCreated().getTime()).toString();
     String subredditName = c.getString(R.string.subreddit_name_r_prefix, message.getSubreddit());
 
     switch (messageType) {
@@ -112,16 +112,17 @@ public class InboxFolderUiConstructor {
 
     long adapterId = message.getId().hashCode();
     CharSequence body = markdown.get().parse(message);
+    //noinspection ConstantConditions
     return InboxIndividualMessage.UiModel.create(adapterId, title, byline, senderInformation, body, message);
   }
 
   private InboxMessageThread.UiModel messageThreadUiModel(Context c, Message messageThread, String loggedInUserName) {
-    List<Message> replies = JrawUtils2.INSTANCE.messageReplies(messageThread);
+    List<Message> replies = JrawUtils2.messageReplies(messageThread);
     Message latestMessageInThread = replies.isEmpty()
         ? messageThread
         : replies.get(replies.size() - 1);
 
-    Optional<String> secondPartyName = Optional.ofNullable(JrawUtils2.INSTANCE.secondPartyName(
+    Optional<String> secondPartyName = Optional.ofNullable(JrawUtils2.secondPartyName(
         c.getResources(),
         latestMessageInThread,
         loggedInUserName));
@@ -134,7 +135,7 @@ public class InboxFolderUiConstructor {
         : snippet;
 
     long adapterId = messageThread.getId().hashCode();
-    String timestamp = Dates.createTimestamp(c.getResources(), JrawUtils2.INSTANCE.createdTimeUtc(latestMessageInThread)).toString();
+    String timestamp = Dates.createTimestamp(c.getResources(), latestMessageInThread.getCreated().getTime()).toString();
     return InboxMessageThread.UiModel.create(adapterId, secondPartyName, messageThread.getSubject(), snippet, timestamp, messageThread);
   }
 }
