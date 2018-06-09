@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
-<me.saket.dank.widgets.InboxUI.IndependentExpandablePageLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<me.saket.dank.widgets.InboxUI.IndependentExpandablePageLayout android:id="@+id/playground_root"
+  style="@style/DankPullCollapsibleActivityPage"
+  xmlns:android="http://schemas.android.com/apk/res/android"
   xmlns:app="http://schemas.android.com/apk/res-auto"
   xmlns:tools="http://schemas.android.com/tools"
-  android:id="@+id/playground_root"
-  style="@style/DankPullCollapsibleActivityPage"
   android:layout_width="match_parent"
   android:layout_height="match_parent">
 
@@ -15,17 +15,53 @@
     <me.saket.dank.widgets.DankToolbar
       android:id="@+id/toolbar"
       style="@style/DankToolbar"
-      android:layout_marginBottom="220dp"
       app:navigationIcon="@drawable/ic_toolbar_close_24dp" />
 
-    <Button
-      android:id="@+id/playground_user_profile_popup"
-      android:layout_width="wrap_content"
+    <LinearLayout
+      android:layout_width="match_parent"
       android:layout_height="wrap_content"
-      android:layout_marginTop="@dimen/spacing16"
-      android:layout_marginStart="@dimen/spacing16"
-      android:text="User profile"
-      tools:ignore="HardcodedText" />
+      android:orientation="vertical">
+
+      <Button
+        android:id="@+id/playground_user_with_subreddit"
+        style="?android:attr/buttonBarButtonStyle"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="@dimen/spacing16"
+        android:layout_marginTop="@dimen/spacing16"
+        android:text="Kn0thing"
+        tools:ignore="HardcodedText" />
+
+      <Button
+        android:id="@+id/playground_banned_user"
+        style="?android:attr/buttonBarButtonStyle"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="@dimen/spacing16"
+        android:layout_marginTop="@dimen/spacing16"
+        android:text="TheFlintASteel"
+        tools:ignore="HardcodedText" />
+
+      <Button
+        android:id="@+id/playground_non_existent_user"
+        style="?android:attr/buttonBarButtonStyle"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="@dimen/spacing16"
+        android:layout_marginTop="@dimen/spacing16"
+        android:text="Sak3tme"
+        tools:ignore="HardcodedText" />
+
+      <Button
+        android:id="@+id/playground_deleted_user"
+        style="?android:attr/buttonBarButtonStyle"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="@dimen/spacing16"
+        android:layout_marginTop="@dimen/spacing16"
+        android:text="mosnuk123"
+        tools:ignore="HardcodedText" />
+    </LinearLayout>
 
     <Button
       android:id="@+id/playground_menupopup"

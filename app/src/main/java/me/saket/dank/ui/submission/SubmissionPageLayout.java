@@ -468,6 +468,7 @@ public class SubmissionPageLayout extends ExpandablePageLayout implements Expand
             .takeUntil(lifecycle().onPageAboutToCollapse())
             //.doOnNext(o -> commentsLoadProgressVisibleStream.accept(false))
             .onErrorResumeNext(error -> {
+              // TODO: Handle 403: Subreddit private.
               ResolvedError resolvedError = errorResolver.get().resolve(error);
               resolvedError.ifUnknown(() -> Timber.e(error, "Couldn't fetch comments"));
               commentsLoadErrors.accept(Optional.of(resolvedError));

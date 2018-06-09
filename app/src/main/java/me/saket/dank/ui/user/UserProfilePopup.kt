@@ -40,8 +40,8 @@ import timber.log.Timber
 import java.util.Date
 import javax.inject.Inject
 
-class UserProfilePopup @SuppressLint("InflateParams")
-constructor(context: Context) : PopupWindowWithMaterialTransition(context) {
+@SuppressLint("InflateParams")
+class UserProfilePopup constructor(context: Context) : PopupWindowWithMaterialTransition(context) {
 
   @BindView(R.id.userprofilepopup_profile_image)
   lateinit var profileImageView: ImageView
@@ -209,12 +209,10 @@ constructor(context: Context) : PopupWindowWithMaterialTransition(context) {
     val period = accountCreationDate.until(nowDate)
     val resources = accountAgeView.resources
 
-    return if (period.months < 0) {
-      resources.getString(R.string.userprofilepopup_account_age_in_days, period.days)
-    } else if (period.years < 0) {
-      resources.getString(R.string.userprofilepopup_account_age_in_months, period.months)
-    } else {
-      resources.getString(R.string.userprofilepopup_account_age_in_years, period.years)
+    return when {
+      period.months < 0 -> resources.getString(R.string.userprofilepopup_account_age_in_days, period.days)
+      period.years < 0 -> resources.getString(R.string.userprofilepopup_account_age_in_months, period.months)
+      else -> resources.getString(R.string.userprofilepopup_account_age_in_years, period.years)
     }
   }
 
