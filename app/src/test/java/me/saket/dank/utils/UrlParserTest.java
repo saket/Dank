@@ -25,7 +25,6 @@ import org.powermock.api.mockito.PowerMockito;
 import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.PowerMockRunner;
 
-import java.io.IOException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
@@ -156,7 +155,7 @@ public class UrlParserTest {
     assertEquals(((RedditSubmissionLink) parsedLink).id(), "5zm7tt");
     assertEquals(((RedditSubmissionLink) parsedLink).subredditName(), null);
     assertEquals(((RedditSubmissionLink) parsedLink).initialComment().id(), "dezzmre");
-    assertEquals((int) ((RedditSubmissionLink) parsedLink).initialComment().contextCount(), 0);
+    assertEquals(((RedditSubmissionLink) parsedLink).initialComment().contextCount(), 0);
   }
 
   @Test
@@ -170,7 +169,7 @@ public class UrlParserTest {
     assertEquals(((RedditSubmissionLink) parsedLink).id(), "5zm7tt");
     assertEquals(((RedditSubmissionLink) parsedLink).subredditName(), "androiddev");
     assertEquals(((RedditSubmissionLink) parsedLink).initialComment().id(), "dezzmre");
-    assertEquals((int) ((RedditSubmissionLink) parsedLink).initialComment().contextCount(), 0);
+    assertEquals(((RedditSubmissionLink) parsedLink).initialComment().contextCount(), 0);
   }
 
   @Test
@@ -306,7 +305,7 @@ public class UrlParserTest {
   }
 
   @Test
-  public void parseRedditHostedVideos() throws IOException {
+  public void parseRedditHostedVideos() {
     String[] videoUrls = {
         "https://v.redd.it/fjpqnd127wf01",
         "https://v.reddit.com/fjpqnd127wf01"
@@ -314,7 +313,8 @@ public class UrlParserTest {
     for (String videoUrl : videoUrls) {
       String dashPlaylistUrl = "https://v.redd.it/nwypmagtjvf01/DASHPlaylist.mpd";
       Submission submission = mock(Submission.class);
-      when(submission.getEmbeddedMedia()).thenReturn(embeddedMedia(dashPlaylistUrl));
+      EmbeddedMedia mockMedia = embeddedMedia(dashPlaylistUrl);
+      when(submission.getEmbeddedMedia()).thenReturn(mockMedia);
 
       Link parsedLink = urlParser.parse(videoUrl, submission);
       assertEquals(true, parsedLink instanceof RedditHostedVideoLink);
@@ -327,6 +327,7 @@ public class UrlParserTest {
     EmbeddedMedia embeddedMedia = mock(EmbeddedMedia.class);
     EmbeddedMedia.RedditVideo redditVideo = mock(EmbeddedMedia.RedditVideo.class);
     when(redditVideo.getDashUrl()).thenReturn(dashPlaylistUrl);
+    when(redditVideo.getFallbackUrl()).thenReturn("https://v.redd.it/fjpqnd127wf01/DASH_4_8_M");
     when(embeddedMedia.getRedditVideo()).thenReturn(redditVideo);
     return embeddedMedia;
   }
@@ -340,7 +341,8 @@ public class UrlParserTest {
     for (String videoUrl : videoUrls) {
       String dashPlaylistUrl = "https://v.redd.it/nwypmagtjvf01/DASHPlaylist.mpd";
       Submission submission = mock(Submission.class);
-      when(submission.getEmbeddedMedia()).thenReturn(embeddedMedia(dashPlaylistUrl));
+      EmbeddedMedia media = embeddedMedia(dashPlaylistUrl);
+      when(submission.getEmbeddedMedia()).thenReturn(media);
 
       Link parsedLink = urlParser.parse(videoUrl, submission);
       assertEquals(true, parsedLink instanceof RedditHostedVideoLink);

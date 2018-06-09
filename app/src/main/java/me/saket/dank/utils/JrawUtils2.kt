@@ -48,27 +48,27 @@ object JrawUtils2 {
     val videoWithoutAudioUrl: String
 
     val embeddedMedia = submission.embeddedMedia
-    if (embeddedMedia != null && embeddedMedia.redditVideo != null) {
+    return if (embeddedMedia != null && embeddedMedia.redditVideo != null) {
       val redditVideo = embeddedMedia.redditVideo
       playlistUrl = redditVideo!!.dashUrl
       videoWithoutAudioUrl = redditVideo.fallbackUrl
-      return Optional.of(RedditHostedVideoDashPlaylist.create(playlistUrl, videoWithoutAudioUrl))
+      Optional.of(RedditHostedVideoDashPlaylist.create(playlistUrl, videoWithoutAudioUrl))
 
     } else {
-      val crosspostParents = submission.crosspostParents
-      if (crosspostParents != null) {
-        if (crosspostParents.size > 1) {
+      val crossPostParents = submission.crosspostParents
+      return if (crossPostParents?.isNotEmpty() == true) {
+        if (crossPostParents.size > 1) {
           Timber.e(AssertionError("Submission has multiple crosspost parents: ${submission.permalink}"))
         }
 
-        val rootCrossParent = crosspostParents.last()
+        val rootCrossParent = crossPostParents.last()
         val crossPostedRedditVideo = rootCrossParent.embeddedMedia!!.redditVideo
         playlistUrl = crossPostedRedditVideo!!.dashUrl
         videoWithoutAudioUrl = crossPostedRedditVideo.fallbackUrl
-        return Optional.of(RedditHostedVideoDashPlaylist.create(playlistUrl, videoWithoutAudioUrl))
+        Optional.of(RedditHostedVideoDashPlaylist.create(playlistUrl, videoWithoutAudioUrl))
 
       } else {
-        return Optional.empty()
+        Optional.empty()
       }
     }
   }
