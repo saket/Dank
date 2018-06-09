@@ -128,7 +128,7 @@ class UserProfilePopup constructor(context: Context) : PopupWindowWithMaterialTr
     commentKarmaView.text = Strings.abbreviateScore(userAccount.commentKarma.toFloat())
     accountAgeView.text = constructAccountAge(userAccount.created)
 
-    if (userProfile.userSubreddit != null) {
+    if (userAccount.icon != null) {
       // Replace fade-in with a scale animation.
       val layoutTransition = (profileImageView.parent as ViewGroup).layoutTransition
       layoutTransition.disableTransitionType(LayoutTransition.APPEARING)
@@ -136,11 +136,10 @@ class UserProfilePopup constructor(context: Context) : PopupWindowWithMaterialTr
       profileImageView.visibility = View.VISIBLE
 
       Glide.with(profileImageView)
-          .load(userProfile.userSubreddit.profileImageUrl())
+          .load(userAccount.icon)
           .apply(RequestOptions()
               .centerCrop()
-              .circleCrop()
-          )
+              .circleCrop())
           .transition(DrawableTransitionOptions.withCrossFade())
           .into(object : ImageViewTarget<Drawable>(profileImageView) {
             override fun setResource(resource: Drawable?) {
