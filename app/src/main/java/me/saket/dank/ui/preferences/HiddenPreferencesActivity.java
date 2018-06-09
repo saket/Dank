@@ -28,7 +28,6 @@ import butterknife.ButterKnife;
 import dagger.Lazy;
 import io.reactivex.Completable;
 import io.reactivex.schedulers.Schedulers;
-import me.saket.dank.BuildConfig;
 import me.saket.dank.R;
 import me.saket.dank.data.LinkMetadataRepository;
 import me.saket.dank.di.Dank;
@@ -170,20 +169,15 @@ public class HiddenPreferencesActivity extends DankPullCollapsibleActivity {
     });
 
     addButton("Recycle old DB rows", o -> {
-      int durationFromNow = BuildConfig.DEBUG ? 1 : 30;
+      int durationFromNow = 0;
       TimeUnit durationTimeUnit = TimeUnit.DAYS;
 
       submissionRepository.recycleAllCachedBefore(durationFromNow, durationTimeUnit)
           .subscribeOn(Schedulers.io())
           .takeUntil(lifecycle().onDestroyCompletable())
           .subscribe(
-              deletedRows -> {
-                Timber.i("Recycled %s database rows older than %s days", deletedRows, durationTimeUnit.toDays(durationFromNow));
-              },
-              error -> {
-                Timber.e(error, "Couldn't recycle database rows");
-              }
-          );
+              deletedRows -> Timber.i("Recycled %s database rows older than %s days", deletedRows, durationTimeUnit.toDays(durationFromNow)),
+              error -> Timber.e(error, "Couldn't recycle database rows"));
     });
 
     addButton("Reset walkthroughs", o -> {

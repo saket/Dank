@@ -17,6 +17,9 @@ import net.dean.jraw.models.Submission;
 import net.dean.jraw.tree.CommentNode;
 import net.dean.jraw.tree.RootCommentNode;
 
+import org.threeten.bp.LocalDateTime;
+import org.threeten.bp.ZoneId;
+
 import java.io.InterruptedIOException;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -186,7 +189,11 @@ public class SubmissionRepository {
           Completable saveCompletable = cachedNetworkStream
               .map(node -> {
                 Submission submission = node.getSubject();
-                CachedSubmissionComments cachedComments = new CachedSubmissionComments(submission.getId(), node.getChildren(), request);
+                CachedSubmissionComments cachedComments = new CachedSubmissionComments(
+                    submission.getId(),
+                    node.getChildren(),
+                    request,
+                    System.currentTimeMillis());
                 CachedSubmission cachedSubmission = new CachedSubmission(
                     submission.getId(),
                     submission,
@@ -225,7 +232,8 @@ public class SubmissionRepository {
       CachedSubmissionComments cachedSubmissionComments = new CachedSubmissionComments(
           submissionData.getSubmission().getId(),
           submissionData.getComments().get().getChildren(),
-          request);
+          request,
+          System.currentTimeMillis());
       roomDatabase.get().submissionDao().saveComments(cachedSubmissionComments);
     });
   }
@@ -459,53 +467,34 @@ public class SubmissionRepository {
    */
   @CheckResult
   public Single<Integer> recycleAllCachedBefore(int durationFromNow, TimeUnit durationTimeUnit) {
-    // TODO JRAW.
-    return Single.just(0);
-//    long daysBeforeNow = durationTimeUnit.toDays(durationFromNow);
-//    LocalDateTime dateTimeBeforeNow = LocalDateTime.now(ZoneId.of("UTC")).minusDays(daysBeforeNow);
-//    String millisBeforeNowString = String.valueOf(dateTimeBeforeNow.atZone(ZoneId.of("UTC")).toInstant().toEpochMilli());
-//
-//    Completable logCompletable;
-//
-//    if (BuildConfig.DEBUG) {
-//      logCompletable = Completable.fromAction(() -> {
-//        List<CachedSubmissionWithComments> rowsToBeDeleted = database.get()
-//            .createQuery(CachedSubmissionWithComments.TABLE_NAME, CachedSubmissionWithComments.SELECT_WHERE_UPDATE_TIME_BEFORE, millisBeforeNowString)
-//            .mapToList(CachedSubmissionWithComments.cursorMapper(moshi.get()))
-//            .blockingFirst();
-//
-//        Timber.i("Now time: %s", System.currentTimeMillis());
-//
-//        Timber.i("Recycling rows before %s (%s): %s", millisBeforeNowString, dateTimeBeforeNow, rowsToBeDeleted.size());
-//        for (CachedSubmissionWithComments row : rowsToBeDeleted) {
-//          Timber.i("%s", row.submission().getTitle());
-//        }
-//      });
-//    } else {
-//      logCompletable = Completable.complete();
-//    }
-//
-//    return logCompletable
-//        .andThen(Single.fromCallable(() -> {
-//          int totalDeletedRows = 0;
-//
-//          try (BriteDatabase.Transaction transaction = database.get().newTransaction()) {
-//            totalDeletedRows += database.get().delete(CachedSubmissionId.TABLE_NAME, CachedSubmissionId.WHERE_SAVE_TIME_BEFORE, millisBeforeNowString);
-//            totalDeletedRows += database.get().delete(
-//                CachedSubmissionWithoutComments.TABLE_NAME,
-//                CachedSubmissionWithoutComments.WHERE_SAVE_TIME_BEFORE,
-//                millisBeforeNowString
-//            );
-//            totalDeletedRows += database.get().delete(
-//                CachedSubmissionWithComments.TABLE_NAME,
-//                CachedSubmissionWithComments.WHERE_UPDATE_TIME_BEFORE,
-//                millisBeforeNowString
-//            );
-//            transaction.markSuccessful();
-//          }
-//
-//          return totalDeletedRows;
-//        }));
+    long daysBeforeNow = durationTimeUnit.toDays(durationFromNow);
+    LocalDateTime dateTimeBeforeNow = LocalDateTime.now(ZoneId.of("UTC")).minusDays(daysBeforeNow);
+    long millisBeforeNow = dateTimeBeforeNow.atZone(ZoneId.of("UTC")).toInstant().toEpochMilli();
+
+    Completable logCompletable;
+
+    if (BuildConfig.DEBUG) {
+      logCompletable = roomDatabase.get()
+          .submissionDao()
+          .countOfSubmissionWithComments(millisBeforeNow)
+          .firstOrError()
+          .flatMapCompletable(rowsToDelete ->
+              Completable.fromAction(() -> {
+                Timber.i("Now time: %s", System.currentTimeMillis());
+
+                Timber.i("Recycling rows before %s (%s): %s", millisBeforeNow, dateTimeBeforeNow, rowsToDelete.size());
+                for (CachedSubmissionComments row : rowsToDelete) {
+                  Timber.i("%s", row.getSubmissionId());
+                }
+              })
+          );
+
+    } else {
+      logCompletable = Completable.complete();
+    }
+
+    return logCompletable
+        .andThen(Single.fromCallable(() -> roomDatabase.get().submissionDao().deleteAllSubmissionRelatedRows(millisBeforeNow)));
   }
 
   @AutoValue
