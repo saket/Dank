@@ -120,9 +120,9 @@ public class MessagesNotificationManager {
         .map(oldSeenMessageIds -> {
           Set<String> updatedSeenMessageIds = new HashSet<>(oldSeenMessageIds.size());
           updatedSeenMessageIds.addAll(oldSeenMessageIds);
-          Timber.d("---------------------");
+          //Timber.d("---------------------");
           for (Message message : messages) {
-            Timber.i("Removing seen for: %s", Strings.substringWithBounds(message.getBody(), 50));
+            //Timber.i("Removing seen for: %s", Strings.substringWithBounds(message.getBody(), 50));
             updatedSeenMessageIds.remove(message.getId());
           }
           return Collections.unmodifiableSet(updatedSeenMessageIds);
@@ -188,10 +188,11 @@ public class MessagesNotificationManager {
       sortedMessages.addAll(unreadMessages);
       Collections.sort(sortedMessages, oldestMessageFirstComparator);
 
-      Timber.i("Creating notifs for:");
-      for (Message sortedMessage : sortedMessages) {
-        Timber.i("%s (%s)", Strings.substringWithBounds(sortedMessage.getBody(), 50), sortedMessage.getCreated());
-      }
+      //Timber.i("Creating notifs for:");
+      //for (Message sortedMessage : sortedMessages) {
+        //Timber.i("%s (%s)", Strings.substringWithBounds(sortedMessage.getBody(), 50), sortedMessage.getCreated());
+      //}
+      //noinspection ConstantConditions
       createNotifications(context, Collections.unmodifiableList(sortedMessages), loggedInUserName);
     });
   }

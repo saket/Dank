@@ -22,6 +22,7 @@ import javax.inject.Inject;
 
 import dagger.Lazy;
 import io.reactivex.Observable;
+import me.saket.dank.BuildConfig;
 import me.saket.dank.R;
 import me.saket.dank.data.ResolvedError;
 import me.saket.dank.reply.ReplyRepository;
@@ -203,7 +204,9 @@ public class SubmissionUiConstructor {
                 allItems.add(commentOptions);
                 allItems.addAll(commentModels);
 
-                Timber.i("Received %s comment ui models", commentModels.size());
+                if (BuildConfig.DEBUG) {
+                  Timber.i("Received %s comment ui models", commentModels.size());
+                }
 
                 // Comments progress and error go after comment rows
                 // so that inline reply for submission appears above them.

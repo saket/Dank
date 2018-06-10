@@ -199,7 +199,7 @@ public class InboxActivity extends DankPullCollapsibleActivity implements InboxF
       try {
         //noinspection ConstantConditions
         seenUnreadMessages = jsonAdapter.fromJson(seenUnreadMessagesJson);
-        Timber.i("Deserialized in: %sms", System.currentTimeMillis() - startTime);
+        //Timber.i("Deserialized in: %sms", System.currentTimeMillis() - startTime);
 
       } catch (IOException e) {
         Timber.e(e, "Couldn't deserialize seen unread messages json: %s", seenUnreadMessagesJson);
