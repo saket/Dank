@@ -248,10 +248,8 @@ public class MessageNotifActionReceiver extends BroadcastReceiver {
                 RedditSubmissionLink commentLink = (RedditSubmissionLink) urlParser.get().parse(messageUrl);
                 openIntent = SubmissionPageLayoutActivity.intent(context, commentLink, null, message);
 
-                Timber.i("messageUrl: %s", messageUrl);
-                Timber.i("commentLink: %s", commentLink);
-
               } else {
+                //noinspection ConstantConditions
                 String secondPartyName = JrawUtils2.secondPartyName(
                     context.getResources(),
                     message,
