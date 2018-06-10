@@ -400,6 +400,7 @@ public class SubmissionCommentTreeUiConstructor {
     if (!isSubmission && isReplyActive && !isCommentNodeCollapsed) {
       String loggedInUserName = userSessionRepository.get().loggedInUserName();
       String parentCommentAuthor = nextNode.getSubject().getAuthor();
+      //noinspection ConstantConditions
       flattenComments.add(inlineReplyUiModel(context, nextNode.getSubject(), parentCommentAuthor, loggedInUserName, nextNode.getDepth()));
     }
 

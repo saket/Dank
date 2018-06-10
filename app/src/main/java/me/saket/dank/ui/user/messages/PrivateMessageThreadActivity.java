@@ -44,6 +44,7 @@ import dagger.Lazy;
 import io.reactivex.BackpressureStrategy;
 import io.reactivex.Completable;
 import io.reactivex.Observable;
+import me.saket.dank.BuildConfig;
 import me.saket.dank.R;
 import me.saket.dank.data.ErrorResolver;
 import me.saket.dank.data.InboxRepository;
@@ -58,6 +59,7 @@ import me.saket.dank.ui.compose.SimpleIdentifiable;
 import me.saket.dank.ui.submission.DraftStore;
 import me.saket.dank.ui.submission.ParentThread;
 import me.saket.dank.ui.user.UserSessionRepository;
+import me.saket.dank.utils.Arrays2;
 import me.saket.dank.utils.DankLinkMovementMethod;
 import me.saket.dank.utils.Dates;
 import me.saket.dank.utils.JrawUtils2;
@@ -295,15 +297,18 @@ public class PrivateMessageThreadActivity extends DankPullCollapsibleActivity {
 
     // Mark PM as read.
     messageThread
-        .map(thread -> thread.getReplies())
-        .filter(replies -> !replies.isEmpty())
         .take(1)
-        .map(replies -> {
-          Identifiable[] replyIds = new Identifiable[replies.size()];
-          for (int i = 0; i < replyIds.length; i++) {
-            replyIds[i] = replies.get(i);
+        .map(thread -> {
+          List<? extends Identifiable> replies = JrawUtils2.messageReplies(thread);
+          List<Identifiable> messagesToMarkAsRead = new ArrayList<>(1 + replies.size());
+          messagesToMarkAsRead.add(thread);
+          messagesToMarkAsRead.addAll(replies);
+          return Arrays2.toArray(messagesToMarkAsRead, Identifiable.class);
+        })
+        .doOnNext(ids -> {
+          if (BuildConfig.DEBUG) {
+            Timber.i("Marking %s messages as read", ids.length);
           }
-          return replyIds;
         })
         .flatMapCompletable(replyIds -> inboxRepository.get().setRead(replyIds, true))
         .subscribeOn(io())
