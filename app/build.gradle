@@ -31,7 +31,7 @@ android {
     applicationId "me.saket.dank"
     minSdkVersion versions.minSdk
     targetSdkVersion versions.compileSdk
-    versionCode 8
+    versionCode 9
     versionName "0.6.1"
     multiDexEnabled true
     testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
