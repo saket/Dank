@@ -32,6 +32,7 @@ import me.saket.dank.ui.submission.SubredditNotFoundException;
 import me.saket.dank.ui.submission.adapter.ImageWithMultipleVariants;
 import me.saket.dank.ui.subreddit.SubmissionPaginationResult;
 import me.saket.dank.ui.subreddit.SubmissionThumbnailTypeMinusNsfw;
+import me.saket.dank.utils.JrawUtils2;
 import me.saket.dank.utils.Optional;
 import me.saket.dank.utils.Pair;
 import me.saket.dank.utils.Strings;
@@ -347,7 +348,7 @@ public class SubredditUiConstructor {
 
     return SubredditSubmission.UiModel.builder()
         .submission(submission)
-        .adapterId(submission.getFullName().hashCode())
+        .adapterId(JrawUtils2.generateAdapterId(submission))
         .thumbnail(thumbnail)
         .isThumbnailClickable(isThumbnailClickable)
         .title(titleBuilder.build(), Pair.create(submissionScore, voteDirection))

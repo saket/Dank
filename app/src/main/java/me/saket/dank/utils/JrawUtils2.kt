@@ -4,6 +4,8 @@ import android.content.res.Resources
 import me.saket.dank.R
 import me.saket.dank.urlparser.RedditHostedVideoDashPlaylist
 import net.dean.jraw.JrawUtils
+import net.dean.jraw.models.Created
+import net.dean.jraw.models.Identifiable
 import net.dean.jraw.models.Message
 import net.dean.jraw.models.Submission
 import net.dean.jraw.tree.CommentNode
@@ -13,6 +15,11 @@ import timber.log.Timber
  * 2 because [JrawUtils] already exists.
  */
 object JrawUtils2 {
+
+  @JvmStatic
+  fun <T> generateAdapterId(thing: T): Long where T : Identifiable, T : Created {
+    return thing.fullName.hashCode() + thing.created.time
+  }
 
   @JvmStatic
   fun isThreadContinuation(commentNode: CommentNode<*>): Boolean {
