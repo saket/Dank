@@ -295,8 +295,9 @@ public class PrivateMessageThreadActivity extends DankPullCollapsibleActivity {
 
     // Mark PM as read.
     messageThread
-        .take(1)
         .map(thread -> thread.getReplies())
+        .filter(replies -> !replies.isEmpty())
+        .take(1)
         .map(replies -> {
           Identifiable[] replyIds = new Identifiable[replies.size()];
           for (int i = 0; i < replyIds.length; i++) {
