@@ -11,7 +11,6 @@ import android.text.format.DateUtils;
 import com.squareup.moshi.JsonAdapter;
 import com.squareup.moshi.Moshi;
 
-import net.dean.jraw.http.NetworkException;
 import net.dean.jraw.models.Identifiable;
 import net.dean.jraw.models.VoteDirection;
 
@@ -97,7 +96,7 @@ public class VoteJobService extends DankJobService {
             error -> {
               boolean needsReschedule;
 
-              if (isTooManyRequestsHttpError(error)) {
+              if (VotingManager.isTooManyRequestsError(error)) {
                 Timber.i("Received 429-too-many-requests. Will retry vote later.");
                 needsReschedule = true;
 
@@ -113,11 +112,6 @@ public class VoteJobService extends DankJobService {
         );
 
     return JobStartCallback.runningInBackground();
-  }
-
-  private boolean isTooManyRequestsHttpError(Throwable error) {
-    return error instanceof NetworkException
-        && ((NetworkException) error).getRes().getCode() == VotingManager.HTTP_CODE_TOO_MANY_REQUESTS;
   }
 
   @Override
