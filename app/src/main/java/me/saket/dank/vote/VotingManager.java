@@ -7,6 +7,7 @@ import android.support.annotation.CheckResult;
 
 import com.squareup.moshi.Moshi;
 
+import net.dean.jraw.ApiException;
 import net.dean.jraw.http.NetworkException;
 import net.dean.jraw.models.Comment;
 import net.dean.jraw.models.Identifiable;
@@ -72,10 +73,6 @@ public class VotingManager {
 
   @CheckResult
   public Completable saveAndSend(Vote vote) {
-    if (vote.contributionToVote().getFullName() == null) {
-      throw new AssertionError();
-    }
-
     // Mark the vote as pending immediately so that getPendingVote() can be used immediately after calling vote().
     markVoteAsPending(vote.contributionToVote(), vote.direction());
 
@@ -97,10 +94,7 @@ public class VotingManager {
           boolean shouldComplete;
           // TODO: Reddit replies with 400 bad request for archived submissions.
 
-          boolean tooManyRequestsError = error instanceof NetworkException
-              && ((NetworkException) error).getRes().getCode() == HTTP_CODE_TOO_MANY_REQUESTS;
-
-          if (tooManyRequestsError || !Dank.errors().resolve(error).isUnknown()) {
+          if (isTooManyRequestsError(error) || !Dank.errors().resolve(error).isUnknown()) {
             // If unknown, this will most probably be network/Reddit errors. Swallow the error and attempt retries later.
             Timber.i("Voting failed for %s. Will retry again later. Error: %s", vote.contributionToVote().getFullName(), error.getMessage());
             VoteJobService.scheduleRetry(appContext, vote.contributionToVote(), vote.direction(), moshi.get());
@@ -218,5 +212,17 @@ public class VotingManager {
 
   private String keyFor(Identifiable contribution) {
     return keyFor(contribution.getFullName());
+  }
+
+  public static boolean isTooManyRequestsError(Throwable error) {
+    return isHttpCode(error, HTTP_CODE_TOO_MANY_REQUESTS);
+  }
+
+  private static boolean isHttpCode(Throwable error, int httpCode) {
+    //noinspection SimplifiableIfStatement
+    if (error instanceof NetworkException && ((NetworkException) error).getRes().getCode() == httpCode) {
+      return true;
+    }
+    return error instanceof ApiException && ((ApiException) error).getCode().equalsIgnoreCase(String.valueOf(httpCode));
   }
 }
