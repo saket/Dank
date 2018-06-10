@@ -410,7 +410,9 @@ public class SubmissionCommentTreeUiConstructor {
         LocallyPostedComment locallyPostedComment = new LocallyPostedComment(pendingSyncReplies.get(i));
         boolean isReplyCollapsed = COLLAPSED_COMMENT_IDS.isCollapsed(locallyPostedComment);
         int depth = nextNode.getDepth() + 1;
-        boolean isFocused = focusedComment.isPresent() && focusedComment.get().fullname().equals(locallyPostedComment.getFullName());
+        boolean isFocused = focusedComment.isPresent()
+            && locallyPostedComment.isPosted()
+            && focusedComment.get().fullname().equals(locallyPostedComment.getFullName());
         flattenComments.add(locallyPostedCommentUiModel(context, locallyPostedComment, isReplyCollapsed, depth, isFocused));
       }
     }

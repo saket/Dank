@@ -18,6 +18,8 @@ data class LocallyPostedComment(val pendingSyncReply: PendingSyncReply) : Identi
     }
   }
 
+  val isPosted = pendingSyncReply.state() == POSTED
+
   override val id: String
     get() = fullNameIfPostedOrThrowError().substring(0, FullNameType.COMMENT.prefix().length)
 
