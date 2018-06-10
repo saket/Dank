@@ -43,6 +43,7 @@ import me.saket.dank.utils.CombineLatestWithLog;
 import me.saket.dank.utils.CombineLatestWithLog.O;
 import me.saket.dank.utils.DankSubmissionRequest;
 import me.saket.dank.utils.Dates;
+import me.saket.dank.utils.JrawUtils2;
 import me.saket.dank.utils.Optional;
 import me.saket.dank.utils.RxHashSet;
 import me.saket.dank.utils.Strings;
@@ -486,7 +487,7 @@ public class SubmissionCommentTreeUiConstructor {
         : R.color.submission_comment_background;
 
     return SubmissionRemoteComment.UiModel.builder()
-        .adapterId(commentNode.getSubject().getFullName().hashCode())
+        .adapterId(JrawUtils2.generateAdapterId(commentNode.getSubject()))
         .bylineTextColor(color(context,
             isCollapsed
                 ? R.color.submission_comment_body_collapsed
@@ -646,7 +647,7 @@ public class SubmissionCommentTreeUiConstructor {
       String loggedInUserName,
       int indentationDepth)
   {
-    long adapterId = (parentContribution.getFullName() + "_reply").hashCode();
+    long adapterId = JrawUtils2.generateAdapterId(parentContribution) + "_reply".hashCode();
     CharSequence authorHint = context.getResources().getString(R.string.submission_comment_reply_author_hint, loggedInUserName);
     return SubmissionCommentInlineReply.UiModel.create(
         adapterId,
@@ -677,10 +678,10 @@ public class SubmissionCommentTreeUiConstructor {
       clickEnabled = true;
     }
 
-    String adapterId = parentCommentNode.getSubject().getFullName() + "_loadMore";
+    long adapterId = JrawUtils2.generateAdapterId(parentCommentNode.getSubject()) + "_loadMore".hashCode();
 
     return SubmissionCommentsLoadMore.UiModel.builder()
-        .adapterId(adapterId.hashCode())
+        .adapterId(adapterId)
         .label(label)
         .iconRes(isThreadContinuation ? R.drawable.ic_arrow_forward_12dp : 0)
         .indentationDepth(parentCommentNode.getDepth())

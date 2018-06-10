@@ -38,6 +38,7 @@ import me.saket.dank.utils.CombineLatestWithLog.O;
 import me.saket.dank.utils.CommentSortUtils;
 import me.saket.dank.utils.DankSubmissionRequest;
 import me.saket.dank.utils.Dates;
+import me.saket.dank.utils.JrawUtils2;
 import me.saket.dank.utils.Optional;
 import me.saket.dank.utils.Pair;
 import me.saket.dank.utils.Strings;
@@ -228,7 +229,7 @@ public class SubmissionUiConstructor {
   {
     VoteDirection pendingOrDefaultVote = votingManager.getPendingOrDefaultVote(submission, submission.getVote());
     int voteDirectionColor = Themes.voteColor(pendingOrDefaultVote);
-    long adapterId = submission.getFullName().hashCode();
+    long adapterId = JrawUtils2.generateAdapterId(submission);
 
     //noinspection ConstantConditions
     Optional<CharSequence> selfTextOptional = submission.isSelfPost() && !submission.getSelfText().isEmpty()

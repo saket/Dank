@@ -110,7 +110,7 @@ public class InboxFolderUiConstructor {
         break;
     }
 
-    long adapterId = message.getId().hashCode();
+    long adapterId = JrawUtils2.generateAdapterId(message);
     CharSequence body = markdown.get().parse(message);
     //noinspection ConstantConditions
     return InboxIndividualMessage.UiModel.create(adapterId, title, byline, senderInformation, body, message);
@@ -134,7 +134,7 @@ public class InboxFolderUiConstructor {
         ? c.getResources().getString(R.string.inbox_snippet_sent_by_logged_in_user, snippet)
         : snippet;
 
-    long adapterId = messageThread.getId().hashCode();
+    long adapterId = JrawUtils2.generateAdapterId(messageThread);
     String timestamp = Dates.createTimestamp(c.getResources(), latestMessageInThread.getCreated().getTime()).toString();
     return InboxMessageThread.UiModel.create(adapterId, secondPartyName, messageThread.getSubject(), snippet, timestamp, messageThread);
   }

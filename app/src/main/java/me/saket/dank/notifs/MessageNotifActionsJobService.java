@@ -25,6 +25,7 @@ import me.saket.dank.data.MoshiAdapter;
 import me.saket.dank.data.ResolvedError;
 import me.saket.dank.di.Dank;
 import me.saket.dank.reddit.Reddit;
+import me.saket.dank.utils.JrawUtils2;
 import timber.log.Timber;
 
 /**
@@ -55,7 +56,7 @@ public class MessageNotifActionsJobService extends DankJobService {
     extras.putString(KEY_ACTION, ACTION_SEND_DIRECT_REPLY);
 
     // Each job needs a unique ID and since we create a separate job for each message.
-    int jobId = ID_SEND_DIRECT_MESSAGE_REPLY + replyToMessage.getId().hashCode();
+    int jobId = (int) (ID_SEND_DIRECT_MESSAGE_REPLY + JrawUtils2.generateAdapterId(replyToMessage));
 
     JobInfo markAsReadJob = new JobInfo.Builder(jobId, new ComponentName(context, MessageNotifActionsJobService.class))
         .setRequiredNetworkType(JobInfo.NETWORK_TYPE_ANY)

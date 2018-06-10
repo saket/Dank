@@ -36,6 +36,7 @@ import me.saket.dank.data.InboxRepository;
 import me.saket.dank.data.MoshiAdapter;
 import me.saket.dank.ui.user.UserSessionRepository;
 import me.saket.dank.ui.user.messages.InboxMessageType;
+import me.saket.dank.utils.JrawUtils2;
 import me.saket.dank.utils.Strings;
 import me.saket.dank.utils.markdown.Markdown;
 import timber.log.Timber;
@@ -76,8 +77,7 @@ public class MessagesNotificationManager {
           for (Message unfilteredMessage : unfilteredMessages) {
             if (!seenMessageIds.contains(unfilteredMessage.getId())) {
               unseenMessages.add(unfilteredMessage);
-            }
-            else {
+            } else {
               Timber.w("Already seen: %s", Strings.substringWithBounds(unfilteredMessage.getBody(), 50));
             }
           }
@@ -190,7 +190,7 @@ public class MessagesNotificationManager {
 
       //Timber.i("Creating notifs for:");
       //for (Message sortedMessage : sortedMessages) {
-        //Timber.i("%s (%s)", Strings.substringWithBounds(sortedMessage.getBody(), 50), sortedMessage.getCreated());
+      //Timber.i("%s (%s)", Strings.substringWithBounds(sortedMessage.getBody(), 50), sortedMessage.getCreated());
       //}
       //noinspection ConstantConditions
       createNotifications(context, Collections.unmodifiableList(sortedMessages), loggedInUserName);
@@ -422,7 +422,7 @@ public class MessagesNotificationManager {
    * Id used for generating a notification for <var>message</var>. Used for dismissing it if it's active.
    */
   public static int createNotificationIdFor(Message message) {
-    return (NotificationConstants.UNREAD_MESSAGE_PREFIX_ + message.getId()).hashCode();
+    return (int) (NotificationConstants.UNREAD_MESSAGE_PREFIX_.hashCode() + JrawUtils2.generateAdapterId(message));
   }
 
   @CheckResult
