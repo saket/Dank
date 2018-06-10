@@ -3,6 +3,7 @@ package me.saket.dank.data;
 import static java.util.Collections.unmodifiableList;
 
 import android.content.ContentValues;
+import android.content.Context;
 import android.database.sqlite.SQLiteDatabase;
 import android.support.annotation.CheckResult;
 
@@ -25,6 +26,7 @@ import io.reactivex.Completable;
 import io.reactivex.Observable;
 import io.reactivex.Single;
 import io.reactivex.functions.Consumer;
+import me.saket.dank.notifs.MessageNotifActionsJobService;
 import me.saket.dank.reddit.Reddit;
 import me.saket.dank.reply.ReplyRepository;
 import me.saket.dank.ui.submission.ParentThread;
@@ -256,18 +258,27 @@ public class InboxRepository {
 
 // ======== READ STATUS ======== //
 
+  /**
+   * Access via {@link MessageNotifActionsJobService#markAsRead(Context, MoshiAdapter, Message...)}.
+   */
   @CheckResult
   public Completable setRead(Identifiable[] messages, boolean read) {
     return reddit.get().loggedInUser().setMessagesRead(read, messages)
         .andThen(removeMessages(InboxFolder.UNREAD, messages));
   }
 
+  /**
+   * Access via {@link MessageNotifActionsJobService#markAsRead(Context, MoshiAdapter, Message...)}.
+   */
   @CheckResult
   public Completable setRead(Identifiable message, boolean read) {
     return reddit.get().loggedInUser().setMessagesRead(read, message)
         .andThen(removeMessages(InboxFolder.UNREAD, message));
   }
 
+  /**
+   * Access via {@link MessageNotifActionsJobService#markAllAsRead(Context)}.
+   */
   @CheckResult
   public Completable setAllRead() {
     return reddit.get().loggedInUser().setAllMessagesRead()
