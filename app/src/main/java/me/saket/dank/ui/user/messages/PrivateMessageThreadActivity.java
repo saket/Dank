@@ -3,6 +3,7 @@ package me.saket.dank.ui.user.messages;
 import static io.reactivex.android.schedulers.AndroidSchedulers.mainThread;
 import static io.reactivex.schedulers.Schedulers.io;
 import static me.saket.dank.utils.RxUtils.doNothing;
+import static me.saket.dank.utils.RxUtils.doNothingCompletable;
 import static me.saket.dank.utils.RxUtils.logError;
 import static me.saket.dank.utils.Views.touchLiesOn;
 
@@ -73,7 +74,7 @@ import timber.log.Timber;
 
 public class PrivateMessageThreadActivity extends DankPullCollapsibleActivity {
 
-//  private static final String KEY_MESSAGE_FULLNAME = "messageFullname";
+  //  private static final String KEY_MESSAGE_FULLNAME = "messageFullname";
   private static final String KEY_MESSAGE_IDENTIFIABLE = "messageIdentifiable";
   private static final String KEY_THREAD_SECOND_PARTY_NAME = "threadSecondPartyName";
   private static final int REQUEST_CODE_FULLSCREEN_REPLY = 99;
@@ -234,7 +235,6 @@ public class PrivateMessageThreadActivity extends DankPullCollapsibleActivity {
         .takeUntil(lifecycle().onDestroy())
         .subscribe(
             pair -> {
-              // TODO JRAW.
               CharSequence reply = pair.first();
               Message latestMessage = pair.second();
 
@@ -292,6 +292,24 @@ public class PrivateMessageThreadActivity extends DankPullCollapsibleActivity {
                 .subscribeOn(io())
                 .subscribe()
         );
+
+    // Mark PM as read.
+    messageThread
+        .take(1)
+        .map(thread -> thread.getReplies())
+        .map(replies -> {
+          Identifiable[] replyIds = new Identifiable[replies.size()];
+          for (int i = 0; i < replyIds.length; i++) {
+            replyIds[i] = replies.get(i);
+          }
+          return replyIds;
+        })
+        .flatMapCompletable(replyIds -> inboxRepository.get().setRead(replyIds, true))
+        .subscribeOn(io())
+        .subscribe(doNothingCompletable(), error -> {
+          ResolvedError resolvedError = errorResolver.get().resolve(error);
+          resolvedError.ifUnknown(() -> Timber.e(error, "Couldn't mark PM as read"));
+        });
   }
 
   @Override
