@@ -117,7 +117,12 @@ public class UserProfileSheetView extends FrameLayout {
         .onErrorResumeNext(Observable.empty())
         .observeOn(mainThread())
         .takeUntil(lifecycle.viewDetaches())
-        .subscribe(this::populateUnreadMessageCount);
+        .subscribe(
+            this::populateUnreadMessageCount,
+            error -> {
+              ResolvedError resolvedError = errorResolver.get().resolve(error);
+              resolvedError.ifUnknown(() -> Timber.e(error, "Couldn't update unread message count"));
+            });
 
     // This call is intentionally allowed to outlive this View's lifecycle.
     // Additionally, NYT-Store blocks multiple calls so it's safe to refresh
