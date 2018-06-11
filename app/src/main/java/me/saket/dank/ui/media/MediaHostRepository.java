@@ -194,13 +194,15 @@ public class MediaHostRepository {
       return gfycatRepository.get()
           .gif(((GfycatUnresolvedLink) unresolvedLink).threeWordId())
           .cast(MediaLink.class);
+
     } else if (unresolvedLink instanceof GfycatLink) {
       return gfycatRepository.get()
           .gif(((GfycatLink) unresolvedLink).threeWordId())
           .cast(MediaLink.class);
 
     } else {
-      return Single.error(new AssertionError("Trying to resolve an already resolved link"));
+      Timber.e(new AssertionError("Trying to resolve an already resolved link: " + unresolvedLink));
+      return Single.just(unresolvedLink);
     }
   }
 
