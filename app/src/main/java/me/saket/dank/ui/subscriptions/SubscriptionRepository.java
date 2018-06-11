@@ -360,6 +360,7 @@ public class SubscriptionRepository {
     };
   }
 
+  // TODO: Retry on network errors.
   private Single<List<String>> loggedInUserSubscriptions() {
     return reddit.get().subscriptions().userSubscriptions()
         .map(remoteSubs -> {
