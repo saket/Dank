@@ -24,7 +24,7 @@ public abstract class SubredditSubmissionThumbnailClickEvent {
 
   public static SubredditSubmissionThumbnailClickEvent create(Submission submission, View itemView, View thumbnailView) {
     if (submission.isSelfPost()) {
-      throw new AssertionError("Shouldn't happen");
+      throw new AssertionError("Shouldn't happen: " + submission.getPermalink());
     }
     return new AutoValue_SubredditSubmissionThumbnailClickEvent(submission, itemView, thumbnailView);
   }
