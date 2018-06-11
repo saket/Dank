@@ -133,7 +133,8 @@ public class VotingManager {
   }
 
   public <T extends Votable & Identifiable> VoteDirection getPendingOrDefaultVote(T votableContribution, VoteDirection defaultValue) {
-    return VoteDirection.valueOf(sharedPrefs.get().getString(keyFor(votableContribution), defaultValue.name()));
+    String voteEnumString = sharedPrefs.get().getString(keyFor(votableContribution), defaultValue.name());
+    return VoteDirectionX.valueOfWithMigration(voteEnumString);
   }
 
 //  public boolean isVotePending(Identifiable votableContribution) {
