@@ -158,8 +158,14 @@ public class InboxRecyclerView extends RecyclerView implements ExpandablePageLay
       return;
     }
 
-    // Store these details so that they can be used later for restoring the original state.
     View child = getChildAt(itemViewPosition);
+    if (child == null) {
+      // Not sure why this would happen. Maybe the View
+      // got removed right when it was clicked to expand?
+      return;
+    }
+
+    // Store these details so that they can be used later for restoring the original state.
     final Rect itemRect = new Rect(
         getLeft() + child.getLeft(),
         getTop() + child.getTop(),
