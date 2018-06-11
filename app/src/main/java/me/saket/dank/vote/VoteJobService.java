@@ -68,7 +68,8 @@ public class VoteJobService extends DankJobService {
 
   @Override
   public JobStartCallback onStartJob2(JobParameters params) {
-    VoteDirection voteDirection = VoteDirection.valueOf(params.getExtras().getString(KEY_VOTE_DIRECTION));
+    //noinspection ConstantConditions
+    VoteDirection voteDirection = VoteDirectionX.valueOfWithMigration(params.getExtras().getString(KEY_VOTE_DIRECTION));
 
     JsonAdapter<SimpleIdentifiable> jsonAdapter = moshi.adapter(SimpleIdentifiable.class);
     String votableJson = params.getExtras().getString(KEY_VOTABLE_JSON);
