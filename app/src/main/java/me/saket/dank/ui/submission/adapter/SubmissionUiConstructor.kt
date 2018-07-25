@@ -15,7 +15,6 @@ import io.reactivex.schedulers.Schedulers.io
 import me.saket.dank.BuildConfig
 import me.saket.dank.R
 import me.saket.dank.data.ResolvedError
-import me.saket.dank.reply.PendingSyncReply
 import me.saket.dank.reply.ReplyRepository
 import me.saket.dank.ui.submission.BookmarksRepository
 import me.saket.dank.ui.submission.ParentThread
@@ -59,19 +58,24 @@ constructor(
   fun stream(
       context: Context,
       submissionCommentTreeUiConstructor: SubmissionCommentTreeUiConstructor,
-      optionalSubmissionDatum: Observable<Optional<SubmissionAndComments>>,
+      optionalSubmissionDatum2: Observable<Optional<SubmissionAndComments>>,
       submissionRequests: Observable<DankSubmissionRequest>,
       contentLinks: Observable<Optional<Link>>,
       mediaContentLoadErrors: Observable<Optional<SubmissionContentLoadError>>,
       commentsLoadErrors: Observable<Optional<ResolvedError>>
   ): Observable<List<SubmissionScreenUiModel>> {
-    return optionalSubmissionDatum
+
+    val sharedOptionalSubmissionDatum = optionalSubmissionDatum2
+        .replay(1)
+        .refCount()
+
+    return sharedOptionalSubmissionDatum
         .distinctUntilChanged { prev, next -> prev.isPresent == next.isPresent }
         .switchMap { optional ->
           Timber.i("Constructing submission: %s", optional.map { (submission) -> submission.title })
 
           if (optional.isEmpty) {
-            return@switchMap optionalSubmissionDatum
+            return@switchMap sharedOptionalSubmissionDatum
                 .distinctUntilChanged { prev, next -> prev.isPresent == next.isPresent }
                 .switchMap {
                   commentsLoadErrors
@@ -84,22 +88,24 @@ constructor(
                 }
           }
 
-          val submissionDatum = optionalSubmissionDatum
+          val sharedSubmissionDatum2 = sharedOptionalSubmissionDatum
               // Not sure why, but the parent switchMap() on submission change gets triggered
               // after this chain receives an empty submission, so adding this extra takeWhile().
               // Update: I think it's because switchMap() acts like a flatMap() if the nested Rx
               // stream is synchronous.
-              .takeWhile { optionalSub -> optionalSub.isPresent }
-              .map { submissionOptional -> submissionOptional.get() }
+              .takeWhile { it.isPresent }
+              .map { it.get() }
               .startWith(optional.get())
+              .replay(1)
+              .refCount()
 
           val contentLinkUiModels = contentLinks
               .distinctUntilChanged()
-              .withLatestFrom(submissionDatum.observeOn(io()).map { (submission) -> submission })
+              .withLatestFrom(sharedSubmissionDatum2.map { it.submission })
               .doOnDispose { contentLinkUiModelConstructor.clearGlideTargets(context) }
               .switchMap { (contentLink, submission) ->
                 if (contentLink.isEmpty) {
-                  Observable.just(Optional.empty<SubmissionContentLinkUiModel>())
+                  Observable.just(Optional.empty())
                 } else {
                   contentLinkUiModelConstructor
                       .streamLoad(context, contentLink.get(), ImageWithMultipleVariants.of(submission.preview))
@@ -109,30 +115,30 @@ constructor(
                 }
               }
 
-          val submissionPendingSyncReplyCounts = submissionDatum
-              .map { (submission) -> submission }
-              .observeOn(io())
+          val submissionPendingSyncReplyCounts = sharedSubmissionDatum2
+              .map { it.submission }
               .take(1)  // replace flatMap -> switchMap if we expect more than 1 emissions.
-              .flatMap<List<PendingSyncReply>> { submission -> replyRepository.streamPendingSyncReplies(ParentThread.of(submission)) }
-              .map { pendingSyncReplies -> pendingSyncReplies.size }
+              .flatMap {
+                replyRepository
+                    .streamPendingSyncReplies(ParentThread.of(it))
+                    .subscribeOn(io())
+              }
+              .map { it.size }
               .startWith(0)  // Stream sometimes takes too long to emit anything.
 
           val externalChanges = Observable
               .merge(votingManager.streamChanges(), bookmarksRepository.get().streamChanges())
-              .observeOn(io())
               .startWith(NOTHING)
 
           val headerUiModels = CombineLatestWithLog.from<Context, Submission, Optional<SubmissionContentLinkUiModel>, Any, SubmissionCommentsHeader.UiModel>(
-              O.of("ext-change", externalChanges.map { o -> context }),
-              O.of("submission 2", submissionDatum.observeOn(io()).map { (submission) -> submission }.distinctUntilChanged()),
-              O.of("content-link", contentLinkUiModels
-                  //.doOnNext(op -> Timber.w("Link ui model changed: %s", op))
-              ),
+              O.of("ext-change", externalChanges.map { context }),
+              O.of("submission 2", sharedSubmissionDatum2.map { it.submission }.distinctUntilChanged()),
+              O.of("content-link", contentLinkUiModels),
               ::headerUiModel
           )
 
           val commentOptionsUiModels = CombineLatestWithLog.from<Submission, DankSubmissionRequest, Int, Any, SubmissionCommentOptions.UiModel>(
-              O.of("submission 3", submissionDatum.map { (submission) -> submission }.distinctUntilChanged()),
+              O.of("submission 3", sharedSubmissionDatum2.map { it.submission }.distinctUntilChanged()),
               O.of("submission requests", submissionRequests),
               O.of("pending-sync-reply-count", submissionPendingSyncReplyCounts),
               ::commentOptionsUiModel
@@ -144,7 +150,7 @@ constructor(
           val viewFullThreadUiModels = submissionRequests
               .map {
                 when {
-                  it.focusCommentId() == null -> Optional.empty<SubmissionCommentsViewFullThread.UiModel>()
+                  it.focusCommentId() == null -> Optional.empty()
                   else -> Optional.of(SubmissionCommentsViewFullThread.UiModel.create(it))
                 }
               }
@@ -153,13 +159,13 @@ constructor(
           val commentRowUiModels = submissionCommentTreeUiConstructor
               .stream(
                   context,
-                  submissionDatum.observeOn(io()),
+                  sharedSubmissionDatum2,
                   submissionRequests,
                   io())
               .startWith(emptyList<SubmissionScreenUiModel>())
 
           val commentsLoadProgressUiModels = Observables
-              .combineLatest(submissionDatum.observeOn(io()), commentsLoadErrors)
+              .combineLatest(sharedSubmissionDatum2, commentsLoadErrors)
               .map { (submissionData, commentsLoadErrors) ->
                 val comments = submissionData.comments
                 val commentsLoadingFailed = commentsLoadErrors.isPresent

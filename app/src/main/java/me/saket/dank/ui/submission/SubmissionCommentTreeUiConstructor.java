@@ -1,5 +1,6 @@
 package me.saket.dank.ui.submission;
 
+import static io.reactivex.schedulers.Schedulers.io;
 import static me.saket.dank.utils.Arrays2.immutable;
 import static me.saket.dank.utils.Preconditions.checkNotNull;
 
@@ -27,6 +28,7 @@ import javax.inject.Inject;
 import dagger.Lazy;
 import io.reactivex.Observable;
 import io.reactivex.Scheduler;
+import kotlin.Triple;
 import me.saket.dank.R;
 import me.saket.dank.data.LocallyPostedComment;
 import me.saket.dank.data.SpannableWithTextEquality;
@@ -188,7 +190,10 @@ public class SubmissionCommentTreeUiConstructor {
   {
     Observable<PendingSyncRepliesMap> pendingSyncRepliesMaps = submissionDatum
         .distinctUntilChanged()
-        .flatMap(submissionData -> replyRepository.get().streamPendingSyncReplies(ParentThread.of(submissionData.getSubmission())))
+        .flatMap(submissionData -> replyRepository.get()
+            .streamPendingSyncReplies(ParentThread.of(submissionData.getSubmission()))
+            .subscribeOn(io())
+        )
         // I've seen this stream very occasionally take a second to emit, so starting with a default value.
         .startWith(Collections.<PendingSyncReply>emptyList())
         .map(replyList -> createPendingSyncReplyMap(replyList));
@@ -199,7 +204,7 @@ public class SubmissionCommentTreeUiConstructor {
             COLLAPSED_COMMENT_IDS.changes(),
             IN_FLIGHT_LOAD_MORE_IDS.changes()
         )
-        .observeOn(scheduler)   // observeOn() because the relays emit on the main thread)
+        //.observeOn(scheduler)   // observeOn() because the relays emit on the main thread)
         .startWith(0);          // Occasionally takes a while to emit something. I'm guessing the scheduler gets blocked.
 
     Observable<Optional<FocusedComment>> focusedComments = submissionRequests
@@ -217,12 +222,15 @@ public class SubmissionCommentTreeUiConstructor {
             O.of("focusedComment", focusedComments),
             O.of("row-visibility", rowVisibilityChanges),
             O.of("votes", voteChanges),
-            (submissionData, pendingSyncRepliesMap, focusedComment, o, oo) -> {
-              String submissionAuthor = submissionData.getSubmission().getAuthor();
-              List<SubmissionScreenUiModel> comments = constructComments(context, submissionData, pendingSyncRepliesMap, submissionAuthor, focusedComment);
-              //Timber.i("Constructed %s comment ui models from %s comments", comments.size(), submissionData.getComments().map(r -> r.totalSize()));
-              return comments;
-            })
+            (submissionData, pendingSyncRepliesMap, focusedComment, o, oo) -> new Triple<>(submissionData, pendingSyncRepliesMap, focusedComment))
+        .observeOn(scheduler)
+        .map(triple -> {
+          SubmissionAndComments submissionData = triple.getFirst();
+          PendingSyncRepliesMap pendingSyncRepliesMap = triple.getSecond();
+          Optional<FocusedComment> focusedComment = triple.getThird();
+          String submissionAuthor = submissionData.getSubmission().getAuthor();
+          return constructComments(context, submissionData, pendingSyncRepliesMap, submissionAuthor, focusedComment);
+        })
         .as(immutable());
   }
 
