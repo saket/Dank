@@ -4,7 +4,7 @@
 
 I started building Dank as a side project in January 2017. It was my playground for exploring Android. It was also an attempt to showcase a beautiful experience of what Android can offer to its users. There are many Reddit apps out there, but they’re all bland. There’s nothing inspirational about them.
 
-You can read more about the features here: https://saket.me/dank
+You can read more about the features here: https://saket.me/dank. An APK of the last release can be [found here](https://github.com/saket/Dank/releases).
 
 I would love to continue working on Dank, but maintaining a side project is like having two jobs. I can’t do it anymore so I’m releasing the source and archiving the project. Please read this blog post for understanding my reasons behind this decision: http://saket.me/sunsetting-dank.
 
