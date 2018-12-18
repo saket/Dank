@@ -28,6 +28,10 @@ public class SubmissionsSortingModePopupMenu extends PopupMenu {
 
     setOnMenuItemClickListener(menuItem -> {
       switch (menuItem.getItemId()) {
+        case R.id.action_subreddit_sorting_best:
+          onSortingModeSelectListener.onSortingModeSelect(SortingAndTimePeriod.create(SubredditSort.BEST));
+          return true;
+
         case R.id.action_subreddit_sorting_hot:
           onSortingModeSelectListener.onSortingModeSelect(SortingAndTimePeriod.create(SubredditSort.HOT));
           return true;
