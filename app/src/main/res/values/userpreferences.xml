@@ -27,6 +27,7 @@
   <string name="userprefs_check_for_new_messages">Poll for new messages</string>
   <string name="userprefs_messages_poll_interval_on_wifi">Every %s only on WiFi</string>
   <string name="userprefs_messages_poll_interval_on_wifi_or_mobile">Every %s on any network</string>
+  <string name="userprefs_messages_poll_interval_never">Never</string>
 
   <plurals name="userprefs_message_poll_interval_days">
     <item quantity="one">day</item>
