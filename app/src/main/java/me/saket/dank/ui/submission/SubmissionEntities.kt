@@ -59,7 +59,7 @@ data class CachedSubmissionAndComments(
   }
 }
 
-@Entity(primaryKeys = ["subredditName", "sortingAndTimePeriod", "saveTimeMillis"])
+@Entity(primaryKeys = ["id", "subredditName", "sortingAndTimePeriod"])
 data class CachedSubmissionId2 constructor(
     val id: String,
     val subredditName: String,
