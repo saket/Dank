@@ -26,6 +26,8 @@ class StorageModule {
 
   @Provides
   fun appDatabase(appContext: Application): AppDatabase {
-    return Room.databaseBuilder(appContext, AppDatabase::class.java, "Dank-room").build()
+    return Room.databaseBuilder(appContext, AppDatabase::class.java, "Dank-room")
+        .fallbackToDestructiveMigrationFrom(1)
+        .build()
   }
 }
