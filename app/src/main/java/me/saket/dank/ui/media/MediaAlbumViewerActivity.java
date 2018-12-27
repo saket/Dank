@@ -156,7 +156,6 @@ public class MediaAlbumViewerActivity extends DankActivity implements MediaFragm
   @Override
   protected void onCreate(@Nullable Bundle savedInstanceState) {
     Dank.dependencyInjector().inject(this);
-    getWindow().addFlags(WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS);
 
     super.onCreate(savedInstanceState);
     overridePendingTransition(R.anim.fade_in_300, 0);
@@ -181,10 +180,6 @@ public class MediaAlbumViewerActivity extends DankActivity implements MediaFragm
     // Animated once images are fetched.
     optionButtonsContainerView.setVisibility(View.INVISIBLE);
     ((ViewGroup) optionButtonsContainerView.getParent()).getLayoutTransition().setDuration(200);
-
-    // Show the option buttons above the navigation bar.
-    int navBarHeight = Views.getNavigationBarSize(this).y;
-    Views.setPaddingBottom(contentOptionButtonsContainerView, contentOptionButtonsContainerView.getPaddingBottom() + navBarHeight);
 
     rxPermissions = new RxPermissions(this);
     systemUiHelper = new SystemUiHelper(this, SystemUiHelper.LEVEL_IMMERSIVE, 0, systemUiVisible -> {
@@ -521,8 +516,6 @@ public class MediaAlbumViewerActivity extends DankActivity implements MediaFragm
    */
   private PopupMenu createSharePopupMenu() {
     // Note: the style sets a negative top offset so that the popup appears on top of the share button.
-    // Unfortunately, setting WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS on the Window causes
-    // PopupMenu to not position itself within the window limits, regardless of using top gravity.
     PopupMenu sharePopupMenu = new PopupMenu(this, shareButton, Gravity.TOP, 0, R.style.DankPopupMenu_AlbumViewerOption);
     sharePopupMenu.setOnMenuItemClickListener(item -> {
       MediaAlbumItem activeMediaItem = mediaAlbumAdapter.getDataSet().get(mediaAlbumPager.getCurrentItem());

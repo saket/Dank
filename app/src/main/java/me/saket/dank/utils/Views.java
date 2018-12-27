@@ -1,6 +1,5 @@
 package me.saket.dank.utils;
 
-import android.content.Context;
 import android.content.res.Resources;
 import android.graphics.Point;
 import android.graphics.Rect;
@@ -8,17 +7,13 @@ import android.graphics.drawable.Drawable;
 import android.support.annotation.CheckResult;
 import android.support.annotation.DrawableRes;
 import android.support.annotation.Nullable;
-import android.view.Display;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.ViewTreeObserver;
-import android.view.WindowManager;
 import android.widget.EditText;
 import android.widget.TextView;
 
 import io.reactivex.Completable;
-import okio.BufferedSource;
-import okio.Okio;
 import timber.log.Timber;
 
 /**
@@ -241,42 +236,6 @@ public class Views {
     int[] location = new int[2];
     view.getLocationOnScreen(location);
     return new Point(location[0], location[1]);
-  }
-
-  public static Point getNavigationBarSize(Context context) {
-    Point appUsableSize = getAppUsableScreenSize(context);
-    Point realScreenSize = getRealScreenSize(context);
-
-    // navigation bar on the right
-    if (appUsableSize.x < realScreenSize.x) {
-      return new Point(realScreenSize.x - appUsableSize.x, appUsableSize.y);
-    }
-
-    // navigation bar at the bottom
-    if (appUsableSize.y < realScreenSize.y) {
-      return new Point(appUsableSize.x, realScreenSize.y - appUsableSize.y);
-    }
-
-    // navigation bar is not present
-    return new Point();
-  }
-
-  private static Point getAppUsableScreenSize(Context context) {
-    WindowManager windowManager = (WindowManager) context.getSystemService(Context.WINDOW_SERVICE);
-    //noinspection ConstantConditions
-    Display display = windowManager.getDefaultDisplay();
-    Point size = new Point();
-    display.getSize(size);
-    return size;
-  }
-
-  private static Point getRealScreenSize(Context context) {
-    WindowManager windowManager = (WindowManager) context.getSystemService(Context.WINDOW_SERVICE);
-    //noinspection ConstantConditions
-    Display display = windowManager.getDefaultDisplay();
-    Point size = new Point();
-    display.getRealSize(size);
-    return size;
   }
 
   public static int getTopRelativeToParent(ViewGroup parent, View view) {
