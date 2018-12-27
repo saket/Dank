@@ -329,7 +329,7 @@ public class SubredditUiConstructor {
       case URL_REMOTE_THUMBNAIL:
         // Don't want to display NSFW content if it's disabled on thumbnail click.
         // Might get flagged by Play Store's automatic review thing.
-        isThumbnailClickable = !submission.isNsfw() || showNsfwContent.get();
+        isThumbnailClickable = !submission.isSelfPost() && (!submission.isNsfw() || showNsfwContent.get());
         break;
 
       case UNKNOWN:
