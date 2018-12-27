@@ -62,7 +62,7 @@ public class SubmissionSwipeActionsProvider implements SwipeableLayout.SwipeActi
     this.onLoginRequireListener = onLoginRequireListener;
 
     SwipeAction moreOptionsSwipeAction = SwipeAction.create(ACTION_NAME_OPTIONS, R.color.list_item_swipe_more_options, 0.5f);
-    //SwipeAction newTabSwipeAction = SwipeAction.create(ACTION_NAME_NEW_TAB, R.color.list_item_swipe_new_tab, 0.5f);
+    SwipeAction newTabSwipeAction = SwipeAction.create(ACTION_NAME_NEW_TAB, R.color.list_item_swipe_new_tab, 0.5f);
     SwipeAction saveSwipeAction = SwipeAction.create(ACTION_NAME_SAVE, R.color.list_item_swipe_save, 0.5f);
     SwipeAction unSaveSwipeAction = SwipeAction.create(ACTION_NAME_UNSAVE, R.color.list_item_swipe_save, 0.5f);
     SwipeAction downvoteSwipeAction = SwipeAction.create(ACTION_NAME_DOWNVOTE, R.color.list_item_swipe_downvote, 0.4f);
@@ -76,7 +76,7 @@ public class SubmissionSwipeActionsProvider implements SwipeableLayout.SwipeActi
 
     swipeActionsWithUnSave = SwipeActions.builder()
         .startActions(SwipeActionsHolder.builder()
-            //.add(newTabSwipeAction)
+            .add(newTabSwipeAction)
             .add(moreOptionsSwipeAction)
             .add(unSaveSwipeAction)
             .build())
@@ -85,7 +85,7 @@ public class SubmissionSwipeActionsProvider implements SwipeableLayout.SwipeActi
 
     swipeActionsWithSave = SwipeActions.builder()
         .startActions(SwipeActionsHolder.builder()
-            //.add(newTabSwipeAction)
+            .add(newTabSwipeAction)
             .add(moreOptionsSwipeAction)
             .add(saveSwipeAction)
             .build())
