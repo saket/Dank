@@ -70,8 +70,8 @@ public class PullToCollapseListener implements View.OnTouchListener {
   public boolean onTouch(View v, MotionEvent event) {
     switch (event.getActionMasked()) {
       case MotionEvent.ACTION_DOWN:
-        downX = event.getRawX();
-        downY = event.getRawY();
+        downX = event.getX();
+        downY = event.getY();
         lastMoveY = downY;
 
         eligibleForCollapse = false;
@@ -87,9 +87,9 @@ public class PullToCollapseListener implements View.OnTouchListener {
           return false;
         }
 
-        float deltaY = event.getRawY() - lastMoveY;
-        float totalSwipeDistanceX = event.getRawX() - downX;
-        float totalSwipeDistanceY = event.getRawY() - downY;
+        float deltaY = event.getY() - lastMoveY;
+        float totalSwipeDistanceX = event.getX() - downX;
+        float totalSwipeDistanceY = event.getY() - downY;
         float totalSwipeDistanceXAbs = Math.abs(totalSwipeDistanceX);
         float totalSwipeDistanceYAbs = Math.abs(totalSwipeDistanceY);
 
@@ -156,7 +156,7 @@ public class PullToCollapseListener implements View.OnTouchListener {
         expandablePage.setTranslationY(translationY);
         dispatchPulledCallback(resistedDeltaY, translationY, upwardSwipe, deltaUpwardSwipe);
 
-        lastMoveY = event.getRawY();
+        lastMoveY = event.getY();
         return true;
       }
 
@@ -164,7 +164,7 @@ public class PullToCollapseListener implements View.OnTouchListener {
       case MotionEvent.ACTION_UP:
         // Collapse or restore the page when the finger is lifted, depending on
         // the pull distance
-        float totalSwipeDistanceY = event.getRawY() - downY;
+        float totalSwipeDistanceY = event.getY() - downY;
         if (Math.abs(totalSwipeDistanceY) >= touchSlop) {
           dispatchReleaseCallback();
         }
