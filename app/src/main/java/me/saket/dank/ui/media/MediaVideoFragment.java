@@ -175,17 +175,13 @@ public class MediaVideoFragment extends BaseMediaViewerFragment {
                 int parentHeight = parent.getHeight();
 
                 int videoControlsHeight = videoControlsView.heightOfControlButtons();
-                boolean isPortraitVideo = (videoHeight + videoControlsHeight) > videoWidth;
 
                 float resizeFactorToFillHorizontalSpace = (float) parentWidth / videoWidth;
                 int resizedHeight = (int) (videoHeight * resizeFactorToFillHorizontalSpace) + videoControlsHeight;
 
-                if (isPortraitVideo) {
-                  int verticalSpaceAvailable = parentHeight - Views.getPaddingVertical(parent);
-                  Views.setDimensions(videoView, parentWidth, Math.min(resizedHeight, verticalSpaceAvailable));
-                } else {
-                  Views.setDimensions(videoView, parentWidth, resizedHeight);
-                }
+                int verticalSpaceAvailable = parentHeight - Views.getPaddingVertical(parent);
+                Views.setDimensions(videoView, parentWidth, Math.min(resizedHeight, verticalSpaceAvailable));
+
               }, error -> {
                 ResolvedError resolvedError = errorResolver.get().resolve(error);
                 resolvedError.ifUnknown(() -> Timber.e(error, "Error while trying to get option buttons' height"));
