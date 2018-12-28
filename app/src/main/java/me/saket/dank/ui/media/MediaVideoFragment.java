@@ -10,17 +10,18 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ViewFlipper;
 
+import butterknife.BindView;
+import butterknife.ButterKnife;
 import com.danikula.videocache.HttpProxyCacheServer;
 import com.devbrackets.android.exomedia.ui.widget.VideoView;
 import com.google.android.exoplayer2.ExoPlaybackException;
 import com.google.android.exoplayer2.upstream.HttpDataSource;
 import com.jakewharton.rxrelay2.BehaviorRelay;
+import dagger.Lazy;
+import timber.log.Timber;
 
 import javax.inject.Inject;
 
-import butterknife.BindView;
-import butterknife.ButterKnife;
-import dagger.Lazy;
 import me.saket.dank.R;
 import me.saket.dank.data.ErrorResolver;
 import me.saket.dank.data.ResolvedError;
@@ -32,7 +33,6 @@ import me.saket.dank.widgets.ErrorStateView;
 import me.saket.dank.widgets.MediaAlbumViewerTitleDescriptionView;
 import me.saket.dank.widgets.binoculars.FlickDismissLayout;
 import me.saket.dank.widgets.binoculars.FlickGestureListener;
-import timber.log.Timber;
 
 public class MediaVideoFragment extends BaseMediaViewerFragment {
 
@@ -171,17 +171,12 @@ public class MediaVideoFragment extends BaseMediaViewerFragment {
                 int parentHeight = parent.getHeight();
 
                 int videoControlsHeight = videoControlsView.heightOfControlButtons();
-                boolean isPortraitVideo = (videoHeight + videoControlsHeight) > videoWidth;
 
                 float resizeFactorToFillHorizontalSpace = (float) parentWidth / videoWidth;
                 int resizedHeight = (int) (videoHeight * resizeFactorToFillHorizontalSpace) + videoControlsHeight;
 
-                if (isPortraitVideo) {
-                  int verticalSpaceAvailable = parentHeight - Views.getPaddingVertical(parent);
-                  Views.setDimensions(videoView, parentWidth, Math.min(resizedHeight, verticalSpaceAvailable));
-                } else {
-                  Views.setDimensions(videoView, parentWidth, resizedHeight);
-                }
+                int verticalSpaceAvailable = parentHeight - Views.getPaddingVertical(parent);
+                Views.setDimensions(videoView, parentWidth, Math.min(resizedHeight, verticalSpaceAvailable));
               }, error -> {
                 ResolvedError resolvedError = errorResolver.get().resolve(error);
                 resolvedError.ifUnknown(() -> Timber.e(error, "Error while trying to get option buttons' height"));
