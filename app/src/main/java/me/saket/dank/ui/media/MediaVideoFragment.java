@@ -113,10 +113,8 @@ public class MediaVideoFragment extends BaseMediaViewerFragment {
         .takeUntil(lifecycle().onDestroy().ignoreElements())
         .subscribe(
             optionButtonsHeight -> {
-              int statusBarHeight = Views.statusBarHeight(getResources());
-              Views.setPaddingVertical(
+              Views.setPaddingBottom(
                   contentViewFlipper,
-                  contentViewFlipper.getPaddingTop() + statusBarHeight,
                   contentViewFlipper.getPaddingBottom() + optionButtonsHeight
               );
             }, error -> {
@@ -168,22 +166,21 @@ public class MediaVideoFragment extends BaseMediaViewerFragment {
           .takeUntil(lifecycle().onDestroyCompletable())
           .subscribe(
               optionButtonsHeight -> {
-                int deviceDisplayWidth = getResources().getDisplayMetrics().widthPixels;
-                int deviceDisplayHeight = getResources().getDisplayMetrics().heightPixels
-                    // Not sure why, but display height doesn't include the status bar's height :S
-                    + Views.statusBarHeight(getResources());
+                ViewGroup parent = (ViewGroup) videoView.getParent();
+                int parentWidth = parent.getWidth();
+                int parentHeight = parent.getHeight();
 
                 int videoControlsHeight = videoControlsView.heightOfControlButtons();
                 boolean isPortraitVideo = (videoHeight + videoControlsHeight) > videoWidth;
 
-                float resizeFactorToFillHorizontalSpace = (float) deviceDisplayWidth / videoWidth;
+                float resizeFactorToFillHorizontalSpace = (float) parentWidth / videoWidth;
                 int resizedHeight = (int) (videoHeight * resizeFactorToFillHorizontalSpace) + videoControlsHeight;
 
                 if (isPortraitVideo) {
-                  int verticalSpaceAvailable = deviceDisplayHeight - optionButtonsHeight;
-                  Views.setDimensions(videoView, deviceDisplayWidth, Math.min(resizedHeight, verticalSpaceAvailable));
+                  int verticalSpaceAvailable = parentHeight - Views.getPaddingVertical(parent);
+                  Views.setDimensions(videoView, parentWidth, Math.min(resizedHeight, verticalSpaceAvailable));
                 } else {
-                  Views.setDimensions(videoView, deviceDisplayWidth, resizedHeight);
+                  Views.setDimensions(videoView, parentWidth, resizedHeight);
                 }
               }, error -> {
                 ResolvedError resolvedError = errorResolver.get().resolve(error);
