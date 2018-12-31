@@ -132,12 +132,16 @@ public class SwipeableLayout extends FrameLayout {
 
 // ======== SWIPE ======== //
 
-  public void setSwipeTranslation(@FloatRange(from = -1f, to = 1f) float translationX) {
+  public void setSwipeTranslation(float translationX) {
     if (!isLaidOut()) {
       //throw new IllegalStateException("SwipeableLayout hasn't been measured yet!");
       Timber.w("SwipeableLayout hasn't been measured yet!");
       return;
     }
+
+    // Limit translation to width of swipeable layout.
+    int swipeableLayoutWidth = getWidth();
+    translationX = Math.max(-swipeableLayoutWidth, Math.min(translationX, swipeableLayoutWidth));
 
     swipeableChild.setTranslationX(translationX);
 
@@ -150,7 +154,7 @@ public class SwipeableLayout extends FrameLayout {
     }
 
     if (swipeEnabled) {
-      swipeActionTriggerDrawable.setBounds((int) translationX, 0, (int) (getWidth() + translationX), getHeight());
+      swipeActionTriggerDrawable.setBounds((int) translationX, 0, (int) (swipeableLayoutWidth + translationX), getHeight());
 
       // Move the icon along with the View being swiped.
       if (swipingFromEndToStart) {
@@ -167,8 +171,8 @@ public class SwipeableLayout extends FrameLayout {
       } else {
         if (!isSettlingBackToPosition()) {
           SwipeAction swipeAction = swipingFromEndToStart
-              ? swipeActions.endActions().findActionAtSwipeDistance(getWidth(), Math.abs(translationX), SwipeDirection.END_TO_START)
-              : swipeActions.startActions().findActionAtSwipeDistance(getWidth(), Math.abs(translationX), SwipeDirection.START_TO_END);
+              ? swipeActions.endActions().findActionAtSwipeDistance(swipeableLayoutWidth, Math.abs(translationX), SwipeDirection.END_TO_START)
+              : swipeActions.startActions().findActionAtSwipeDistance(swipeableLayoutWidth, Math.abs(translationX), SwipeDirection.START_TO_END);
 
           if (activeSwipeAction != swipeAction) {
             SwipeAction oldAction = activeSwipeAction;
