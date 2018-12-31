@@ -25,6 +25,11 @@ public class SwipeActionsHolder {
    */
   @CheckResult
   protected SwipeAction findActionAtSwipeDistance(int swipeableLayoutWidth, float swipeDistance, SwipeDirection swipeDirection) {
+    if (swipeDistance > swipeableLayoutWidth) {
+      throw new IllegalArgumentException("Swipe distance can't be bigger than width of swipeable layout: swipeableLayoutWidth: "
+          + swipeableLayoutWidth + ", swipeDistance: " + swipeDistance);
+    }
+
     float totalWeights = calculateTotalWeights();
 
     switch (swipeDirection) {
