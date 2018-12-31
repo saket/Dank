@@ -84,7 +84,7 @@ tasks.withType(org.jetbrains.kotlin.gradle.tasks.KotlinCompile).all {
 }
 
 dependencies {
-  compile project(path: ':markdownhints')
+  implementation project(path: ':markdownhints')
 
   implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk7:$versions.kotlin"
 
@@ -106,9 +106,9 @@ dependencies {
   implementation "com.squareup.moshi:moshi:$versions.moshi"
   kapt "com.squareup.moshi:moshi-kotlin-codegen:$versions.moshi"
   kapt "com.google.auto.value:auto-value:$versions.autoValue"
-  provided "com.jakewharton.auto.value:auto-value-annotations:$versions.autoValue"
+  api "com.jakewharton.auto.value:auto-value-annotations:$versions.autoValue"
   kapt "com.ryanharter.auto.value:auto-value-moshi:$versions.autoValueMoshi"
-  provided "com.ryanharter.auto.value:auto-value-moshi-annotations:$versions.autoValueMoshi"
+  api "com.ryanharter.auto.value:auto-value-moshi-annotations:$versions.autoValueMoshi"
   kapt 'com.ryanharter.auto.value:auto-value-parcel:0.2.6'
   implementation "com.jakewharton.timber:timber:$versions.timber"
   implementation "com.jakewharton:butterknife:$versions.butterKnife"
