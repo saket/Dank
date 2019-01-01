@@ -232,7 +232,8 @@ public class ComposeReplyActivity extends DankPullCollapsibleActivity
     Editable text = replyField.getText();
     int currentLineIndex = layout.getLineForOffset(replyField.getSelectionStart());
     int currentLineStartIndex = layout.getLineStart(currentLineIndex);
-    boolean isNestingQuotes = text.length() > 0 && text.charAt(currentLineStartIndex) == syntax;
+    boolean isNestingQuotes = text.length() > 0 && currentLineStartIndex < text.length()
+        && text.charAt(currentLineStartIndex) == syntax;
 
     int selectionStartCopy = replyField.getSelectionStart();
     int selectionEndCopy = replyField.getSelectionEnd();
