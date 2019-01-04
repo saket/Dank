@@ -39,6 +39,11 @@ persist_workspace: &persist_workspace
     paths:
       - ./*/build
 
+workflow_filter_all: &workflow_filter_all
+  filters:
+    tags:
+      only: /.*/
+
 jobs:
   build_debug:
     <<: *config_android
@@ -81,11 +86,33 @@ jobs:
       - store_artifacts:
           path: ~/junit
 
+  publish_github_release:
+    docker:
+      - image: circleci/golang:1.8
+    steps:
+      - <<: *attach_workspace
+      - run:
+          name: Publish Pre-Release on GitHub
+          command: |
+            go get github.com/tcnksm/ghr
+            DEBUG_APK="Dank_${CIRCLE_TAG}_debug.apk"
+            mv ~/dank/app/build/outputs/apk/debug/app-debug.apk ${DEBUG_APK}
+            ghr -t ${GITHUB_TOKEN} -u ${CIRCLE_PROJECT_USERNAME} -r ${CIRCLE_PROJECT_REPONAME} -c ${CIRCLE_SHA1} -delete ${CIRCLE_TAG} ${DEBUG_APK}
+
 workflows:
   version: 2
-  build_test:
+  build_test_publish:
     jobs:
-      - build_debug
+      - build_debug:
+          <<: *workflow_filter_all
 #      - check:
 #          requires:
 #            - build_debug
+      - publish_github_release:
+          requires:
+            - build_debug
+          filters:
+            tags:
+              only: /^\d+\.\d+(\.\d+)?$/
+            branches:
+              ignore: /.*/
