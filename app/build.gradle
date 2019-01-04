@@ -29,8 +29,8 @@ android {
     applicationId "me.saket.dank"
     minSdkVersion versions.minSdk
     targetSdkVersion versions.compileSdk
-    versionCode 10
-    versionName "0.6.2"
+    versionCode 11
+    versionName "0.6.3"
     multiDexEnabled true
     testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
   }
