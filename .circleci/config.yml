@@ -86,6 +86,6 @@ workflows:
   build_test:
     jobs:
       - build_debug
-      - check:
-          requires:
-            - build_debug
+#      - check:
+#          requires:
+#            - build_debug
