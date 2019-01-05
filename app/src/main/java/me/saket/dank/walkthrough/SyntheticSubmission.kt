@@ -42,7 +42,10 @@ class SyntheticSubmissionAndComments {
   }
 }
 
-class SyntheticSubmission(private val commentCount: Int) : Submission() {
+class SyntheticSubmission @JvmOverloads constructor(
+  private val commentCount: Int,
+  override val created: Date = Date(System.currentTimeMillis())
+) : Submission() {
 
   override fun getCommentCount(): Int {
     return commentCount
@@ -175,9 +178,6 @@ class SyntheticSubmission(private val commentCount: Int) : Submission() {
   override val subredditFullName: String
     get() = "t5_32wow"
 
-  override val created: Date
-    get() = Date(System.currentTimeMillis())
-
   override val distinguished: DistinguishedStatus
     get() = DistinguishedStatus.NORMAL
 
@@ -200,7 +200,12 @@ class SyntheticSubmission(private val commentCount: Int) : Submission() {
     get() = VoteDirection.NONE
 }
 
-class SyntheticComment(override val body: String, private val parent: Submission, val replies: List<Comment> = listOf()) : Comment() {
+class SyntheticComment @JvmOverloads constructor(
+  override val body: String,
+  private val parent: Submission,
+  val replies: List<Comment> = listOf(),
+  override val created: Date = Date(System.currentTimeMillis())
+) : Comment() {
 
   override fun getUrl(): String? {
     return null
@@ -257,9 +262,6 @@ class SyntheticComment(override val body: String, private val parent: Submission
 
   override val subredditFullName: String
     get() = "t5_3kfea"
-
-  override val created: Date
-    get() = Date(System.currentTimeMillis())
 
   override val distinguished: DistinguishedStatus
     get() = DistinguishedStatus.NORMAL
