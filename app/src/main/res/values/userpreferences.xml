@@ -16,6 +16,11 @@
   <string name="userprefs_submission_thumbnails">Submission thumbnails</string>
   <string name="userprefs_submission_thumbnail_summary_on">Show if available</string>
   <string name="userprefs_submission_thumbnail_summary_off">Always hidden</string>
+
+  <string name="userprefs_item_byline_comment_count">Submission comments count</string>
+  <string name="userprefs_item_byline_comment_count_summary_on">Always show</string>
+  <string name="userprefs_item_byline_comment_count_summary_off">Always hidden</string>
+
   <string name="userprefs_group_gestures">Gestures</string>
   <string name="userprefs_customize_submission_gestures">Submission gesture actions</string>
   <string name="userprefs_customize_comment_gestures">Comment gesture actions</string>
