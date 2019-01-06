@@ -257,7 +257,7 @@ public class SubredditUiConstructor {
       bylineBuilder.append(" \u00b7 ");
       bylineBuilder.append(c.getString(
           R.string.subreddit_submission_item_byline_comment_count,
-          Strings.abbreviateScore(postedAndPendingCommentCount)));
+          Strings.abbreviateScore(postedAndPendingCommentCount)).toUpperCase(Locale.ENGLISH));
     }
     if (submission.isNsfw()) {
       bylineBuilder.append(" \u00b7 ");
