@@ -160,9 +160,7 @@ public class InboxRecyclerView extends RecyclerView implements ExpandablePageLay
 
     View child = getChildAt(itemViewPosition);
     if (child == null) {
-      // Not sure why this would happen. Maybe the View
-      // got removed right when it was clicked to expand?
-      return;
+      throw new IllegalArgumentException("No item at the specified position in InboxRecyclerView: " + itemViewPosition);
     }
 
     // Store these details so that they can be used later for restoring the original state.
@@ -489,10 +487,10 @@ public class InboxRecyclerView extends RecyclerView implements ExpandablePageLay
   public static class ExpandInfo implements Parcelable {
 
     // Position of the currently expanded item.
-    public int expandedItemPosition = -1;
+    public int expandedItemPosition;
 
     // Adapter ID of the currently expanded item.
-    public long expandedItemId = -1;
+    public long expandedItemId;
 
     // Original location of the currently expanded item (that is, when the user selected this item).
     // Can be used for restoring states after collapsing.

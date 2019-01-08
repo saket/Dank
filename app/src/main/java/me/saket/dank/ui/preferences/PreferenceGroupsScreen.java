@@ -194,7 +194,7 @@ public class PreferenceGroupsScreen extends ExpandablePageLayout implements Pref
     ((UserPreferenceNestedScreen) nestedPageScreen).setNavigationOnClickListener(o -> preferenceRecyclerView.collapse());
     nestedPage.addView(nestedPageScreen);
     nestedPage.post(() ->
-        preferenceRecyclerView.expandItem(viewHolderToExpand.getAdapterPosition(), viewHolderToExpand.getItemId())
+        preferenceRecyclerView.expandItem(preferenceRecyclerView.indexOfChild(viewHolderToExpand.itemView), viewHolderToExpand.getItemId())
     );
   }
 
