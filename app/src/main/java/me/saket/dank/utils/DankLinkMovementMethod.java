@@ -26,7 +26,7 @@ public class DankLinkMovementMethod extends BetterLinkMovementMethod {
 
   @Override
   public boolean onTouchEvent(TextView view, Spannable text, MotionEvent event) {
-    if (event.getAction() == MotionEvent.ACTION_UP) {
+    if (event.getAction() == MotionEvent.ACTION_DOWN || event.getAction() == MotionEvent.ACTION_UP) {
       // A link is potentially going to be clicked.
       clickedUrlCoordinates = new Point((int) event.getRawX(), (int) event.getRawY());
     }
