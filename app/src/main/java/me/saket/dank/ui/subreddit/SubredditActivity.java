@@ -239,7 +239,7 @@ public class SubredditActivity extends DankPullCollapsibleActivity
       //noinspection ConstantConditions
       sortingChangesStream.accept(savedState.getParcelable(KEY_SORTING_AND_TIME_PERIOD));
     } else {
-      sortingChangesStream.accept(new SortingAndTimePeriod(Reddit.Companion.getDEFAULT_SUBREDDIT_SORT()));
+      sortingChangesStream.accept(new SortingAndTimePeriod(Reddit.Companion.DEFAULT_SUBREDDIT_SORT()));
     }
     sortingChangesStream
         .takeUntil(lifecycle().onDestroy())
