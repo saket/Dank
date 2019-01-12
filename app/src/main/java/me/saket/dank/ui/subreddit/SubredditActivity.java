@@ -514,7 +514,7 @@ public class SubredditActivity extends DankPullCollapsibleActivity
     Observable<CachedSubmissionFolder> submissionFolderStream = Observable.combineLatest(
         subredditChangesStream,
         sortingChangesStream,
-        CachedSubmissionFolder::create
+        CachedSubmissionFolder::new
     );
 
     Relay<SubmissionPaginationResult> paginationResults = BehaviorRelay.createDefault(SubmissionPaginationResult.idle());
