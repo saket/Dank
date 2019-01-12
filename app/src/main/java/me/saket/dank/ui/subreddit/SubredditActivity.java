@@ -677,7 +677,7 @@ public class SubredditActivity extends DankPullCollapsibleActivity
   public void onClickSortingMode(Button sortingModeButton) {
     SubmissionsSortingModePopupMenu sortingPopupMenu = new SubmissionsSortingModePopupMenu(this, sortingModeButton);
     sortingPopupMenu.inflate(R.menu.menu_submission_sorting_mode);
-    sortingPopupMenu.highlightActiveSortingAndTImePeriod(sortingChangesStream.getValue());
+    sortingPopupMenu.highlightActiveSortingAndTimePeriod(sortingChangesStream.getValue());
     sortingPopupMenu.setOnSortingModeSelectListener(sortingChangesStream::accept);
     sortingPopupMenu.show();
   }
