@@ -32,6 +32,7 @@ interface Reddit {
 
     // "Confidence" is now "Best".
     val DEFAULT_COMMENT_SORT = CommentSort.CONFIDENCE
+
     val DEFAULT_SUBREDDIT_SORT = SubredditSort.BEST
   }
 
