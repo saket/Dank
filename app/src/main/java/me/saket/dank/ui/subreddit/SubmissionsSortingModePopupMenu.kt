@@ -31,23 +31,23 @@ class SubmissionsSortingModePopupMenu(
   }
 
   init {
-    val map = mapOf<Int, SortingAndTimePeriod>(
-        R.id.action_subreddit_sorting_best to SortingAndTimePeriod.create(BEST),
-        R.id.action_subreddit_sorting_hot to SortingAndTimePeriod.create(HOT),
-        R.id.action_subreddit_sorting_new to SortingAndTimePeriod.create(NEW),
-        R.id.action_subreddit_sorting_rising to SortingAndTimePeriod.create(RISING),
-        R.id.action_subreddit_sorting_controversial_hour to SortingAndTimePeriod.create(CONTROVERSIAL, HOUR),
-        R.id.action_subreddit_sorting_controversial_day to SortingAndTimePeriod.create(CONTROVERSIAL, DAY),
-        R.id.action_subreddit_sorting_controversial_week to SortingAndTimePeriod.create(CONTROVERSIAL, WEEK),
-        R.id.action_subreddit_sorting_controversial_month to SortingAndTimePeriod.create(CONTROVERSIAL, MONTH),
-        R.id.action_subreddit_sorting_controversial_year to SortingAndTimePeriod.create(CONTROVERSIAL, YEAR),
-        R.id.action_subreddit_sorting_controversial_alltime to SortingAndTimePeriod.create(CONTROVERSIAL, ALL),
-        R.id.action_subreddit_sorting_top_hour to SortingAndTimePeriod.create(TOP, HOUR),
-        R.id.action_subreddit_sorting_top_day to SortingAndTimePeriod.create(TOP, DAY),
-        R.id.action_subreddit_sorting_top_week to SortingAndTimePeriod.create(TOP, WEEK),
-        R.id.action_subreddit_sorting_top_month to SortingAndTimePeriod.create(TOP, MONTH),
-        R.id.action_subreddit_sorting_top_year to SortingAndTimePeriod.create(TOP, YEAR),
-        R.id.action_subreddit_sorting_top_alltime to SortingAndTimePeriod.create(TOP, ALL)
+    val map = mapOf(
+        R.id.action_subreddit_sorting_best to SortingAndTimePeriod(BEST),
+        R.id.action_subreddit_sorting_hot to SortingAndTimePeriod(HOT),
+        R.id.action_subreddit_sorting_new to SortingAndTimePeriod(NEW),
+        R.id.action_subreddit_sorting_rising to SortingAndTimePeriod(RISING),
+        R.id.action_subreddit_sorting_controversial_hour to SortingAndTimePeriod(CONTROVERSIAL, HOUR),
+        R.id.action_subreddit_sorting_controversial_day to SortingAndTimePeriod(CONTROVERSIAL, DAY),
+        R.id.action_subreddit_sorting_controversial_week to SortingAndTimePeriod(CONTROVERSIAL, WEEK),
+        R.id.action_subreddit_sorting_controversial_month to SortingAndTimePeriod(CONTROVERSIAL, MONTH),
+        R.id.action_subreddit_sorting_controversial_year to SortingAndTimePeriod(CONTROVERSIAL, YEAR),
+        R.id.action_subreddit_sorting_controversial_alltime to SortingAndTimePeriod(CONTROVERSIAL, ALL),
+        R.id.action_subreddit_sorting_top_hour to SortingAndTimePeriod(TOP, HOUR),
+        R.id.action_subreddit_sorting_top_day to SortingAndTimePeriod(TOP, DAY),
+        R.id.action_subreddit_sorting_top_week to SortingAndTimePeriod(TOP, WEEK),
+        R.id.action_subreddit_sorting_top_month to SortingAndTimePeriod(TOP, MONTH),
+        R.id.action_subreddit_sorting_top_year to SortingAndTimePeriod(TOP, YEAR),
+        R.id.action_subreddit_sorting_top_alltime to SortingAndTimePeriod(TOP, ALL)
     )
 
     setOnMenuItemClickListener { menuItem ->
@@ -76,8 +76,8 @@ class SubmissionsSortingModePopupMenu(
 
   // NOTE: Keep this in sync with CommentSortingModePopupMenu.
   fun highlightActiveSortingAndTimePeriod(highlighted: SortingAndTimePeriod) {
-    val highlightedSorting = context.getString(highlighted.sortingDisplayTextRes)
-    val highlightedTimePeriod = context.getString(highlighted.timePeriodDisplayTextRes)
+    val highlightedSorting = context.getString(highlighted.sortingDisplayTextRes())
+    val highlightedTimePeriod = context.getString(highlighted.timePeriodDisplayTextRes())
 
     for (i in 0 until menu.size()) {
       val menuItem = menu.getItem(i)

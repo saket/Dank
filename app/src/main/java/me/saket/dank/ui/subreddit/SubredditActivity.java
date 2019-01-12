@@ -239,7 +239,7 @@ public class SubredditActivity extends DankPullCollapsibleActivity
       //noinspection ConstantConditions
       sortingChangesStream.accept(savedState.getParcelable(KEY_SORTING_AND_TIME_PERIOD));
     } else {
-      sortingChangesStream.accept(SortingAndTimePeriod.create(Reddit.Companion.getDEFAULT_SUBREDDIT_SORT()));
+      sortingChangesStream.accept(new SortingAndTimePeriod(Reddit.Companion.getDEFAULT_SUBREDDIT_SORT()));
     }
     sortingChangesStream
         .takeUntil(lifecycle().onDestroy())
@@ -247,11 +247,11 @@ public class SubredditActivity extends DankPullCollapsibleActivity
           if (sortingAndTimePeriod.sortOrder().getRequiresTimePeriod()) {
             sortingModeButton.setText(getString(
                 R.string.subreddit_sorting_mode_with_time_period,
-                getString(sortingAndTimePeriod.getSortingDisplayTextRes()),
-                getString(sortingAndTimePeriod.getTimePeriodDisplayTextRes())
+                getString(sortingAndTimePeriod.sortingDisplayTextRes()),
+                getString(sortingAndTimePeriod.timePeriodDisplayTextRes())
             ));
           } else {
-            sortingModeButton.setText(getString(R.string.subreddit_sorting_mode, getString(sortingAndTimePeriod.getSortingDisplayTextRes())));
+            sortingModeButton.setText(getString(R.string.subreddit_sorting_mode, getString(sortingAndTimePeriod.sortingDisplayTextRes())));
           }
         });
 
