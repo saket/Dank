@@ -72,12 +72,10 @@ public class PreferenceGroupsScreen extends ExpandablePageLayout implements Pref
     ButterKnife.bind(this, this);
     Dank.dependencyInjector().inject(this);
 
-    //noinspection ConstantConditions
     toolbar.setNavigationOnClickListener(v -> ((UserPreferencesActivity) getContext()).onClickPreferencesToolbarUp());
-    setPullToCollapseIntercepter((event, downX, downY, upwardPagePull) -> {
-      //noinspection CodeBlock2Expr
-      return Views.touchLiesOn(preferenceRecyclerView, downX, downY) && preferenceRecyclerView.canScrollVertically(upwardPagePull ? 1 : -1);
-    });
+    setPullToCollapseIntercepter((event, downX, downY, upwardPagePull) ->
+        Views.touchLiesOn(preferenceRecyclerView, downX, downY) && preferenceRecyclerView.canScrollVertically(upwardPagePull ? 1 : -1)
+    );
 
     lifecycle = LifecycleOwnerViews.create(this, ((LifecycleOwnerActivity) getContext()).lifecycle());
 
@@ -194,13 +192,12 @@ public class PreferenceGroupsScreen extends ExpandablePageLayout implements Pref
     ((UserPreferenceNestedScreen) nestedPageScreen).setNavigationOnClickListener(o -> preferenceRecyclerView.collapse());
     nestedPage.addView(nestedPageScreen);
     nestedPage.post(() ->
-        preferenceRecyclerView.expandItem(viewHolderToExpand.getAdapterPosition(), viewHolderToExpand.getItemId())
+        preferenceRecyclerView.expandItem(preferenceRecyclerView.indexOfChild(viewHolderToExpand.itemView), viewHolderToExpand.getItemId())
     );
   }
 
   @Override
-  protected void onPageAboutToExpand(long expandAnimDuration) {
-  }
+  protected void onPageAboutToExpand(long expandAnimDuration) {}
 
   @Override
   protected void onPageCollapsed() {
