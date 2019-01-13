@@ -25,6 +25,10 @@
     <item name="popupMenuStyle">@style/DankPopupMenu</item>
     <item name="textAppearanceLargePopupMenu">@style/DankPopupMenuTextAppearance</item>
     <item name="textAppearancePopupMenuHeader">@style/DankPopupMenuHeaderTextAppearance</item>
+
+    <!-- Text -->
+    <item name="android:textColorPrimary">@color/text_color_primary</item>
+    <item name="android:textColorSecondary">@color/text_color_secondary</item>
   </style>
 
   <style name="DankTheme.Splash">

@@ -8,7 +8,9 @@ import android.text.style.ForegroundColorSpan;
 import android.widget.ImageView;
 
 import com.f2prateek.rx.preferences2.Preference;
-
+import dagger.Lazy;
+import io.reactivex.Observable;
+import io.reactivex.functions.BiFunction;
 import net.dean.jraw.models.Submission;
 import net.dean.jraw.models.SubmissionPreview;
 import net.dean.jraw.models.VoteDirection;
@@ -19,9 +21,6 @@ import java.util.Locale;
 import javax.inject.Inject;
 import javax.inject.Named;
 
-import dagger.Lazy;
-import io.reactivex.Observable;
-import io.reactivex.functions.BiFunction;
 import me.saket.dank.R;
 import me.saket.dank.data.EmptyState;
 import me.saket.dank.data.ErrorResolver;
@@ -51,6 +50,7 @@ public class SubredditUiConstructor {
   private final Preference<Boolean> showCommentCountInByline;
   private final Preference<Boolean> showNsfwContent;
   private final Preference<Boolean> showThumbnailsPref;
+  private final Preference<Boolean> showSubmissionThumbnailsOnLeft;
   private final ErrorResolver errorResolver;
   private final Lazy<BookmarksRepository> bookmarksRepository;
 
@@ -62,7 +62,8 @@ public class SubredditUiConstructor {
       Lazy<SubmissionGesturesWalkthrough> gesturesWalkthrough,
       @Named("comment_count_in_submission_list_byline") Preference<Boolean> showCommentCountInByline,
       @Named("show_nsfw_content") Preference<Boolean> showNsfwContent,
-      @Named("show_submission_thumbnails") Preference<Boolean> showThumbnailsPref)
+      @Named("show_submission_thumbnails") Preference<Boolean> showThumbnailsPref,
+      @Named("show_submission_thumbnails_on_left") Preference<Boolean> showSubmissionThumbnailsOnLeft)
   {
     this.votingManager = votingManager;
     this.errorResolver = errorResolver;
@@ -71,6 +72,7 @@ public class SubredditUiConstructor {
     this.showCommentCountInByline = showCommentCountInByline;
     this.showNsfwContent = showNsfwContent;
     this.showThumbnailsPref = showThumbnailsPref;
+    this.showSubmissionThumbnailsOnLeft = showSubmissionThumbnailsOnLeft;
   }
 
   @CheckResult
@@ -80,7 +82,12 @@ public class SubredditUiConstructor {
       Observable<SubmissionPaginationResult> paginationResults)
   {
     Observable<?> userPrefChanges = Observable
-        .merge(showCommentCountInByline.asObservable(), showNsfwContent.asObservable(), showThumbnailsPref.asObservable())
+        .merge(
+            showCommentCountInByline.asObservable(),
+            showNsfwContent.asObservable(),
+            showThumbnailsPref.asObservable(),
+            showSubmissionThumbnailsOnLeft.asObservable()
+        )
         .skip(1); // Skip initial values.
 
     Observable<Object> externalChanges = Observable.merge(
@@ -351,6 +358,7 @@ public class SubredditUiConstructor {
         .adapterId(JrawUtils2.generateAdapterId(submission))
         .thumbnail(thumbnail)
         .isThumbnailClickable(isThumbnailClickable)
+        .displayThumbnailOnLeftSide(showSubmissionThumbnailsOnLeft.get())
         .title(titleBuilder.build(), Pair.create(submissionScore, voteDirection))
         .byline(bylineBuilder.build(), postedAndPendingCommentCount)
         .backgroundDrawableRes(rowBackgroundResource)

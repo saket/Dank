@@ -90,4 +90,8 @@
   <!-- App shortcuts -->
   <color name="app_shortcut_background">@color/blue_gray_50</color>
   <color name="appshortcut_swipe_delete">@color/red_300</color>
+
+  <!-- Text -->
+  <color name="text_primary">@color/gray_200</color>
+  <color name="text_secondary">@color/gray_500</color>
 </resources>

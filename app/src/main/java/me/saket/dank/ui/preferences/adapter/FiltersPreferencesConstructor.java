@@ -25,7 +25,7 @@ public class FiltersPreferencesConstructor implements UserPreferencesConstructor
   public List<UserPreferencesScreenUiModel> construct(Context c) {
     List<UserPreferencesScreenUiModel> uiModels = new ArrayList<>();
 
-    uiModels.add(UserPreferenceSwitch.UiModel.create(
+    uiModels.add(new UserPreferenceSwitch.UiModel(
         c.getString(R.string.userprefs_show_nsfw_content),
         showNsfwContentPref.get()
             ? c.getString(R.string.userprefs_show_nsfw_content_summary_on)

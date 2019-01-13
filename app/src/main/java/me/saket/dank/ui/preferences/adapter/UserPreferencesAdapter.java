@@ -78,6 +78,6 @@ public class UserPreferencesAdapter extends RecyclerViewArrayAdapter<UserPrefere
 
   @CheckResult
   public Observable<UserPreferenceSwitchToggleEvent> streamSwitchToggles() {
-    return switchAdapter.itemClicks;
+    return switchAdapter.getItemClicks();
   }
 }
