@@ -1,5 +1,8 @@
 package me.saket.dank.widgets.swipe;
 
+import static java.lang.Math.abs;
+import static me.saket.dank.utils.Math2.clamp;
+
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.helper.ItemTouchHelper;
 import android.view.GestureDetector;
@@ -7,7 +10,6 @@ import android.view.MotionEvent;
 import android.view.View;
 
 import me.saket.dank.utils.SimpleRecyclerViewOnChildAttachStateChangeListener;
-import timber.log.Timber;
 
 /**
  * Not using {@link ItemTouchHelper}, because it only supports "dismissing" items with swipe.
@@ -81,7 +83,7 @@ public class RecyclerSwipeListener extends RecyclerView.SimpleOnItemTouchListene
         }
 
         // The swipe should start horizontally, but we'll let the gesture continue in any direction after that.
-        boolean isHorizontalSwipe = Math.abs(distanceX) > Math.abs(distanceY) * 2;
+        boolean isHorizontalSwipe = abs(distanceX) > abs(distanceY) * 2;
         isSwiping = !viewBeingSwiped.isSettlingBackToPosition() && (viewBeingSwiped.hasCrossedSwipeDistanceThreshold() || isHorizontalSwipe);
 
         if (!isSwiping) {
@@ -94,7 +96,8 @@ public class RecyclerSwipeListener extends RecyclerView.SimpleOnItemTouchListene
         }
 
         float newTranslationX = viewBeingSwiped.getSwipeTranslation() - distanceX;
-        viewBeingSwiped.setSwipeTranslation(newTranslationX);
+        float newTranslationXWithinBounds = clamp(newTranslationX, -viewBeingSwiped.getWidth(), viewBeingSwiped.getWidth());
+        viewBeingSwiped.setSwipeTranslation(newTranslationXWithinBounds);
         return true;
       }
     });
