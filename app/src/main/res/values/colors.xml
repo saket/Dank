@@ -61,8 +61,9 @@
   <color name="subredditpicker_subreddit_button_tint_selected">#0b0b0b</color>
   <color name="subredditpicker_subreddit_button_text_normal">@color/gray_400</color>
   <color name="subredditpicker_subreddit_button_text_hidden">@color/gray_700</color>
-
   <color name="submission_option_button_byline">@color/white_opacity_60</color>
+  <color name="subreddit_fab">@color/gray_800</color>
+  <color name="subreddit_fab_ripple">@color/gray_500</color>
 
   <!-- Submission -->
   <color name="submission_link_title">@color/white_opacity_90</color>
@@ -80,6 +81,7 @@
   <color name="submission_comment_background">@color/window_background</color>
   <color name="submission_comment_background_focused">@color/blue_gray_900</color>
   <color name="submission_fab">@color/gray_800</color>
+  <color name="submission_fab_ripple">@color/gray_500</color>
 
   <color name="submission_videoplayer_buffer">@color/gray_900</color>
   <color name="submission_videoplayer_progress">@color/gray_850</color>

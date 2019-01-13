@@ -82,10 +82,12 @@
       android:textColor="@color/subreddit_subscribe" />
   </LinearLayout>
 
-  <!-- All Views inside this have bottom margins to make space for
-       their shadows. Setting an elevation on this container would
-       have been a better option, but it doesn't work because the
-       toolbar expandable sheet can change its dimensions.  -->
+  <!--
+    All Views inside this have bottom margins to make space for
+    their shadows. Setting an elevation on this container would
+    have been a better option, but it doesn't work because the
+    toolbar expandable sheet can change its dimensions.
+  -->
   <FrameLayout
     android:id="@+id/subreddit_toolbar_container"
     android:layout_width="match_parent"
@@ -106,8 +108,10 @@
       android:background="@color/toolbar"
       android:elevation="@dimen/elevation_toolbar" />
 
-    <!-- Background is required on this View or else the title's
-         background ripple gets drawn behind the toolbar. -->
+    <!--
+      Background is required on this View or else the title's
+      background ripple gets drawn behind the toolbar.
+    -->
     <RelativeLayout
       android:id="@+id/subreddit_toolbar_title_container"
       android:layout_width="wrap_content"
@@ -121,8 +125,10 @@
       tools:ignore="RtlSymmetry"
       tools:outlineProvider="background">
 
-      <!-- Custom toolbar icon because the toolbar gets covered by
-           subreddit/profile sheet. -->
+      <!--
+        Custom toolbar icon because the toolbar gets covered by
+        subreddit/profile sheet.
+      -->
       <ImageButton
         android:id="@+id/subreddit_toolbar_close"
         style="@style/DankToolbarIcon"
@@ -159,6 +165,21 @@
         app:eiv_color="@color/color_accent" />
     </RelativeLayout>
   </FrameLayout>
+
+  <!--
+    Specifically using "ic_edit_white_24dp" instead of "ic_edit_24dp"
+    because FAB-morphing shared-element-transition won't take tint into
+    consideration that has been manually applied here.
+   -->
+  <android.support.design.widget.FloatingActionButton
+    android:id="@+id/submission_reply"
+    style="@style/DankFAB"
+    android:layout_margin="@dimen/spacing16"
+    android:src="@drawable/ic_edit_white_24dp"
+    android:tint="@color/white"
+    app:backgroundTint="@color/subreddit_fab"
+    app:elevation="@dimen/elevation_fab"
+    app:rippleColor="@color/gray_500" />
 
   <me.saket.dank.ui.submission.SubmissionPageLayout
     android:id="@+id/subreddit_submission_page"
