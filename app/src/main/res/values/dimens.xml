@@ -27,7 +27,8 @@
   <dimen name="subreddit_toolbar_sheet_elevation">10dp</dimen>
   <dimen name="subreddit_picker_sheet_height">366dp</dimen>
   <dimen name="subreddit_picker_sheet_bottom_margin">20dp</dimen>
-  <dimen name="subreddit_submission_start_padding">@dimen/spacing16</dimen>
+  <dimen name="subreddit_submission_padding">@dimen/spacing16</dimen>
+  <dimen name="subreddit_submission_thumbnail_padding">@dimen/spacing24</dimen>
   <dimen name="subreddit_submission_thumbnail">52dp</dimen>
 
   <dimen name="popup_menu_horizontal_offset_for_button">4dp</dimen>    <!-- Adjustments required to align with a button -->

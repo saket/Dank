@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="utf-8"?>
+<android.support.constraint.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+  xmlns:app="http://schemas.android.com/apk/res-auto"
+  xmlns:tools="http://schemas.android.com/tools"
+  android:layout_width="match_parent"
+  android:layout_height="wrap_content"
+  android:layout_marginTop="@dimen/spacing12">
+
+  <ImageView
+    android:id="@+id/submissiongestureswalkthrough_item_icon"
+    android:layout_width="@dimen/subreddit_submission_thumbnail"
+    android:layout_height="@dimen/subreddit_submission_thumbnail"
+    android:layout_marginTop="6dp"
+    android:layout_marginStart="@dimen/spacing16"
+    android:layout_marginBottom="@dimen/spacing16"
+    android:padding="@dimen/spacing8"
+    android:src="@drawable/emoji_waving_hand"
+    app:layout_constraintBottom_toBottomOf="parent"
+    app:layout_constraintStart_toStartOf="parent"
+    app:layout_constraintTop_toTopOf="parent"
+    tools:ignore="ContentDescription"
+    tools:scaleType="centerInside" />
+
+  <me.saket.dank.walkthrough.TextSwitcherWithDistinctCheck
+    android:id="@+id/submissiongestureswalkthrough_item_title_switcher"
+    android:layout_width="0dp"
+    android:layout_height="wrap_content"
+    android:layout_marginStart="@dimen/subreddit_submission_thumbnail_padding"
+    android:layout_marginEnd="@dimen/subreddit_submission_padding"
+    app:layout_constraintStart_toEndOf="@+id/submissiongestureswalkthrough_item_icon"
+    app:layout_constraintEnd_toEndOf="parent"
+    app:layout_constraintTop_toTopOf="parent" />
+
+  <me.saket.dank.walkthrough.TextSwitcherWithDistinctCheck
+    android:id="@+id/submissiongestureswalkthrough_item_message_switcher"
+    android:layout_width="0dp"
+    android:layout_height="wrap_content"
+    android:layout_marginTop="@dimen/spacing4"
+    android:layout_marginBottom="@dimen/spacing16"
+    app:layout_constraintBottom_toBottomOf="parent"
+    app:layout_constraintEnd_toEndOf="@+id/submissiongestureswalkthrough_item_title_switcher"
+    app:layout_constraintStart_toStartOf="@+id/submissiongestureswalkthrough_item_title_switcher"
+    app:layout_constraintTop_toBottomOf="@+id/submissiongestureswalkthrough_item_title_switcher"
+    app:layout_constraintVertical_bias="0" />
+</android.support.constraint.ConstraintLayout>

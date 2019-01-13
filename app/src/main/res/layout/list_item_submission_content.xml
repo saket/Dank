@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="utf-8"?>
+<android.support.constraint.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+  xmlns:app="http://schemas.android.com/apk/res-auto"
+  xmlns:tools="http://schemas.android.com/tools"
+  android:layout_width="match_parent"
+  android:layout_height="wrap_content">
+
+  <TextView
+    android:id="@+id/submission_item_title"
+    android:layout_width="0dp"
+    android:layout_height="wrap_content"
+    android:layout_marginStart="@dimen/subreddit_submission_padding"
+    android:layout_marginEnd="@dimen/subreddit_submission_thumbnail_padding"
+    android:lineSpacingExtra="@dimen/spacing2"
+    android:textColor="@color/gray_100"
+    android:textIsSelectable="false"
+    android:textSize="@dimen/textsize16"
+    app:layout_constraintEnd_toStartOf="@+id/submission_item_icon"
+    app:layout_constraintStart_toStartOf="parent"
+    app:layout_constraintTop_toTopOf="parent"
+    app:layout_goneMarginEnd="@dimen/subreddit_submission_padding"
+    tools:ignore="RtlHardcoded"
+    tools:text="Title" />
+
+  <me.saket.dank.widgets.TintableCompoundDrawableTextView
+    android:id="@+id/submission_item_byline"
+    android:layout_width="0dp"
+    android:layout_height="wrap_content"
+    android:layout_marginTop="@dimen/spacing4"
+    android:layout_marginBottom="@dimen/spacing16"
+    android:ellipsize="end"
+    android:maxLines="1"
+    android:textColor="@color/subreddit_submission_item_byline"
+    android:textSize="@dimen/textsize12"
+    app:layout_constraintBottom_toBottomOf="parent"
+    app:layout_constraintEnd_toEndOf="@+id/submission_item_title"
+    app:layout_constraintStart_toStartOf="@+id/submission_item_title"
+    app:layout_constraintTop_toBottomOf="@+id/submission_item_title"
+    app:layout_constraintVertical_bias="0"
+    tools:text="/r/TodayILearned \u00b7 Saketme \u00b7 43 comments" />
+
+  <me.saket.dank.ImageViewWithStackTraceName
+    android:id="@+id/submission_item_icon"
+    android:layout_width="@dimen/subreddit_submission_thumbnail"
+    android:layout_height="@dimen/subreddit_submission_thumbnail"
+    android:layout_marginTop="6dp"
+    android:layout_marginEnd="@dimen/spacing16"
+    android:layout_marginBottom="@dimen/spacing16"
+    android:foreground="@drawable/touchindicator_submission_thumbnail"
+    app:layout_constraintBottom_toBottomOf="parent"
+    app:layout_constraintEnd_toEndOf="parent"
+    app:layout_constraintTop_toTopOf="parent"
+    app:layout_constraintVertical_bias="0"
+    tools:background="@drawable/background_submission_self_thumbnail"
+    tools:ignore="ContentDescription"
+    tools:scaleType="centerInside"
+    tools:src="@drawable/ic_link_24dp"
+    tools:tint="@color/gray_200" />
+</android.support.constraint.ConstraintLayout>

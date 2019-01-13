@@ -190,4 +190,5 @@ dependencies {
   implementation "com.nytimes.android:filesystem3:$versions.nytStore"
   implementation "com.facebook.stetho:stetho:$versions.stetho"
   implementation "com.facebook.stetho:stetho-okhttp3:$versions.stetho"
+  implementation 'com.android.support.constraint:constraint-layout:1.1.3'
 }

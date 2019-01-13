@@ -37,6 +37,9 @@ public class SubmissionItemDiffer extends SimpleDiffUtilsCallbacks<SubmissionRow
         SubredditSubmission.UiModel newSubmission = (SubredditSubmission.UiModel) newItem;
 
         List<SubredditSubmission.PartialChange> partialChanges = new ArrayList<>(3);
+        if (oldSubmission.displayThumbnailOnLeftSide() != newSubmission.displayThumbnailOnLeftSide()) {
+          partialChanges.add(SubredditSubmission.PartialChange.THUMBNAIL_POSITION);
+        }
         if (!oldSubmission.title().equals(newSubmission.title())) {
           partialChanges.add(SubredditSubmission.PartialChange.TITLE);
         }
@@ -52,6 +55,7 @@ public class SubmissionItemDiffer extends SimpleDiffUtilsCallbacks<SubmissionRow
         return partialChanges;
 
       case PAGINATION_FOOTER:
+      case GESTURES_WALKTHROUGH:
         return super.getChangePayload(oldItem, newItem);
 
       default:

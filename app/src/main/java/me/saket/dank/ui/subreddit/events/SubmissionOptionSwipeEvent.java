@@ -32,7 +32,7 @@ public abstract class SubmissionOptionSwipeEvent implements SwipeEvent {
     Point showLocation = new Point(0, itemView().getTop() + Views.statusBarHeight(resources));
 
     // Align with submission body.
-    int padding = resources.getDimensionPixelSize(R.dimen.subreddit_submission_start_padding);
+    int padding = resources.getDimensionPixelSize(R.dimen.subreddit_submission_padding);
     showLocation.offset(padding, padding);
 
     showPopup(Optional.of(callingSubreddit), showLocation);
@@ -43,7 +43,7 @@ public abstract class SubmissionOptionSwipeEvent implements SwipeEvent {
     Point menuLocation = new Point(0, sheetLocation.y);
 
     // Align with submission title.
-    int headerPadding = itemView().getResources().getDimensionPixelSize(R.dimen.subreddit_submission_start_padding);
+    int headerPadding = itemView().getResources().getDimensionPixelSize(R.dimen.subreddit_submission_padding);
     menuLocation.offset(headerPadding, headerPadding);
 
     showPopup(callingSubreddit, menuLocation);

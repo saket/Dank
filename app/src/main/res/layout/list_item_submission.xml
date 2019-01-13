@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
-<me.saket.dank.widgets.swipe.SwipeableLayout android:id="@+id/submission_item_root"
-  xmlns:android="http://schemas.android.com/apk/res/android"
+<me.saket.dank.widgets.swipe.SwipeableLayout xmlns:android="http://schemas.android.com/apk/res/android"
   xmlns:tools="http://schemas.android.com/tools"
+  android:id="@+id/submission_item_root"
   android:layout_width="match_parent"
   android:layout_height="wrap_content"
   tools:background="@color/window_background">
@@ -16,55 +16,9 @@
     android:orientation="vertical"
     android:paddingTop="@dimen/spacing12">
 
-    <RelativeLayout
+    <include
       android:id="@+id/submission_item_content_container"
-      android:layout_width="match_parent"
-      android:layout_height="wrap_content">
-
-      <TextView
-        android:id="@+id/submission_item_title"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginEnd="@dimen/spacing24"
-        android:lineSpacingExtra="@dimen/spacing2"
-        android:layout_marginStart="@dimen/subreddit_submission_start_padding"
-        android:layout_toStartOf="@+id/submission_item_icon"
-        android:textColor="@color/gray_100"
-        android:textIsSelectable="false"
-        android:textSize="@dimen/textsize16"
-        tools:ignore="RtlHardcoded"
-        tools:text="Title" />
-
-      <me.saket.dank.widgets.TintableCompoundDrawableTextView
-        android:id="@+id/submission_item_byline"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_alignEnd="@+id/submission_item_title"
-        android:layout_alignStart="@+id/submission_item_title"
-        android:layout_below="@+id/submission_item_title"
-        android:layout_marginBottom="@dimen/spacing16"
-        android:layout_marginTop="@dimen/spacing4"
-        android:ellipsize="end"
-        android:maxLines="1"
-        android:textColor="@color/subreddit_submission_item_byline"
-        android:textSize="@dimen/textsize12"
-        tools:text="/r/TodayILearned \u00b7 Saketme \u00b7 43 comments" />
-
-      <me.saket.dank.ImageViewWithStackTraceName
-        android:id="@+id/submission_item_icon"
-        android:layout_width="@dimen/subreddit_submission_thumbnail"
-        android:layout_height="@dimen/subreddit_submission_thumbnail"
-        android:layout_alignParentEnd="true"
-        android:layout_marginBottom="@dimen/spacing16"
-        android:layout_marginEnd="@dimen/spacing16"
-        android:layout_marginTop="6dp"
-        android:foreground="@drawable/touchindicator_submission_thumbnail"
-        tools:background="@drawable/background_submission_self_thumbnail"
-        tools:ignore="ContentDescription"
-        tools:scaleType="centerInside"
-        tools:src="@drawable/ic_link_24dp"
-        tools:tint="@color/gray_200" />
-    </RelativeLayout>
+      layout="@layout/list_item_submission_content" />
 
     <View
       android:id="@+id/submission_item_separator"

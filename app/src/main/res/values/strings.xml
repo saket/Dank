@@ -78,6 +78,7 @@
   <string name="subreddit_submission_item_cd_external_url">Thumbnail for submission URL</string>
   <string name="subreddit_submission_item_cd_self_text">Thumbnail for self-text submission</string>
   <string name="cd_subreddit_submission_item_nsfw_post">Thumbnail for not-safe-for-work submission</string>
+  <string name="cd_subreddit_submission_item_no_thumbnail">Thumbnail for unknown submission type</string>
   <string name="subreddit_submission_item_byline_comment_count">%s comments</string>
 
   <string name="cd_subredditpicker_manage_subreddits">Manage subreddits</string>
