@@ -9,7 +9,6 @@ import android.graphics.drawable.ColorDrawable;
 import android.graphics.drawable.Drawable;
 import android.graphics.drawable.LayerDrawable;
 import android.support.annotation.ColorInt;
-import android.support.annotation.FloatRange;
 import android.support.annotation.IntRange;
 import android.support.annotation.Nullable;
 import android.support.v4.content.ContextCompat;
@@ -132,7 +131,7 @@ public class SwipeableLayout extends FrameLayout {
 
 // ======== SWIPE ======== //
 
-  public void setSwipeTranslation(@FloatRange(from = -1f, to = 1f) float translationX) {
+  public void setSwipeTranslation(float translationX) {
     if (!isLaidOut()) {
       //throw new IllegalStateException("SwipeableLayout hasn't been measured yet!");
       Timber.w("SwipeableLayout hasn't been measured yet!");
