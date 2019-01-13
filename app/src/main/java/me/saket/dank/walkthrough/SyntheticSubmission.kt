@@ -23,11 +23,12 @@ class SyntheticSubmissionAndComments {
   val comments: Listing<NestedIdentifiable>
 
   init {
+    // TODO: Get these from localized strings.
     val body = "Both the submission title and comments can be swiped horizontally to reveal actions like upvote, options, etc."
     val body2 = "Comments (and their replies) can be collapsed by tapping on them."
     val body3 = "Drag the cat's image downwards and release to close this tutorial."
 
-    submission = SyntheticSubmission(3)
+    submission = SyntheticSubmission(commentCount = 3)
 
     val comment2 = SyntheticComment(body2, submission)
     val comment1And2 = SyntheticComment(body, submission, listOf(comment2))
@@ -42,9 +43,8 @@ class SyntheticSubmissionAndComments {
   }
 }
 
-class SyntheticSubmission @JvmOverloads constructor(
-  private val commentCount: Int,
-  override val created: Date = Date(System.currentTimeMillis())
+class SyntheticSubmission(
+    private val commentCount: Int
 ) : Submission() {
 
   override fun getCommentCount(): Int {
@@ -178,6 +178,9 @@ class SyntheticSubmission @JvmOverloads constructor(
   override val subredditFullName: String
     get() = "t5_32wow"
 
+  override val created: Date =
+      Date(System.currentTimeMillis())
+
   override val distinguished: DistinguishedStatus
     get() = DistinguishedStatus.NORMAL
 
@@ -200,11 +203,10 @@ class SyntheticSubmission @JvmOverloads constructor(
     get() = VoteDirection.NONE
 }
 
-class SyntheticComment @JvmOverloads constructor(
-  override val body: String,
-  private val parent: Submission,
-  val replies: List<Comment> = listOf(),
-  override val created: Date = Date(System.currentTimeMillis())
+class SyntheticComment(
+    override val body: String,
+    private val parent: Submission,
+    private val replies: List<Comment> = listOf()
 ) : Comment() {
 
   override fun getUrl(): String? {
@@ -262,6 +264,9 @@ class SyntheticComment @JvmOverloads constructor(
 
   override val subredditFullName: String
     get() = "t5_3kfea"
+
+  override val created: Date =
+      Date(System.currentTimeMillis())
 
   override val distinguished: DistinguishedStatus
     get() = DistinguishedStatus.NORMAL
