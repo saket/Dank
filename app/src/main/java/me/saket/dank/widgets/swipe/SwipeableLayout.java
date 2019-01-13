@@ -133,14 +133,15 @@ public class SwipeableLayout extends FrameLayout {
 
   public void setSwipeTranslation(float translationX) {
     if (!isLaidOut()) {
-      //throw new IllegalStateException("SwipeableLayout hasn't been measured yet!");
       Timber.w("SwipeableLayout hasn't been measured yet!");
       return;
     }
 
-    // Limit translation to width of swipeable layout.
-    int swipeableLayoutWidth = getWidth();
-    translationX = Math.max(-swipeableLayoutWidth, Math.min(translationX, swipeableLayoutWidth));
+    float translationXAbs = Math.abs(translationX);
+    if (translationXAbs > getWidth()) {
+      throw new IllegalArgumentException("Swipe distance can't be bigger than the width of the swipeable layout. "
+          + "swipeableLayoutWidth: " + getWidth() + ", swipeDistance: " + translationX);
+    }
 
     swipeableChild.setTranslationX(translationX);
 
@@ -153,7 +154,7 @@ public class SwipeableLayout extends FrameLayout {
     }
 
     if (swipeEnabled) {
-      swipeActionTriggerDrawable.setBounds((int) translationX, 0, (int) (swipeableLayoutWidth + translationX), getHeight());
+      swipeActionTriggerDrawable.setBounds((int) translationX, 0, (int) (getWidth() + translationX), getHeight());
 
       // Move the icon along with the View being swiped.
       if (swipingFromEndToStart) {
@@ -170,8 +171,8 @@ public class SwipeableLayout extends FrameLayout {
       } else {
         if (!isSettlingBackToPosition()) {
           SwipeAction swipeAction = swipingFromEndToStart
-              ? swipeActions.endActions().findActionAtSwipeDistance(swipeableLayoutWidth, Math.abs(translationX), SwipeDirection.END_TO_START)
-              : swipeActions.startActions().findActionAtSwipeDistance(swipeableLayoutWidth, Math.abs(translationX), SwipeDirection.START_TO_END);
+              ? swipeActions.endActions().findActionAtSwipeDistance(getWidth(), translationXAbs, SwipeDirection.END_TO_START)
+              : swipeActions.startActions().findActionAtSwipeDistance(getWidth(), translationXAbs, SwipeDirection.START_TO_END);
 
           if (activeSwipeAction != swipeAction) {
             SwipeAction oldAction = activeSwipeAction;
@@ -185,7 +186,7 @@ public class SwipeableLayout extends FrameLayout {
           }
 
           // Tint the background gray until the swipe threshold is crossed.
-          boolean swipeThresholdCrossed = Math.abs(translationX) > actionIconView.getWidth() * 3 / 4;
+          boolean swipeThresholdCrossed = translationXAbs > actionIconView.getWidth() * 3 / 4;
           setSwipeDistanceThresholdCrossed(swipeThresholdCrossed);
         }
       }
