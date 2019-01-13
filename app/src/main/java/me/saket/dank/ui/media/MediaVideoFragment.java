@@ -107,6 +107,7 @@ public class MediaVideoFragment extends BaseMediaViewerFragment {
     // Make the video flick-dismissible.
     setupFlickGestures(flickDismissViewGroup);
 
+    // TODO: Use Window insets instead of manually calculating this:
     // Keep the video below the status bar and above the control buttons.
     //noinspection ConstantConditions
     ((MediaFragmentCallbacks) getActivity()).optionButtonsHeight()
@@ -151,7 +152,7 @@ public class MediaVideoFragment extends BaseMediaViewerFragment {
 
       // Auto-play when this Fragment becomes visible.
       fragmentVisibleToUserStream
-          .take(1)    // TODO
+          .take(1)
           .takeUntil(lifecycle().onDestroy())
           .subscribe(visibleToUser -> {
             if (!visibleToUser) {
@@ -168,22 +169,22 @@ public class MediaVideoFragment extends BaseMediaViewerFragment {
           .takeUntil(lifecycle().onDestroyCompletable())
           .subscribe(
               optionButtonsHeight -> {
-                int deviceDisplayWidth = getResources().getDisplayMetrics().widthPixels;
-                int deviceDisplayHeight = getResources().getDisplayMetrics().heightPixels
-                    // Not sure why, but display height doesn't include the status bar's height :S
-                    + Views.statusBarHeight(getResources());
+                // TODO: Use Window insets instead of manually calculating this:
+                ViewGroup parent = contentViewFlipper;
+                int parentWidth = parent.getWidth();
+                int parentHeight = parent.getHeight();
 
                 int videoControlsHeight = videoControlsView.heightOfControlButtons();
                 boolean isPortraitVideo = (videoHeight + videoControlsHeight) > videoWidth;
 
-                float resizeFactorToFillHorizontalSpace = (float) deviceDisplayWidth / videoWidth;
+                float resizeFactorToFillHorizontalSpace = (float) parentWidth / videoWidth;
                 int resizedHeight = (int) (videoHeight * resizeFactorToFillHorizontalSpace) + videoControlsHeight;
 
                 if (isPortraitVideo) {
-                  int verticalSpaceAvailable = deviceDisplayHeight - optionButtonsHeight;
-                  Views.setDimensions(videoView, deviceDisplayWidth, Math.min(resizedHeight, verticalSpaceAvailable));
+                  int verticalSpaceAvailable = parentHeight - Views.getPaddingVertical(parent);
+                  Views.setDimensions(videoView, parentWidth, Math.min(resizedHeight, verticalSpaceAvailable));
                 } else {
-                  Views.setDimensions(videoView, deviceDisplayWidth, resizedHeight);
+                  Views.setDimensions(videoView, parentWidth, resizedHeight);
                 }
               }, error -> {
                 ResolvedError resolvedError = errorResolver.get().resolve(error);
