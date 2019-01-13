@@ -1,6 +1,7 @@
 package me.saket.dank.utils;
 
 import android.content.Context;
+import android.content.res.Configuration;
 import android.content.res.Resources;
 import android.graphics.Point;
 import android.graphics.Rect;
@@ -8,6 +9,7 @@ import android.graphics.drawable.Drawable;
 import android.support.annotation.CheckResult;
 import android.support.annotation.DrawableRes;
 import android.support.annotation.Nullable;
+import android.util.DisplayMetrics;
 import android.view.Display;
 import android.view.View;
 import android.view.ViewGroup;
@@ -17,8 +19,6 @@ import android.widget.EditText;
 import android.widget.TextView;
 
 import io.reactivex.Completable;
-import okio.BufferedSource;
-import okio.Okio;
 import timber.log.Timber;
 
 /**
@@ -159,6 +159,10 @@ public class Views {
 
   public static void setPaddingBottom(View view, int paddingBottom) {
     view.setPaddingRelative(view.getPaddingStart(), view.getPaddingTop(), view.getPaddingEnd(), paddingBottom);
+  }
+
+  public static void setPaddingRight(View view, int paddingRight) {
+    view.setPadding(view.getPaddingLeft(), view.getPaddingTop(), paddingRight, view.getPaddingBottom());
   }
 
   public static void setPaddingVertical(View view, int padding) {
