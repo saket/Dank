@@ -187,9 +187,9 @@ public class MediaAlbumViewerActivity extends DankActivity implements MediaFragm
     Views.setPaddingBottom(contentOptionButtonsContainerView, contentOptionButtonsContainerView.getPaddingBottom() + navBarHeight);
 
     rxPermissions = new RxPermissions(this);
-    systemUiHelper = new SystemUiHelper(this, SystemUiHelper.LEVEL_IMMERSIVE, 0, systemUiVisible -> {
-      systemUiVisibilityStream.accept(systemUiVisible);
-    });
+    systemUiHelper = new SystemUiHelper(this, SystemUiHelper.LEVEL_IMMERSIVE, 0, systemUiVisible ->
+        systemUiVisibilityStream.accept(systemUiVisible)
+    );
   }
 
   @Override
