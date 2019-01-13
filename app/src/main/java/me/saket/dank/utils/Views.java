@@ -1,7 +1,6 @@
 package me.saket.dank.utils;
 
 import android.content.Context;
-import android.content.res.Configuration;
 import android.content.res.Resources;
 import android.graphics.Point;
 import android.graphics.Rect;
@@ -9,7 +8,6 @@ import android.graphics.drawable.Drawable;
 import android.support.annotation.CheckResult;
 import android.support.annotation.DrawableRes;
 import android.support.annotation.Nullable;
-import android.util.DisplayMetrics;
 import android.view.Display;
 import android.view.View;
 import android.view.ViewGroup;
@@ -163,6 +161,10 @@ public class Views {
 
   public static void setPaddingRight(View view, int paddingRight) {
     view.setPadding(view.getPaddingLeft(), view.getPaddingTop(), paddingRight, view.getPaddingBottom());
+  }
+
+  public static int getPaddingVertical(View view) {
+    return view.getPaddingTop() + view.getPaddingBottom();
   }
 
   public static void setPaddingVertical(View view, int padding) {
