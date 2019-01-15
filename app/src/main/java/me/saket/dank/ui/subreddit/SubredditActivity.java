@@ -51,7 +51,6 @@ import io.reactivex.BackpressureStrategy;
 import io.reactivex.Completable;
 import io.reactivex.Observable;
 import io.reactivex.Single;
-import io.reactivex.android.schedulers.AndroidSchedulers;
 import io.reactivex.subjects.ReplaySubject;
 import me.saket.dank.R;
 import me.saket.dank.cache.CachePreFiller;
@@ -366,8 +365,8 @@ public class SubredditActivity extends DankPullCollapsibleActivity
     uiEvents
         .compose(subredditController.get())
         .takeUntil(lifecycle().onDestroy())
-        .observeOn(AndroidSchedulers.mainThread())
-        .subscribe(uiChange -> uiChange.render(this));
+        .observeOn(mainThread())
+        .subscribe(uiChange -> uiChange.invoke(this));
   }
 
   private void setupSubmissionPage() {
