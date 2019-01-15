@@ -11,6 +11,7 @@ import static me.saket.dank.utils.Views.setPaddingTop;
 import static me.saket.dank.utils.Views.touchLiesOn;
 
 import android.animation.LayoutTransition;
+import android.app.ActivityOptions;
 import android.content.Context;
 import android.content.Intent;
 import android.graphics.Rect;
@@ -837,9 +838,15 @@ public class SubredditActivity extends DankPullCollapsibleActivity
 // ======== FAB ======== //
 
   private void setupCreateNewPostFab() {
-    postFab.setOnClickListener(o ->
-        startActivity(CreateNewPostActivity.intent(this))
-    );
+    postFab.setOnClickListener(o -> {
+      Pair<Intent, ActivityOptions> intentAndOptions = CreateNewPostActivity.intentWithFabTransform(
+          this,
+          postFab,
+          R.color.subreddit_fab,
+          R.drawable.ic_edit_white_24dp
+      );
+      startActivity(intentAndOptions.first(), intentAndOptions.second().toBundle());
+    });
   }
 
   @Override

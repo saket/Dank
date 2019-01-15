@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<FrameLayout android:id="@+id/archivedsubmission_background"
+<FrameLayout android:id="@+id/createnewpost_background"
   xmlns:android="http://schemas.android.com/apk/res/android"
   xmlns:tools="http://schemas.android.com/tools"
   android:layout_width="match_parent"
@@ -12,15 +12,13 @@
     android:id="@+id/createnewpost_dialog_container"
     android:layout_width="wrap_content"
     android:layout_height="wrap_content"
-    android:layout_gravity="center"
-    android:layout_margin="@dimen/spacing48"
+    android:layout_margin="@dimen/spacing16"
     android:background="@drawable/background_popup_window"
     android:elevation="@dimen/elevation_fab"
-    android:orientation="horizontal"
     tools:ignore="UselessParent">
 
     <View
       android:layout_width="match_parent"
-      android:layout_height="120dp" />
+      android:layout_height="320dp" />
   </LinearLayout>
 </FrameLayout>

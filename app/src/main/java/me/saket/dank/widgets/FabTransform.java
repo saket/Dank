@@ -52,7 +52,7 @@ import me.saket.dank.R;
 import me.saket.dank.utils.Animations;
 
 /**
- * Copied from plaid.
+ * Copied from Plaid: https://github.com/nickbutcher/plaid.
  *
  * A transition between a FAB & another surface using a circular reveal moving along an arc.
  * <p>
