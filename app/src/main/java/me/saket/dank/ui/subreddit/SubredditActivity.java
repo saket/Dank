@@ -31,6 +31,7 @@ import android.widget.TextView;
 import com.f2prateek.rx.preferences2.Preference;
 import com.github.zagum.expandicon.ExpandIconView;
 import com.jakewharton.rxbinding2.internal.Notification;
+import com.jakewharton.rxbinding2.support.v7.widget.RxRecyclerView;
 import com.jakewharton.rxrelay2.BehaviorRelay;
 import com.jakewharton.rxrelay2.PublishRelay;
 import com.jakewharton.rxrelay2.Relay;
@@ -370,11 +371,17 @@ public class SubredditActivity extends DankPullCollapsibleActivity
         .map(name -> new SubredditChanged(name));
 
     uiEvents
-        .mergeWith(Observable.merge(subredditChanges, screenDestroys))
+        .mergeWith(Observable.merge(subredditChanges, screenDestroys, listScrolls()))
         .compose(subredditController.get())
         .takeUntil(screenDestroys)
         .observeOn(mainThread())
         .subscribe(uiChange -> uiChange.invoke(this));
+  }
+
+  private Observable<UiEvent> listScrolls() {
+    return RxRecyclerView
+        .scrollEvents(submissionRecyclerView)
+        .map(o -> new SubredditListScrolled(o.dy()));
   }
 
   private void setupSubmissionPage() {
@@ -432,12 +439,6 @@ public class SubredditActivity extends DankPullCollapsibleActivity
           break;
       }
     });
-  }
-
-  private void setupCreateNewPostFab() {
-    postFab.setOnClickListener(o ->
-        startActivity(CreateNewPostActivity.intent(this))
-    );
   }
 
 // ======== SUBMISSION LIST ======== //
@@ -832,6 +833,25 @@ public class SubredditActivity extends DankPullCollapsibleActivity
   private boolean isUserProfileSheetVisible() {
     return !toolbarSheet.isCollapsed() && toolbarSheet.getChildAt(0) instanceof UserProfileSheetView;
   }
+
+// ======== FAB ======== //
+
+  private void setupCreateNewPostFab() {
+    postFab.setOnClickListener(o ->
+        startActivity(CreateNewPostActivity.intent(this))
+    );
+  }
+
+  @Override
+  public void setFabVisible(boolean visible) {
+    if (visible) {
+      postFab.show();
+    } else {
+      postFab.hide();
+    }
+  }
+
+// ======== OTHER STUFF ======== //
 
   @Override
   public void onBackPressed() {

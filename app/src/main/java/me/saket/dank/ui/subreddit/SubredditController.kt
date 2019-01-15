@@ -41,7 +41,8 @@ class SubredditController @Inject constructor(
 
     return Observable.mergeArray(
         unreadMessageIconChanges(replayedEvents),
-        submissionExpansions(replayedEvents))
+        submissionExpansions(replayedEvents),
+        hidePostFabOnDownwardScroll(replayedEvents))
   }
 
   private fun syntheticSubmissionsForGesturesWalkthrough() = ObservableTransformer<UiEvent, UiEvent> { events ->
@@ -109,5 +110,19 @@ class SubredditController @Inject constructor(
         .map { event -> { ui: Ui -> ui.expandSubmissionRow(event.itemView(), event.itemId()) } }
 
     return populations.mergeWith(expansions)
+  }
+
+  private fun hidePostFabOnDownwardScroll(events: Observable<UiEvent>): Observable<UiChange> {
+    val canShowFab = events
+        .ofType<SubredditListScrolled>()
+        .filter { it.isListRefreshEvent.not() }
+        .map { it.dy < 0 }
+        .distinctUntilChanged()
+
+    return canShowFab
+        .startWith(true)
+        .map { upwardScroll ->
+          { ui: Ui -> ui.setFabVisible(upwardScroll) }
+        }
   }
 }
