@@ -17,6 +17,7 @@ import android.graphics.Rect;
 import android.os.Bundle;
 import android.os.Parcelable;
 import android.support.annotation.Nullable;
+import android.support.design.widget.FloatingActionButton;
 import android.support.transition.TransitionManager;
 import android.support.transition.TransitionSet;
 import android.support.v7.util.DiffUtil;
@@ -68,6 +69,7 @@ import me.saket.dank.ui.UrlRouter;
 import me.saket.dank.ui.authentication.LoginActivity;
 import me.saket.dank.ui.compose.InsertGifDialog;
 import me.saket.dank.ui.giphy.GiphyGif;
+import me.saket.dank.ui.post.CreateNewPostActivity;
 import me.saket.dank.ui.preferences.UserPreferencesActivity;
 import me.saket.dank.ui.submission.ArchivedSubmissionDialogActivity;
 import me.saket.dank.ui.submission.CachedSubmissionFolder;
@@ -132,6 +134,7 @@ public class SubredditActivity extends DankPullCollapsibleActivity
   @BindView(R.id.subreddit_toolbar_expandable_sheet) ToolbarExpandableSheet toolbarSheet;
   @BindView(R.id.subreddit_progress) View fullscreenProgressView;
   @BindView(R.id.subreddit_submission_errorState) ErrorStateView fullscreenErrorStateView;
+  @BindView(R.id.subreddit_post) FloatingActionButton postFab;
 
   // TODO: convert all to lazy injections.
   @Inject SubmissionRepository submissionRepository;
@@ -217,6 +220,7 @@ public class SubredditActivity extends DankPullCollapsibleActivity
     loadSubmissions(savedState == null);
     setupSubmissionPage();
     setupToolbarSheet();
+    setupCreateNewPostFab();
 
     // Restore state of subreddit picker sheet / user profile sheet.
     if (savedState != null) {
@@ -363,7 +367,7 @@ public class SubredditActivity extends DankPullCollapsibleActivity
         .map(o -> ScreenDestroyed.INSTANCE);
 
     Observable<UiEvent> subredditChanges = subredditChangesStream
-        .map(name -> SubredditChangeEvent.create(name));
+        .map(name -> new SubredditChanged(name));
 
     uiEvents
         .mergeWith(Observable.merge(subredditChanges, screenDestroys))
@@ -428,6 +432,12 @@ public class SubredditActivity extends DankPullCollapsibleActivity
           break;
       }
     });
+  }
+
+  private void setupCreateNewPostFab() {
+    postFab.setOnClickListener(o ->
+        startActivity(CreateNewPostActivity.intent(this))
+    );
   }
 
 // ======== SUBMISSION LIST ======== //

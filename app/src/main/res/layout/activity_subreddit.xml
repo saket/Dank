@@ -172,7 +172,7 @@
     consideration that has been manually applied here.
    -->
   <android.support.design.widget.FloatingActionButton
-    android:id="@+id/submission_reply"
+    android:id="@+id/subreddit_post"
     style="@style/DankFAB"
     android:layout_margin="@dimen/spacing16"
     android:src="@drawable/ic_edit_white_24dp"

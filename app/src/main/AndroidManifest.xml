@@ -116,6 +116,11 @@
       android:windowSoftInputMode="adjustNothing" />
 
     <activity
+      android:name=".ui.post.CreateNewPostActivity"
+      android:theme="@style/DankTheme.DialogLikeActivity"
+      android:windowSoftInputMode="adjustResize" />
+
+    <activity
       android:name=".deeplinks.DeepLinkHandlingActivity"
       android:theme="@android:style/Theme.NoDisplay">
 

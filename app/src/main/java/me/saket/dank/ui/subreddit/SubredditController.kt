@@ -81,8 +81,8 @@ class SubredditController @Inject constructor(
 
   private fun submissionExpansions(events: Observable<UiEvent>): Observable<UiChange> {
     val subredditNameChanges = events
-        .ofType<SubredditChangeEvent>()
-        .map { it.subredditName() }
+        .ofType<SubredditChanged>()
+        .map { it.subredditName }
 
     val populations = events
         .ofType<SubredditSubmissionClickEvent>()
