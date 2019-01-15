@@ -143,7 +143,7 @@ public class SubmissionController implements ObservableTransformer<UiEvent, UiCh
     return events
         .ofType(SubmissionChangeCommentSortClicked.class)
         .withLatestFrom(requestChanges, Pair::create)
-        .map(pair -> (UiChange<SubmissionUi>) ui -> ui.showChangeSortPopup(pair.first(), pair.second()));
+        .map(pair -> ui -> ui.showChangeSortPopup(pair.first(), pair.second()));
   }
 
   private Observable<UiChange<SubmissionUi>> sortModeChanges(Observable<UiEvent> events) {
@@ -162,7 +162,7 @@ public class SubmissionController implements ObservableTransformer<UiEvent, UiCh
               .commentSort(selectedSort, SelectedBy.USER)
               .build();
         })
-        .map(newRequest -> (UiChange<SubmissionUi>) ui -> ui.acceptRequest(newRequest));
+        .map(newRequest -> ui -> ui.acceptRequest(newRequest));
   }
 
   private Observable<UiChange<SubmissionUi>> manualRefreshes(Observable<UiEvent> events) {
