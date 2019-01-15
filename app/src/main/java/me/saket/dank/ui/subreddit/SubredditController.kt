@@ -4,13 +4,12 @@ import dagger.Lazy
 import io.reactivex.Observable
 import io.reactivex.ObservableSource
 import io.reactivex.ObservableTransformer
-import io.reactivex.Single
-import io.reactivex.android.schedulers.AndroidSchedulers.mainThread
 import io.reactivex.rxkotlin.ofType
 import io.reactivex.rxkotlin.withLatestFrom
 import io.reactivex.schedulers.Schedulers.io
 import me.saket.dank.data.InboxRepository
 import me.saket.dank.reddit.Reddit
+import me.saket.dank.ui.ReplayUntilScreenIsDestroyed
 import me.saket.dank.ui.UiEvent
 import me.saket.dank.ui.submission.AuditedCommentSort
 import me.saket.dank.ui.submission.AuditedCommentSort.SelectedBy
@@ -22,7 +21,6 @@ import me.saket.dank.ui.user.messages.InboxFolder
 import me.saket.dank.utils.DankSubmissionRequest
 import me.saket.dank.utils.Optional
 import me.saket.dank.walkthrough.SubmissionGestureWalkthroughProceedEvent
-import timber.log.Timber
 import java.util.concurrent.TimeUnit
 import javax.inject.Inject
 
@@ -36,30 +34,26 @@ class SubredditController @Inject constructor(
 ) : ObservableTransformer<UiEvent, UiChange> {
 
   override fun apply(events: Observable<UiEvent>): ObservableSource<UiChange> {
-    val replayedEvents = events.replay().refCount()
-
-    val transformedEvents = replayedEvents
-        .mergeWith(syntheticSubmissionsForGesturesWalkthrough(replayedEvents))
+    val replayedEvents = ReplayUntilScreenIsDestroyed(events)
+        .compose(syntheticSubmissionsForGesturesWalkthrough())
+        .disposeWith(events.ofType())
+        .replay()
 
     return Observable.mergeArray(
-        unreadMessageIconChanges(transformedEvents),
-        submissionExpansions(transformedEvents))
+        unreadMessageIconChanges(replayedEvents),
+        submissionExpansions(replayedEvents))
   }
 
-  private fun syntheticSubmissionsForGesturesWalkthrough(events: Observable<UiEvent>): Observable<UiEvent> {
-    return events
-        .ofType(SubmissionGestureWalkthroughProceedEvent::class.java)
+  private fun syntheticSubmissionsForGesturesWalkthrough() = ObservableTransformer<UiEvent, UiEvent> { events ->
+    val openWalkthroughSubmission = events
+        .ofType<SubmissionGestureWalkthroughProceedEvent>()
         .flatMapSingle { event ->
           submissionRepository.get()
               .syntheticSubmissionForGesturesWalkthrough()
               .subscribeOn(io())
-              .observeOn(mainThread())
-              .map { submissionData -> event.toSubmissionClickEvent(submissionData.submission) }
-              .onErrorResumeNext { e ->
-                e.printStackTrace()
-                Single.never()
-              }
+              .map { event.toSubmissionClickEvent(it.submission) }
         }
+    events.mergeWith(openWalkthroughSubmission)
   }
 
   private fun unreadMessageIconChanges(events: Observable<UiEvent>): Observable<UiChange> {
@@ -68,8 +62,6 @@ class SubredditController @Inject constructor(
         .switchMap { userSessionRepository.get().streamSessions() }
         .filter { it.isPresent }
         .switchMap {
-          Timber.i("Fetching user profile for updating unread message icon")
-
           val unreadCountsFromInbox = inboxRepository.get()
               .messages(InboxFolder.UNREAD)
               .map { unreads -> unreads.size }

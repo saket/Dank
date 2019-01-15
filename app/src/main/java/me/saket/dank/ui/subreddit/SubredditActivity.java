@@ -62,6 +62,7 @@ import me.saket.dank.data.UserPreferences;
 import me.saket.dank.di.Dank;
 import me.saket.dank.reddit.Reddit;
 import me.saket.dank.ui.DankPullCollapsibleActivity;
+import me.saket.dank.ui.ScreenDestroyed;
 import me.saket.dank.ui.UiEvent;
 import me.saket.dank.ui.UrlRouter;
 import me.saket.dank.ui.authentication.LoginActivity;
@@ -357,14 +358,17 @@ public class SubredditActivity extends DankPullCollapsibleActivity
   private void setupController() {
     uiEvents.onNext(SubredditScreenCreateEvent.create());
 
-    subredditChangesStream
-        .map(name -> SubredditChangeEvent.create(name))
-        .takeUntil(lifecycle().onDestroy())
-        .subscribe(uiEvents);
+    Observable<UiEvent> screenDestroys = lifecycle()
+        .onDestroy()
+        .map(o -> ScreenDestroyed.INSTANCE);
+
+    Observable<UiEvent> subredditChanges = subredditChangesStream
+        .map(name -> SubredditChangeEvent.create(name));
 
     uiEvents
+        .mergeWith(Observable.merge(subredditChanges, screenDestroys))
         .compose(subredditController.get())
-        .takeUntil(lifecycle().onDestroy())
+        .takeUntil(screenDestroys)
         .observeOn(mainThread())
         .subscribe(uiChange -> uiChange.invoke(this));
   }
