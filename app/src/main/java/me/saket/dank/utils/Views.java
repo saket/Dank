@@ -156,16 +156,20 @@ public class Views {
     view.setPaddingRelative(view.getPaddingStart(), view.getPaddingTop(), view.getPaddingEnd(), paddingBottom);
   }
 
+  public static void setPaddingRight(View view, int paddingRight) {
+    view.setPadding(view.getPaddingLeft(), view.getPaddingTop(), paddingRight, view.getPaddingBottom());
+  }
+
+  public static int getPaddingVertical(View view) {
+    return view.getPaddingTop() + view.getPaddingBottom();
+  }
+
   public static void setPaddingVertical(View view, int padding) {
     view.setPaddingRelative(view.getPaddingStart(), padding, view.getPaddingEnd(), padding);
   }
 
   public static void setPaddingVertical(View view, int paddingTop, int paddingBottom) {
     view.setPaddingRelative(view.getPaddingStart(), paddingTop, view.getPaddingEnd(), paddingBottom);
-  }
-
-  public static int getPaddingVertical(View view) {
-    return view.getPaddingTop() + view.getPaddingBottom();
   }
 
   public static void setDimensions(View view, int width, int height) {

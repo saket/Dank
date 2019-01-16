@@ -23,6 +23,7 @@ import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewConfiguration;
 import android.view.ViewGroup;
+import android.view.WindowInsets;
 import android.view.WindowManager;
 import android.view.animation.AccelerateInterpolator;
 import android.view.animation.DecelerateInterpolator;
@@ -181,10 +182,15 @@ public class MediaAlbumViewerActivity extends DankActivity implements MediaFragm
     optionButtonsContainerView.setVisibility(View.INVISIBLE);
     ((ViewGroup) optionButtonsContainerView.getParent()).getLayoutTransition().setDuration(200);
 
-    rxPermissions = new RxPermissions(this);
-    systemUiHelper = new SystemUiHelper(this, SystemUiHelper.LEVEL_IMMERSIVE, 0, systemUiVisible -> {
-      systemUiVisibilityStream.accept(systemUiVisible);
+    rootLayout.setOnApplyWindowInsetsListener((v, insets) -> {
+      positionMediaControlsToAvoidOverlappingWithNavBar(insets);
+      return insets;
     });
+
+    rxPermissions = new RxPermissions(this);
+    systemUiHelper = new SystemUiHelper(this, SystemUiHelper.LEVEL_IMMERSIVE, 0, systemUiVisible ->
+        systemUiVisibilityStream.accept(systemUiVisible)
+    );
   }
 
   @Override
@@ -273,6 +279,20 @@ public class MediaAlbumViewerActivity extends DankActivity implements MediaFragm
       }
       // Else, swallow.
     }
+  }
+
+  private void positionMediaControlsToAvoidOverlappingWithNavBar(WindowInsets insets) {
+    int bottomWindowInset = insets.getSystemWindowInsetBottom();
+    int rightWindowInset = insets.getSystemWindowInsetRight();
+
+    // FYI: The paddings are intentionally not relative.
+    // The navigation bar is always on the right AFAIK.
+    ViewGroup view = contentOptionButtonsContainerView;
+    view.setPadding(
+        view.getPaddingLeft(),
+        view.getPaddingTop(),
+        view.getPaddingRight() + rightWindowInset,
+        view.getPaddingBottom() + bottomWindowInset);
   }
 
   private void resolveMediaLinkAndDisplayContent(MediaLink mediaLinkToDisplay) {

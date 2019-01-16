@@ -107,6 +107,7 @@ public class MediaVideoFragment extends BaseMediaViewerFragment {
     // Make the video flick-dismissible.
     setupFlickGestures(flickDismissViewGroup);
 
+    // TODO: Use Window insets instead of manually calculating this:
     // Keep the video below the status bar and above the control buttons.
     //noinspection ConstantConditions
     ((MediaFragmentCallbacks) getActivity()).optionButtonsHeight()
@@ -149,7 +150,7 @@ public class MediaVideoFragment extends BaseMediaViewerFragment {
 
       // Auto-play when this Fragment becomes visible.
       fragmentVisibleToUserStream
-          .take(1)    // TODO
+          .take(1)
           .takeUntil(lifecycle().onDestroy())
           .subscribe(visibleToUser -> {
             if (!visibleToUser) {
@@ -166,7 +167,8 @@ public class MediaVideoFragment extends BaseMediaViewerFragment {
           .takeUntil(lifecycle().onDestroyCompletable())
           .subscribe(
               optionButtonsHeight -> {
-                ViewGroup parent = (ViewGroup) videoView.getParent();
+                // TODO: Use Window insets instead of manually calculating this:
+                ViewGroup parent = contentViewFlipper;
                 int parentWidth = parent.getWidth();
                 int parentHeight = parent.getHeight();
 
@@ -177,6 +179,7 @@ public class MediaVideoFragment extends BaseMediaViewerFragment {
 
                 int verticalSpaceAvailable = parentHeight - Views.getPaddingVertical(parent);
                 Views.setDimensions(videoView, parentWidth, Math.min(resizedHeight, verticalSpaceAvailable));
+
               }, error -> {
                 ResolvedError resolvedError = errorResolver.get().resolve(error);
                 resolvedError.ifUnknown(() -> Timber.e(error, "Error while trying to get option buttons' height"));

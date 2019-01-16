@@ -26,8 +26,8 @@ public class SwipeActionsHolder {
   @CheckResult
   protected SwipeAction findActionAtSwipeDistance(int swipeableLayoutWidth, float swipeDistance, SwipeDirection swipeDirection) {
     if (swipeDistance > swipeableLayoutWidth) {
-      throw new IllegalArgumentException("Swipe distance can't be bigger than width of swipeable layout: swipeableLayoutWidth: "
-          + swipeableLayoutWidth + ", swipeDistance: " + swipeDistance);
+      throw new IllegalArgumentException("Swipe distance can't be bigger than the width of the swipeable layout: " +
+          "swipeableLayoutWidth: " + swipeableLayoutWidth + ", swipeDistance: " + swipeDistance);
     }
 
     float totalWeights = calculateTotalWeights();
@@ -67,6 +67,7 @@ public class SwipeActionsHolder {
     return actions.contains(swipeAction);
   }
 
+  // TODO: avoid creating a new iterator because this method gets called on every motion event.
   private float calculateTotalWeights() {
     float totalWeights = 0;
     for (SwipeAction target : actions) {

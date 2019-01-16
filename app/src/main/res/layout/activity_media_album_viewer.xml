@@ -8,7 +8,8 @@
   android:animateLayoutChanges="true"
   android:background="@color/black_opacity_75"
   android:orientation="vertical"
-  tools:background="@color/black_opacity_10">
+  tools:background="@color/black_opacity_10"
+  tools:context=".ui.media.MediaAlbumViewerActivity">
 
   <me.saket.dank.widgets.binoculars.FlickDismissLayout
     android:id="@+id/mediaalbumviewer_flick_dismiss_layout"
@@ -45,7 +46,6 @@
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:animateLayoutChanges="true"
-    android:fitsSystemWindows="true"
     android:gravity="bottom|end"
     android:orientation="vertical"
     tools:ignore="ContentDescription">

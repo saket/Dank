@@ -34,10 +34,10 @@ import me.saket.dank.di.Dank;
 import me.saket.dank.markdownhints.MarkdownHintOptions;
 import me.saket.dank.markdownhints.MarkdownHints;
 import me.saket.dank.markdownhints.MarkdownSpanPool;
+import me.saket.dank.reply.ReplyRepository;
 import me.saket.dank.ui.DankPullCollapsibleActivity;
 import me.saket.dank.ui.giphy.GiphyGif;
 import me.saket.dank.ui.giphy.GiphyPickerActivity;
-import me.saket.dank.reply.ReplyRepository;
 import me.saket.dank.utils.Keyboards;
 import me.saket.dank.utils.SimpleTextWatcher;
 import me.saket.dank.utils.Views;
@@ -222,7 +222,7 @@ public class ComposeReplyActivity extends DankPullCollapsibleActivity
   }
 
   /**
-   * Inserts '>' or '#' at the starting of the line and deletes extra space when nesting.
+   * Insert '>' or '#' at the starting of the line and delete extra space when nesting.
    */
   private void insertQuoteOrHeadingMarkdownSyntax(MarkdownBlock markdownBlock) {
     char syntax = markdownBlock.prefix().charAt(0);   // '>' or '#'.
@@ -231,22 +231,23 @@ public class ComposeReplyActivity extends DankPullCollapsibleActivity
     Layout layout = replyField.getLayout();
     Editable text = replyField.getText();
     int currentLineIndex = layout.getLineForOffset(replyField.getSelectionStart());
-    int currentLineStartIndex = layout.getLineStart(currentLineIndex);
-    boolean isNestingQuotes = text.length() > 0 && currentLineStartIndex < text.length()
-        && text.charAt(currentLineStartIndex) == syntax;
+    int textOffsetOfCurrentLine = layout.getLineStart(currentLineIndex);
+
+    CharSequence currentLine = text.subSequence(textOffsetOfCurrentLine, text.length());
+    boolean isCurrentLineNonEmpty = currentLine.length() > 0;
+    boolean isNestingSyntax = isCurrentLineNonEmpty && currentLine.charAt(0) == syntax;
 
     int selectionStartCopy = replyField.getSelectionStart();
     int selectionEndCopy = replyField.getSelectionEnd();
 
-    replyField.setSelection(currentLineStartIndex);
+    replyField.setSelection(textOffsetOfCurrentLine);
     insertMarkdownSyntax(markdownBlock);
-    //noinspection ConstantConditions
     int quoteSyntaxLength = markdownBlock.prefix().length();
     replyField.setSelection(selectionStartCopy + quoteSyntaxLength, selectionEndCopy + quoteSyntaxLength);
 
-    // Next, delete extra spaces between nested quotes.
-    if (isNestingQuotes) {
-      text.delete(currentLineStartIndex + 1, currentLineStartIndex + 2);
+    // Next, delete extra spaces between nested quotes/heading.
+    if (isNestingSyntax) {
+      text.delete(textOffsetOfCurrentLine + 1, textOffsetOfCurrentLine + 2);
     }
   }
 

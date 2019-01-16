@@ -23,11 +23,12 @@ class SyntheticSubmissionAndComments {
   val comments: Listing<NestedIdentifiable>
 
   init {
+    // TODO: Get these from localized strings.
     val body = "Both the submission title and comments can be swiped horizontally to reveal actions like upvote, options, etc."
     val body2 = "Comments (and their replies) can be collapsed by tapping on them."
     val body3 = "Drag the cat's image downwards and release to close this tutorial."
 
-    submission = SyntheticSubmission(3)
+    submission = SyntheticSubmission(commentCount = 3)
 
     val comment2 = SyntheticComment(body2, submission)
     val comment1And2 = SyntheticComment(body, submission, listOf(comment2))
@@ -42,248 +43,150 @@ class SyntheticSubmissionAndComments {
   }
 }
 
-class SyntheticSubmission @JvmOverloads constructor(
-  private val commentCount: Int,
-  override val created: Date = Date(System.currentTimeMillis())
+class SyntheticSubmission(
+    private val commentCount: Int
 ) : Submission() {
 
-  override fun getCommentCount(): Int {
-    return commentCount
-  }
+  override fun getCommentCount(): Int = commentCount
 
-  override fun getLinkFlairText(): String? {
-    return null
-  }
+  override fun getLinkFlairText(): String? = null
 
-  override fun getPreview(): SubmissionPreview? {
-    return null
-  }
+  override fun getPreview(): SubmissionPreview? = null
 
-  override fun isVisited(): Boolean {
-    return false
-  }
+  override fun isVisited(): Boolean = false
 
-  override fun isNsfw(): Boolean {
-    return false
-  }
+  override fun isNsfw(): Boolean = false
 
-  override fun isRemoved(): Boolean {
-    return false
-  }
+  override fun isRemoved(): Boolean = false
 
-  override fun isLocked(): Boolean {
-    return false
-  }
+  override fun isLocked(): Boolean = false
 
-  override fun getEmbeddedMedia(): EmbeddedMedia? {
-    return null
-  }
+  override fun getEmbeddedMedia(): EmbeddedMedia? = null
 
-  override fun getSelfText(): String? {
-    return null
-  }
+  override fun getSelfText(): String? = null
 
-  override fun getDomain(): String {
-    return "i.imgur.com"
-  }
+  override fun getDomain(): String = "i.imgur.com"
 
-  override fun getTitle(): String {
-    return "Here's a heart-warming photo to start your journey"
-  }
+  override fun getTitle(): String = "Here's a heart-warming photo to start your journey"
 
-  override fun isHidden(): Boolean {
-    return false
-  }
+  override fun isHidden(): Boolean = false
 
-  override fun isContestMode(): Boolean {
-    return false
-  }
+  override fun isContestMode(): Boolean = false
 
-  override fun getUrl(): String {
-    return SyntheticData.SUBMISSION_IMAGE_URL_FOR_GESTURE_WALKTHROUGH
-  }
+  override fun getUrl(): String = SyntheticData.SUBMISSION_IMAGE_URL_FOR_GESTURE_WALKTHROUGH
 
-  override fun getCrosspostParents(): MutableList<Submission>? {
-    return null
-  }
+  override fun getCrosspostParents(): MutableList<Submission>? = null
 
-  override fun getPostHint(): String? {
-    return "image"
-  }
+  override fun getPostHint(): String? = "image"
 
-  override fun getSuggestedSort(): CommentSort? {
-    return Reddit.DEFAULT_COMMENT_SORT
-  }
+  override fun getSuggestedSort(): CommentSort? = Reddit.DEFAULT_COMMENT_SORT
 
-  override fun getReports(): Int? {
-    return 0
-  }
+  override fun getReports(): Int? = 0
 
-  override fun getLinkFlairCssClass(): String? {
-    return null
-  }
+  override fun getLinkFlairCssClass(): String? = null
 
-  override fun getPermalink(): String {
-    return "/r/GetDank"
-  }
+  override fun getPermalink(): String = "/r/GetDank"
 
-  override fun isSpoiler(): Boolean {
-    return false
-  }
+  override fun isSpoiler(): Boolean = false
 
-  override fun isSelfPost(): Boolean {
-    return false
-  }
+  override fun isSelfPost(): Boolean = false
 
-  override fun getThumbnail(): String? {
-    return null
-  }
+  override fun getThumbnail(): String? = null
 
-  override fun getAuthorFlairText(): String? {
-    return null
-  }
+  override fun getAuthorFlairText(): String? = null
 
-  override fun isQuarantine(): Boolean {
-    return false
-  }
+  override fun isQuarantine(): Boolean = false
 
-  override fun isSpam(): Boolean {
-    return false
-  }
+  override fun isSpam() = false
 
-  override val author: String
-    get() = "Saketme"
+  override val author: String = "Saketme"
 
-  override val body: String?
-    get() = null
+  override val body: String? = null
 
-  override val edited: Date?
-    get() = null
+  override val edited: Date? = null
 
-  override val isArchived: Boolean
-    get() = false
+  override val isArchived: Boolean = false
 
-  override val isSaved: Boolean
-    get() = false
+  override val isSaved: Boolean = false
 
-  override val isScoreHidden: Boolean
-    get() = false
+  override val isScoreHidden: Boolean = false
 
-  override val isStickied: Boolean
-    get() = false
+  override val isStickied: Boolean = false
 
-  override val subreddit: String
-    get() = "GetDank"
+  override val subreddit: String = "GetDank"
 
-  override val subredditFullName: String
-    get() = "t5_32wow"
+  override val subredditFullName: String = "t5_32wow"
 
-  override val distinguished: DistinguishedStatus
-    get() = DistinguishedStatus.NORMAL
+  override val created: Date = Date(System.currentTimeMillis())
 
-  override val gilded: Short
-    get() = 0
+  override val distinguished: DistinguishedStatus = DistinguishedStatus.NORMAL
 
-  override val isGildable: Boolean
-    get() = false
+  override val gilded: Short = 0
 
-  override val fullName: String
-    get() = SyntheticData.SUBMISSION_FULLNAME_FOR_GESTURE_WALKTHROUGH
+  override val isGildable: Boolean = false
 
-  override val id: String
-    get() = SyntheticData.SUBMISSION_ID_FOR_GESTURE_WALKTHROUGH
+  override val fullName: String = SyntheticData.SUBMISSION_FULLNAME_FOR_GESTURE_WALKTHROUGH
 
-  override val score: Int
-    get() = 1
+  override val id: String = SyntheticData.SUBMISSION_ID_FOR_GESTURE_WALKTHROUGH
 
-  override val vote: VoteDirection
-    get() = VoteDirection.NONE
+  override val score: Int = 1
+
+  override val vote: VoteDirection = VoteDirection.NONE
 }
 
-class SyntheticComment @JvmOverloads constructor(
-  override val body: String,
-  private val parent: Submission,
-  val replies: List<Comment> = listOf(),
-  override val created: Date = Date(System.currentTimeMillis())
+class SyntheticComment(
+    override val body: String,
+    private val parent: Submission,
+    private val replies: List<Comment> = listOf()
 ) : Comment() {
 
-  override fun getUrl(): String? {
-    return null
-  }
+  override fun getUrl(): String? = null
 
-  override fun getSubredditType(): Subreddit.Access {
-    return Subreddit.Access.PUBLIC
-  }
+  override fun getSubredditType(): Subreddit.Access = Subreddit.Access.PUBLIC
 
-  override fun getSubmissionTitle(): String? {
-    return null
-  }
+  override fun getSubmissionTitle(): String? = null
 
-  override fun getPermalink(): String {
-    return parent.permalink
-  }
+  override fun getPermalink(): String = parent.permalink
 
-  override fun getControversiality(): Int {
-    return 0
-  }
+  override fun getControversiality(): Int = 0
 
-  override fun getAuthorFlairText(): String? {
-    return null
-  }
+  override fun getAuthorFlairText(): String? = null
 
-  override fun getReplies(): Listing<NestedIdentifiable> {
-    return Listing.create(null, replies)
-  }
+  override fun getReplies(): Listing<NestedIdentifiable> = Listing.create(null, replies)
 
-  override fun getSubmissionFullName(): String {
-    return parent.fullName
-  }
+  override fun getSubmissionFullName(): String = parent.fullName
 
-  override val author: String
-    get() = "Dank"
+  override val author: String = "Dank"
 
-  override val edited: Date?
-    get() = null
+  override val edited: Date? = null
 
-  override val isArchived: Boolean
-    get() = false
+  override val isArchived: Boolean = false
 
-  override val isSaved: Boolean
-    get() = false
+  override val isSaved: Boolean = false
 
-  override val isScoreHidden: Boolean
-    get() = false
+  override val isScoreHidden: Boolean = false
 
-  override val isStickied: Boolean
-    get() = false
+  override val isStickied: Boolean = false
 
-  override val subreddit: String
-    get() = "GetDank"
+  override val subreddit: String = "GetDank"
 
-  override val subredditFullName: String
-    get() = "t5_3kfea"
+  override val subredditFullName: String = "t5_3kfea"
 
-  override val distinguished: DistinguishedStatus
-    get() = DistinguishedStatus.NORMAL
+  override val created: Date = Date(System.currentTimeMillis())
 
-  override val gilded: Short
-    get() = 0
+  override val distinguished: DistinguishedStatus = DistinguishedStatus.NORMAL
 
-  override val isGildable: Boolean
-    get() = false
+  override val gilded: Short = 0
 
-  override val fullName: String
-    get() = "t1_$id"
+  override val isGildable: Boolean = false
 
-  override val id: String
-    get() = "${body.hashCode()}"
+  override val id: String = "${body.hashCode()}"
 
-  override val score: Int
-    get() = 1
+  override val fullName: String = "t1_$id"
 
-  override val vote: VoteDirection
-    get() = VoteDirection.NONE
+  override val score: Int = 1
 
-  override val parentFullName: String
-    get() = "t1_parent_comment_fullname"
+  override val vote: VoteDirection = VoteDirection.NONE
+
+  override val parentFullName: String = "t1_parent_comment_fullname"
 }
