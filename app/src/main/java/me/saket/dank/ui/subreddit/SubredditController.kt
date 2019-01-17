@@ -21,6 +21,10 @@ import me.saket.dank.ui.user.messages.InboxFolder
 import me.saket.dank.utils.DankSubmissionRequest
 import me.saket.dank.utils.Optional
 import me.saket.dank.walkthrough.SubmissionGestureWalkthroughProceedEvent
+import me.saket.dank.widgets.InboxUI.ExpandablePageLayout.PageState.COLLAPSED
+import me.saket.dank.widgets.InboxUI.ExpandablePageLayout.PageState.COLLAPSING
+import me.saket.dank.widgets.InboxUI.ExpandablePageLayout.PageState.EXPANDED
+import me.saket.dank.widgets.InboxUI.ExpandablePageLayout.PageState.EXPANDING
 import java.util.concurrent.TimeUnit
 import javax.inject.Inject
 
@@ -42,7 +46,8 @@ class SubredditController @Inject constructor(
     return Observable.mergeArray(
         unreadMessageIconChanges(replayedEvents),
         submissionExpansions(replayedEvents),
-        hidePostFabOnDownwardScroll(replayedEvents))
+        hidePostFabOnDownwardScroll(replayedEvents),
+        keepActivityResizableWhileSubmissionIsOpen(replayedEvents))
   }
 
   private fun syntheticSubmissionsForGesturesWalkthrough() = ObservableTransformer<UiEvent, UiEvent> { events ->
@@ -124,5 +129,24 @@ class SubredditController @Inject constructor(
         .map { upwardScroll ->
           { ui: Ui -> ui.setFabVisible(upwardScroll) }
         }
+  }
+
+  /**
+   * FYI: not sure why, but for this to work, the windowSoftInputMode needs
+   * to be set to "adjustNothing" by default in Manifest.
+   */
+  private fun keepActivityResizableWhileSubmissionIsOpen(events: Observable<UiEvent>): Observable<UiChange> {
+    return events
+        .ofType<SubmissionPageStateChanged>()
+        .map {
+          when (it.pageState) {
+            COLLAPSING -> WindowSoftInputMode.ADJUST_NOTHING
+            COLLAPSED -> WindowSoftInputMode.ADJUST_NOTHING
+            EXPANDING -> WindowSoftInputMode.ADJUST_RESIZE
+            EXPANDED -> WindowSoftInputMode.ADJUST_RESIZE
+          }
+        }
+        .distinctUntilChanged()
+        .map { { ui: Ui -> ui.setWindowSoftInputMode(it) } }
   }
 }

@@ -30,7 +30,7 @@ class JrawTokenRefresher @Inject constructor(private val clients: BehaviorSubjec
 
   fun log(msg: String) {
     if (BuildConfig.DEBUG) {
-      Timber.w(msg)
+      //Timber.w(msg)
     }
   }
 

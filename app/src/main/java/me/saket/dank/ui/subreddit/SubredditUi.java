@@ -15,4 +15,6 @@ public interface SubredditUi {
   void expandSubmissionRow(View submissionRowView, long submissionRowId);
 
   void setFabVisible(boolean visible);
+
+  void setWindowSoftInputMode(WindowSoftInputMode mode);
 }

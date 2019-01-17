@@ -369,10 +369,10 @@ public class SubredditActivity extends DankPullCollapsibleActivity
         .map(o -> ScreenDestroyed.INSTANCE);
 
     Observable<UiEvent> subredditChanges = subredditChangesStream
-        .map(name -> new SubredditChanged(name));
+        .map(SubredditChanged::new);
 
     uiEvents
-        .mergeWith(Observable.merge(subredditChanges, screenDestroys, listScrolls()))
+        .mergeWith(Observable.merge(subredditChanges, screenDestroys, listScrolls(), submissionPageStateChanges()))
         .compose(subredditController.get())
         .takeUntil(screenDestroys)
         .observeOn(mainThread())
@@ -383,6 +383,12 @@ public class SubredditActivity extends DankPullCollapsibleActivity
     return RxRecyclerView
         .scrollEvents(submissionRecyclerView)
         .map(o -> new SubredditListScrolled(o.dy()));
+  }
+
+  private Observable<UiEvent> submissionPageStateChanges() {
+    return RxExpandablePage
+        .stateChanges(submissionPage)
+        .map(SubmissionPageStateChanged::new);
   }
 
   private void setupSubmissionPage() {
@@ -859,6 +865,11 @@ public class SubredditActivity extends DankPullCollapsibleActivity
   }
 
 // ======== OTHER STUFF ======== //
+
+  @Override
+  public void setWindowSoftInputMode(WindowSoftInputMode mode) {
+    getWindow().setSoftInputMode(mode.getFrameworkValue());
+  }
 
   @Override
   public void onBackPressed() {
