@@ -46,7 +46,7 @@ class SubredditController @Inject constructor(
     return Observable.mergeArray(
         unreadMessageIconChanges(replayedEvents),
         submissionExpansions(replayedEvents),
-        hidePostFabOnDownwardScroll(replayedEvents),
+        toggleFabVisibility(replayedEvents),
         keepActivityResizableWhileSubmissionIsOpen(replayedEvents))
   }
 
@@ -117,15 +117,31 @@ class SubredditController @Inject constructor(
     return populations.mergeWith(expansions)
   }
 
-  private fun hidePostFabOnDownwardScroll(events: Observable<UiEvent>): Observable<UiChange> {
-    val canShowFab = events
+  private fun toggleFabVisibility(events: Observable<UiEvent>): Observable<UiChange> {
+    val show = true
+    val hide = false
+
+    val toggleOnListScroll = events
         .ofType<SubredditListScrolled>()
         .filter { it.isListRefreshEvent.not() }
         .map { it.dy < 0 }
         .distinctUntilChanged()
 
-    return canShowFab
-        .startWith(true)
+    val showOnStart = Observable.just(show)
+
+    val toggleOnSubmissionExpansion = events
+        .ofType<SubmissionPageStateChanged>()
+        .map {
+          when (it.pageState) {
+            COLLAPSING -> show
+            COLLAPSED -> show
+            EXPANDING -> hide
+            EXPANDED -> hide
+          }
+        }
+
+    return Observable
+        .merge(toggleOnListScroll, showOnStart, toggleOnSubmissionExpansion)
         .map { upwardScroll ->
           { ui: Ui -> ui.setFabVisible(upwardScroll) }
         }
