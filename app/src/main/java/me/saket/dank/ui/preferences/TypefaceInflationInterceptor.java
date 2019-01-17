@@ -11,11 +11,12 @@ import javax.inject.Inject;
 import javax.inject.Singleton;
 
 import io.github.inflationx.viewpump.InflateResult;
+import io.github.inflationx.viewpump.Interceptor;
 import io.reactivex.Observable;
 import me.saket.dank.widgets.ToolbarWithCustomTypeface;
 
 @Singleton
-public class TypefaceInflationInterceptor implements io.github.inflationx.viewpump.Interceptor {
+public class TypefaceInflationInterceptor implements Interceptor {
 
   private final Observable<TypefaceResource> preferenceChanges;
 

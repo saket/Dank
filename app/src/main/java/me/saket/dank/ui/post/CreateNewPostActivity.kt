@@ -12,23 +12,27 @@ import android.support.v4.content.ContextCompat
 import android.view.View
 import android.view.ViewGroup
 import kotterknife.bindView
-import me.saket.dank.R
 import me.saket.dank.ui.DankActivity
+import me.saket.dank.utils.Keyboards
 import me.saket.dank.utils.Pair
 import me.saket.dank.widgets.FabTransform
+import me.saket.dank.R
 
 class CreateNewPostActivity : DankActivity() {
 
   private val dialogContainer by bindView<ViewGroup>(R.id.createnewpost_dialog_container)
   private val backgroundView by bindView<View>(R.id.createnewpost_background)
+  private val closeView by bindView<View>(R.id.createnewpost_close)
 
   override fun onCreate(savedInstanceState: Bundle?) {
     super.onCreate(savedInstanceState)
     setContentView(R.layout.activity_create_new_post)
 
     playEntryTransition()
-    backgroundView.setOnClickListener { dismiss() }
     dialogContainer.clipToOutline = true
+
+    backgroundView.setOnClickListener { dismiss() }
+    closeView.setOnClickListener { dismiss() }
   }
 
   private fun playEntryTransition() {
@@ -41,6 +45,7 @@ class CreateNewPostActivity : DankActivity() {
   }
 
   fun dismiss() {
+    Keyboards.hide(dialogContainer)
     if (FabTransform.hasActivityTransition(this)) {
       finishAfterTransition()
     } else {
