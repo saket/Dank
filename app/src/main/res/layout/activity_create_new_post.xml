@@ -75,6 +75,7 @@
               android:layout_height="wrap_content">
 
               <EditText
+                android:id="@+id/createnewpost_title"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_marginEnd="@dimen/spacing16"
@@ -100,6 +101,7 @@
             </LinearLayout>
 
             <EditText
+              android:id="@+id/createnewpost_body"
               android:layout_width="match_parent"
               android:layout_height="0dp"
               android:layout_marginEnd="@dimen/spacing16"
@@ -183,7 +185,7 @@
             android:layout_weight="1" />
 
           <ImageButton
-            android:id="@+id/item_comment_reply_go_fullscreen"
+            android:id="@+id/createnewpost_go_fullscreen"
             android:layout_width="44dp"
             android:layout_height="match_parent"
             android:background="?attr/selectableItemBackgroundBorderless"
@@ -193,7 +195,7 @@
             android:tint="@color/gray_400" />
 
           <ImageButton
-            android:id="@+id/item_comment_reply_send"
+            android:id="@+id/createnewpost_send"
             android:layout_width="wrap_content"
             android:layout_height="match_parent"
             android:background="?attr/selectableItemBackgroundBorderless"

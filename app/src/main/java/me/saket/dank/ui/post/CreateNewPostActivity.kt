@@ -11,28 +11,41 @@ import android.support.design.widget.FloatingActionButton
 import android.support.v4.content.ContextCompat
 import android.view.View
 import android.view.ViewGroup
+import android.widget.Button
+import android.widget.EditText
+import com.jakewharton.rxbinding2.widget.RxTextView
+import io.reactivex.Observable
+import io.reactivex.android.schedulers.AndroidSchedulers.mainThread
 import kotterknife.bindView
+import me.saket.dank.di.Dank
 import me.saket.dank.ui.DankActivity
+import me.saket.dank.ui.ScreenDestroyed
 import me.saket.dank.utils.Keyboards
 import me.saket.dank.utils.Pair
 import me.saket.dank.widgets.FabTransform
+import timber.log.Timber
+import javax.inject.Inject
 import me.saket.dank.R
 
 class CreateNewPostActivity : DankActivity() {
 
+  @Inject
+  lateinit var controller: CreateNewPostScreenController
+
   private val dialogContainer by bindView<ViewGroup>(R.id.createnewpost_dialog_container)
   private val backgroundView by bindView<View>(R.id.createnewpost_background)
   private val closeView by bindView<View>(R.id.createnewpost_close)
+  private val titleEditText by bindView<EditText>(R.id.createnewpost_title)
+  private val bodyEditText by bindView<EditText>(R.id.createnewpost_body)
+  private val sendButton by bindView<Button>(R.id.createnewpost_send)
 
   override fun onCreate(savedInstanceState: Bundle?) {
+    Dank.dependencyInjector().inject(this)
     super.onCreate(savedInstanceState)
     setContentView(R.layout.activity_create_new_post)
 
     playEntryTransition()
-    dialogContainer.clipToOutline = true
-
-    backgroundView.setOnClickListener { dismiss() }
-    closeView.setOnClickListener { dismiss() }
+    setupScreen()
   }
 
   private fun playEntryTransition() {
@@ -56,6 +69,47 @@ class CreateNewPostActivity : DankActivity() {
 
   override fun onBackPressed() {
     dismiss()
+  }
+
+  private fun setupScreen() {
+    dialogContainer.clipToOutline = true
+
+    backgroundView.setOnClickListener { dismiss() }
+    closeView.setOnClickListener { dismiss() }
+
+    val screenDestroys = lifecycle()
+        .onDestroy()
+        .map { ScreenDestroyed }
+
+    Observable.merge(titleTextChanges(), bodyTextChanges(), imageSelections(), screenDestroys)
+        .compose(controller)
+        .observeOn(mainThread())
+        .takeUntil(screenDestroys)
+        .subscribe { uiChange -> uiChange(this) }
+  }
+
+  private fun titleTextChanges() =
+      RxTextView
+          .textChanges(titleEditText)
+          .map { NewPostTitleTextChanged(it.toString()) }
+
+  private fun bodyTextChanges() =
+      RxTextView
+          .textChanges(bodyEditText)
+          .map { NewPostBodyTextChanged(it.toString()) }
+
+  private fun imageSelections() = Observable.just(NewPostImageSelectionUpdated(images = emptyList()))
+
+  fun setDetectedPostKind(kind: NewPostKind) {
+    Timber.w("TODO: set post type to $kind")
+  }
+
+  fun setSendButtonEnabled(enabled: Boolean) {
+    sendButton.isEnabled = enabled
+  }
+
+  fun requestFocusOnTitleField() {
+    titleEditText.requestFocus()
   }
 
   companion object {
