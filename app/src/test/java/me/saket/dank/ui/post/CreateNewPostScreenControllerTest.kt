@@ -94,7 +94,7 @@ class CreateNewPostScreenControllerTest {
   }
 
   @Test
-  fun `send button should remain disabled while title and subreddit are missing`() {
+  fun `submit button should remain disabled while title and subreddit are missing`() {
     uiEvents.run {
       onNext(NewPostTitleTextChanged(""))
       onNext(NewPostSubredditSelected("androiddev"))
@@ -102,12 +102,12 @@ class CreateNewPostScreenControllerTest {
       onNext(NewPostTitleTextChanged(""))
     }
 
-    verify(screen, times(2)).setSendButtonEnabled(false)
-    verify(screen, times(1)).setSendButtonEnabled(true)
+    verify(screen, times(3)).setSubmitButtonEnabled(false)
+    verify(screen, times(1)).setSubmitButtonEnabled(true)
   }
 
   @Test
-  fun `when send is clicked then post details should be saved and screen closed`() {
+  fun `when submit is clicked then post details should be saved and screen closed`() {
     val title = "Mods are asleep"
     val body = "Post pictures of..."
     val options = NewPostOptions(
@@ -121,7 +121,7 @@ class CreateNewPostScreenControllerTest {
       onNext(NewPostTitleTextChanged(title))
       onNext(NewPostBodyTextChanged(body))
       onNext(NewPostOptionsUpdated(options))
-      onNext(NewPostSendClicked)
+      onNext(NewPostSubmitClicked)
     }
 
     verify(outboxRepository).submit(PostToSubmit(title= title, body = body, options = options))

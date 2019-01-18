@@ -31,13 +31,14 @@ class CreateNewPostScreenController @Inject constructor(
 
     return Observable.mergeArray(
         autoResolvePostType(replayedEvents),
-        focusTitleOnBackPressInEmptyBody(replayedEvents))
+        focusTitleOnBackPressInEmptyBody(replayedEvents),
+        toggleSubmitButton(replayedEvents))
   }
 
   private fun autoResolvePostType(events: Observable<UiEvent>): Observable<UiChange> {
     val bodyTextChanges = events
         .ofType<NewPostBodyTextChanged>()
-        .map { it.text }
+        .map { it.body }
 
     val imageSelectionChanges = events
         .ofType<NewPostImageSelectionUpdated>()
@@ -61,12 +62,27 @@ class CreateNewPostScreenController @Inject constructor(
   private fun focusTitleOnBackPressInEmptyBody(events: Observable<UiEvent>): Observable<UiChange> {
     val bodyTextChanges = events
         .ofType<NewPostBodyTextChanged>()
-        .map { it.text }
+        .map { it.body }
 
     return events
         .ofType<NewPostBodyBackspaceClicked>()
         .withLatestFrom(bodyTextChanges)
         .filter { (_, body) -> body.isEmpty() }
         .map { { ui: Ui -> ui.requestFocusOnTitleField() } }
+  }
+
+  private fun toggleSubmitButton(events: Observable<UiEvent>): Observable<UiChange> {
+    val titleTextChanges = events
+        .ofType<NewPostTitleTextChanged>()
+        .map { it.title }
+
+    val subredditSelections = events
+        .ofType<NewPostSubredditSelected>()
+        .map { it.subredditName }
+
+    return Observables.combineLatest(titleTextChanges, subredditSelections)
+        .map { (title, subredditName) -> title.isNotBlank() && subredditName.isNotBlank() }
+        .startWith(false)
+        .map { { ui: Ui -> ui.setSubmitButtonEnabled(it) } }
   }
 }

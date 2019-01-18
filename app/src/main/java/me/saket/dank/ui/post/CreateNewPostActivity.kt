@@ -38,7 +38,7 @@ class CreateNewPostActivity : DankActivity() {
   private val closeView by bindView<View>(R.id.createnewpost_close)
   private val titleEditText by bindView<EditText>(R.id.createnewpost_title)
   private val bodyEditText by bindView<EditTextWithBackspaceListener>(R.id.createnewpost_body)
-  private val sendButton by bindView<Button>(R.id.createnewpost_send)
+  private val submitButton by bindView<Button>(R.id.createnewpost_send)
 
   override fun onCreate(savedInstanceState: Bundle?) {
     Dank.dependencyInjector().inject(this)
@@ -116,8 +116,8 @@ class CreateNewPostActivity : DankActivity() {
     Timber.w("TODO: set post type to $kind")
   }
 
-  fun setSendButtonEnabled(enabled: Boolean) {
-    sendButton.isEnabled = enabled
+  fun setSubmitButtonEnabled(enabled: Boolean) {
+    submitButton.isEnabled = enabled
   }
 
   fun requestFocusOnTitleField() {

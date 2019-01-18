@@ -189,17 +189,17 @@
             android:layout_width="44dp"
             android:layout_height="match_parent"
             android:background="?attr/selectableItemBackgroundBorderless"
-            android:contentDescription="@string/cd_submission_comment_reply_go_fullscreen"
+            android:contentDescription="Go fullscreen"
             android:padding="@dimen/spacing12"
             android:src="@drawable/ic_fullscreen_24dp"
             android:tint="@color/gray_400" />
 
           <ImageButton
-            android:id="@+id/createnewpost_send"
+            android:id="@+id/createnewpost_submit"
             android:layout_width="wrap_content"
             android:layout_height="match_parent"
             android:background="?attr/selectableItemBackgroundBorderless"
-            android:contentDescription="@string/cd_submission_comment_reply_send"
+            android:contentDescription="Submit post"
             android:padding="@dimen/spacing12"
             android:src="@drawable/ic_send_20dp"
             android:tint="@color/gray_400" />
