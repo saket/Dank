@@ -102,8 +102,7 @@ public class UserAuthListener {
     runBackgroundJobs(context);
   }
 
-  @VisibleForTesting
-  void handleLoggedOut() {
+  private void handleLoggedOut() {
     //Timber.d("User logged out. Doing things.");
 
     crashReporter.get().identifyUser(null);

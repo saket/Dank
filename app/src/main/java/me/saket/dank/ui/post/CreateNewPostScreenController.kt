@@ -4,17 +4,23 @@ import dagger.Lazy
 import io.reactivex.Observable
 import io.reactivex.ObservableSource
 import io.reactivex.ObservableTransformer
+import io.reactivex.rxkotlin.Observables
 import io.reactivex.rxkotlin.ofType
 import me.saket.dank.ui.ReplayUntilScreenIsDestroyed
 import me.saket.dank.ui.UiEvent
+import me.saket.dank.ui.post.NewPostKind.IMAGE
+import me.saket.dank.ui.post.NewPostKind.LINK
+import me.saket.dank.ui.post.NewPostKind.SELF_TEXT
+import me.saket.dank.ui.post.UrlValidator.Result.Invalid
+import me.saket.dank.ui.post.UrlValidator.Result.Valid
 import javax.inject.Inject
 
 typealias Ui = CreateNewPostActivity
 typealias UiChange = (Ui) -> Unit
 
 class CreateNewPostScreenController @Inject constructor(
-    urlValidator: Lazy<UrlValidator>,
-    outboxRepository: Lazy<PostOutboxRepository>
+    private val urlValidator: Lazy<UrlValidator>,
+    private val outboxRepository: Lazy<PostOutboxRepository>
 ) : ObservableTransformer<UiEvent, UiChange> {
 
   override fun apply(events: Observable<UiEvent>): ObservableSource<UiChange> {
@@ -27,6 +33,26 @@ class CreateNewPostScreenController @Inject constructor(
   }
 
   private fun autoResolvePostType(events: Observable<UiEvent>): Observable<UiChange> {
-    return Observable.never()
+    val bodyTextChanges = events
+        .ofType<NewPostBodyTextChanged>()
+        .map { it.text }
+
+    val imageSelectionChanges = events
+        .ofType<NewPostImageSelectionUpdated>()
+        .map { it.images }
+
+    return Observables.combineLatest(bodyTextChanges, imageSelectionChanges)
+        .map { (body, images) ->
+          if (images.isNotEmpty()) {
+            IMAGE
+          } else {
+            val urlValidation = urlValidator.get().validate(body)
+            when (urlValidation) {
+              Valid -> LINK
+              Invalid -> SELF_TEXT
+            }
+          }
+        }
+        .map { { ui: Ui -> ui.setDetectedPostKind(it) } }
   }
 }

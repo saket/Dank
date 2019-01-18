@@ -21,13 +21,13 @@ public class UrlsTest {
     PowerMockito.mockStatic(Uri.class);
 
     PowerMockito.when(Uri.parse(anyString())).thenAnswer(invocation -> {
-      String url = invocation.getArgumentAt(0, String.class);
+      String url = invocation.getArgument(0);
       return UrlParserTest.createMockUriFor(url);
     });
   }
 
   @Test
-  public void subdomain() throws Exception {
+  public void subdomain() {
     assertEquals("v", Urls.subdomain(Uri.parse("https://v.redd.it/fjpqnd127wf01")).get());
     assertEquals("i", Urls.subdomain(Uri.parse("https://i.redd.it/5524cd")).get());
     assertEquals(Optional.empty(), Urls.subdomain(Uri.parse("https://redd.it/5524cd")));
