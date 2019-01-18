@@ -6,6 +6,7 @@ import io.reactivex.ObservableSource
 import io.reactivex.ObservableTransformer
 import io.reactivex.rxkotlin.Observables
 import io.reactivex.rxkotlin.ofType
+import io.reactivex.rxkotlin.withLatestFrom
 import me.saket.dank.ui.ReplayUntilScreenIsDestroyed
 import me.saket.dank.ui.UiEvent
 import me.saket.dank.ui.post.NewPostKind.IMAGE
@@ -29,7 +30,8 @@ class CreateNewPostScreenController @Inject constructor(
         .replay()
 
     return Observable.mergeArray(
-        autoResolvePostType(replayedEvents))
+        autoResolvePostType(replayedEvents),
+        focusTitleOnBackPressInEmptyBody(replayedEvents))
   }
 
   private fun autoResolvePostType(events: Observable<UiEvent>): Observable<UiChange> {
@@ -54,5 +56,17 @@ class CreateNewPostScreenController @Inject constructor(
           }
         }
         .map { { ui: Ui -> ui.setDetectedPostKind(it) } }
+  }
+
+  private fun focusTitleOnBackPressInEmptyBody(events: Observable<UiEvent>): Observable<UiChange> {
+    val bodyTextChanges = events
+        .ofType<NewPostBodyTextChanged>()
+        .map { it.text }
+
+    return events
+        .ofType<NewPostBodyBackspaceClicked>()
+        .withLatestFrom(bodyTextChanges)
+        .filter { (_, body) -> body.isEmpty() }
+        .map { { ui: Ui -> ui.requestFocusOnTitleField() } }
   }
 }

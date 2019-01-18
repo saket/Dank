@@ -22,6 +22,7 @@ import me.saket.dank.ui.DankActivity
 import me.saket.dank.ui.ScreenDestroyed
 import me.saket.dank.utils.Keyboards
 import me.saket.dank.utils.Pair
+import me.saket.dank.widgets.EditTextWithBackspaceListener
 import me.saket.dank.widgets.FabTransform
 import timber.log.Timber
 import javax.inject.Inject
@@ -36,7 +37,7 @@ class CreateNewPostActivity : DankActivity() {
   private val backgroundView by bindView<View>(R.id.createnewpost_background)
   private val closeView by bindView<View>(R.id.createnewpost_close)
   private val titleEditText by bindView<EditText>(R.id.createnewpost_title)
-  private val bodyEditText by bindView<EditText>(R.id.createnewpost_body)
+  private val bodyEditText by bindView<EditTextWithBackspaceListener>(R.id.createnewpost_body)
   private val sendButton by bindView<Button>(R.id.createnewpost_send)
 
   override fun onCreate(savedInstanceState: Bundle?) {
@@ -81,7 +82,13 @@ class CreateNewPostActivity : DankActivity() {
         .onDestroy()
         .map { ScreenDestroyed }
 
-    Observable.merge(titleTextChanges(), bodyTextChanges(), imageSelections(), screenDestroys)
+    Observable
+        .mergeArray(
+            titleTextChanges(),
+            bodyTextChanges(),
+            bodyBackspaceClicks(),
+            imageSelections(),
+            screenDestroys)
         .compose(controller)
         .observeOn(mainThread())
         .takeUntil(screenDestroys)
@@ -97,6 +104,11 @@ class CreateNewPostActivity : DankActivity() {
       RxTextView
           .textChanges(bodyEditText)
           .map { NewPostBodyTextChanged(it.toString()) }
+
+  private fun bodyBackspaceClicks() =
+      bodyEditText
+          .backspaceClicks
+          .map { NewPostBodyBackspaceClicked }
 
   private fun imageSelections() = Observable.just(NewPostImageSelectionUpdated(images = emptyList()))
 

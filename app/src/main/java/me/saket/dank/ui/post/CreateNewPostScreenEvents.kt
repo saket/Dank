@@ -8,7 +8,7 @@ data class NewPostTitleTextChanged(val text: String) : UiEvent
 
 data class NewPostBodyTextChanged(val text: String) : UiEvent
 
-object NewPostBodyBackspacePressed : UiEvent
+object NewPostBodyBackspaceClicked : UiEvent
 
 data class NewPostImageSelectionUpdated(val images: List<ImageToUpload>) : UiEvent
 

@@ -42,11 +42,12 @@ class CreateNewPostScreenControllerTest {
 
     uiEvents.run {
       onNext(NewPostBodyTextChanged(body))
+      onNext(NewPostImageSelectionUpdated(images = emptyList()))
       onNext(NewPostImageSelectionUpdated(images = listOf(ImageToUpload())))
       onNext(NewPostImageSelectionUpdated(images = emptyList()))
     }
 
-    verify(screen, times(2)).setDetectedPostKind(NewPostKind.SELF_TEXT)
+    verify(screen, times(2)).setDetectedPostKind(NewPostKind.LINK)
   }
 
   @Test
@@ -78,15 +79,15 @@ class CreateNewPostScreenControllerTest {
   }
 
   @Test
-  fun `when backspace is pressed on body and body is empty, move focus to title field`() {
+  fun `when backspace is clicked on body and body is empty, move focus to title field`() {
     uiEvents.run {
       onNext(NewPostTitleTextChanged(""))
       onNext(NewPostBodyTextChanged(""))
       onNext(NewPostTitleTextChanged("Mods are asleep"))
       onNext(NewPostBodyTextChanged("Post pictures of..."))
-      onNext(NewPostBodyBackspacePressed)
+      onNext(NewPostBodyBackspaceClicked)
       onNext(NewPostBodyTextChanged(""))
-      onNext(NewPostBodyBackspacePressed)
+      onNext(NewPostBodyBackspaceClicked)
     }
 
     verify(screen).requestFocusOnTitleField()
