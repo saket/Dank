@@ -18,6 +18,8 @@ buildscript {
       flexmark        : '0.27.0',
       timber          : '4.6.0',
       junit           : '4.12',
+      mockito         : '2.18.3',
+      mockitoKotlin   : '1.5.0',
       deeplinkDispatch: '3.1.1',
       androidTest     : '1.0.2',
       kotlin          : '1.3.11',
