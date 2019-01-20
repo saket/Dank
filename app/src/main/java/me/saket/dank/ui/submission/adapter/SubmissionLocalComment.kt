@@ -116,8 +116,7 @@ interface SubmissionLocalComment {
         @Suppress("UNCHECKED_CAST")
         for (partialChange in payload as List<PartialChange>) {
           when (partialChange) {
-            SubmissionRemoteComment.PartialChange.BYLINE -> bylineView.text = uiModel.byline
-            else -> throw AssertionError()
+            PartialChange.BYLINE -> bylineView.text = uiModel.byline
           }
         }
       }
