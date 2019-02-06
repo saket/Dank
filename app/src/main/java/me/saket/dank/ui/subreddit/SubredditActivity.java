@@ -577,7 +577,7 @@ public class SubredditActivity extends DankPullCollapsibleActivity
         .subscribe(cachedSubmissionStream);
 
     Observable<SubredditScreenUiModel> sharedUiModels = uiConstructor
-        .stream(this, cachedSubmissionStream.observeOn(io()), paginationResults.observeOn(io()))
+        .stream(this, cachedSubmissionStream.observeOn(io()), paginationResults.observeOn(io()), submissionFolderStream)
         .subscribeOn(io())
         .share();
 
