@@ -1,6 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 <menu xmlns:android="http://schemas.android.com/apk/res/android">
   <item
+    android:id="@+id/action_subreddit_sorting_best"
+    android:title="@string/sorting_mode_best" />
+
+  <item
     android:id="@+id/action_subreddit_sorting_hot"
     android:title="@string/sorting_mode_hot" />
 

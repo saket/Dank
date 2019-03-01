@@ -257,7 +257,7 @@ public class SubredditUiConstructor {
       bylineBuilder.append(" \u00b7 ");
       bylineBuilder.append(c.getString(
           R.string.subreddit_submission_item_byline_comment_count,
-          Strings.abbreviateScore(postedAndPendingCommentCount)));
+          Strings.abbreviateScore(postedAndPendingCommentCount)).toUpperCase(Locale.ENGLISH));
     }
     if (submission.isNsfw()) {
       bylineBuilder.append(" \u00b7 ");
@@ -329,7 +329,7 @@ public class SubredditUiConstructor {
       case URL_REMOTE_THUMBNAIL:
         // Don't want to display NSFW content if it's disabled on thumbnail click.
         // Might get flagged by Play Store's automatic review thing.
-        isThumbnailClickable = !submission.isNsfw() || showNsfwContent.get();
+        isThumbnailClickable = !submission.isSelfPost() && (!submission.isNsfw() || showNsfwContent.get());
         break;
 
       case UNKNOWN:

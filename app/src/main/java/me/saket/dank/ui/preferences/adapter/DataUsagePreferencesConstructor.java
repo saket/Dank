@@ -115,6 +115,11 @@ public class DataUsagePreferencesConstructor implements UserPreferencesConstruct
   }
 
   private String messagePollIntervalAndNetworkTypeSummary(Context c) {
+    Boolean enabled = messagesPollEnabledPref.get().get();
+    if (!enabled) {
+      return c.getString(R.string.userprefs_messages_poll_interval_never);
+    }
+
     TimeInterval interval = messagesPollFrequencyPref.get().get();
     NetworkStrategy strategy = messagesPollNetworkStrategyPref.get().get();
 

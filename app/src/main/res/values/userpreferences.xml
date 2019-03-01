@@ -16,6 +16,11 @@
   <string name="userprefs_submission_thumbnails">Submission thumbnails</string>
   <string name="userprefs_submission_thumbnail_summary_on">Show if available</string>
   <string name="userprefs_submission_thumbnail_summary_off">Always hidden</string>
+
+  <string name="userprefs_item_byline_comment_count">Submission comments count</string>
+  <string name="userprefs_item_byline_comment_count_summary_on">Always show</string>
+  <string name="userprefs_item_byline_comment_count_summary_off">Always hidden</string>
+
   <string name="userprefs_group_gestures">Gestures</string>
   <string name="userprefs_customize_submission_gestures">Submission gesture actions</string>
   <string name="userprefs_customize_comment_gestures">Comment gesture actions</string>
@@ -27,6 +32,7 @@
   <string name="userprefs_check_for_new_messages">Poll for new messages</string>
   <string name="userprefs_messages_poll_interval_on_wifi">Every %s only on WiFi</string>
   <string name="userprefs_messages_poll_interval_on_wifi_or_mobile">Every %s on any network</string>
+  <string name="userprefs_messages_poll_interval_never">Never</string>
 
   <plurals name="userprefs_message_poll_interval_days">
     <item quantity="one">day</item>

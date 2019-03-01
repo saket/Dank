@@ -17,7 +17,7 @@ import me.saket.dank.ui.submission.SubmissionRoomTypeConverter
       CachedSubmission::class,
       CachedSubmissionComments::class,
       CachedSubmissionId2::class],
-    version = 1,
+    version = 2,
     exportSchema = false)
 @TypeConverters(
     SubmissionRoomTypeConverter::class,

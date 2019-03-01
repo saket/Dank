@@ -30,8 +30,10 @@ interface Reddit {
     const val CONTEXT_QUERY_PARAM = "context"
     const val COMMENT_DEFAULT_CONTEXT_COUNT = 3
 
-    // "Confidence" is now "Best".
+    // "Confidence" is now "Best" in Reddit's API.
     val DEFAULT_COMMENT_SORT = CommentSort.CONFIDENCE
+
+    @get:JvmName("DEFAULT_SUBREDDIT_SORT")
     val DEFAULT_SUBREDDIT_SORT = SubredditSort.BEST
   }
 
