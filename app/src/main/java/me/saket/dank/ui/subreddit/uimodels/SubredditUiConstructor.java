@@ -26,6 +26,7 @@ import me.saket.dank.data.EmptyState;
 import me.saket.dank.data.ErrorResolver;
 import me.saket.dank.data.ErrorState;
 import me.saket.dank.ui.submission.BookmarksRepository;
+import me.saket.dank.ui.submission.CachedSubmissionFolder;
 import me.saket.dank.ui.submission.PrivateSubredditException;
 import me.saket.dank.ui.submission.SubredditNotFoundException;
 import me.saket.dank.ui.submission.adapter.ImageWithMultipleVariants;
@@ -79,7 +80,8 @@ public class SubredditUiConstructor {
   public Observable<SubredditScreenUiModel> stream(
       Context context,
       Observable<Optional<List<Submission>>> cachedSubmissionLists,
-      Observable<SubmissionPaginationResult> paginationResults)
+      Observable<SubmissionPaginationResult> paginationResults,
+      Observable<CachedSubmissionFolder> submissionFolderStream)
   {
     Observable<?> userPrefChanges = Observable
         .merge(
@@ -106,6 +108,7 @@ public class SubredditUiConstructor {
         paginationProgressUiModels(cachedSubmissionLists, paginationResults).distinctUntilChanged(),
         gesturesWalkthrough.get().walkthroughRows(),
         cachedSubmissionLists,
+        submissionFolderStream,
         externalChanges,
         (fullscreenProgressVisible,
             optFullscreenError,
@@ -114,6 +117,7 @@ public class SubredditUiConstructor {
             optPagination,
             optWalkthroughRow,
             optCachedSubs,
+            folder,
             o) ->
         {
           int rowCount = optPagination.map(p -> 1).orElse(0) + optCachedSubs.map(subs -> subs.size()).orElse(0);
@@ -126,7 +130,7 @@ public class SubredditUiConstructor {
 
             for (Submission submission : cachedSubs) {
               int pendingSyncReplyCount = 0;  // TODO v2:  Get this from database.
-              rowUiModels.add(submissionUiModel(context, submission, pendingSyncReplyCount));
+              rowUiModels.add(submissionUiModel(context, submission, pendingSyncReplyCount, folder.subredditName()));
             }
           });
           optPagination.ifPresent(pagination -> rowUiModels.add(pagination));
@@ -241,7 +245,8 @@ public class SubredditUiConstructor {
   private SubredditSubmission.UiModel submissionUiModel(
       Context c,
       Submission submission,
-      Integer pendingSyncReplyCount)
+      Integer pendingSyncReplyCount,
+      String subredditName)
   {
     int submissionScore = votingManager.getScoreAfterAdjustingPendingVote(submission);
     VoteDirection voteDirection = votingManager.getPendingOrDefaultVote(submission, submission.getVote());
@@ -257,8 +262,10 @@ public class SubredditUiConstructor {
 
     // Setting textAllCaps removes all spans, so I'm applying uppercase manually.
     Truss bylineBuilder = new Truss();
-    bylineBuilder.append(c.getString(R.string.subreddit_name_r_prefix, submission.getSubreddit()).toUpperCase(Locale.ENGLISH));
-    bylineBuilder.append(" \u00b7 ");
+    if (!submission.getSubreddit().equals(subredditName)) {
+      bylineBuilder.append(c.getString(R.string.subreddit_name_r_prefix, submission.getSubreddit()).toUpperCase(Locale.ENGLISH));
+      bylineBuilder.append(" \u00b7 ");
+    }
     bylineBuilder.append(submission.getAuthor().toUpperCase(Locale.ENGLISH));
     if (showCommentCountInByline.get()) {
       bylineBuilder.append(" \u00b7 ");
