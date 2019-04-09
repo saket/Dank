@@ -10,14 +10,14 @@ public class UrlParserConfig {
   /**
    * /r/$subreddit.
    */
-  private static final String SUBREDDIT_PATTERN = "/?r/([a-zA-Z0-9-_.]+)(/)*";
+  private static final String SUBREDDIT_PATTERN = "(?:^|[ ]+)\\/?r\\/([a-zA-Z0-9-_.]+)(\\/)*";
   private static final Pattern DEFAULT_BOUNDED_SUBREDDIT_PATTERN = Pattern.compile("^" + SUBREDDIT_PATTERN + "$");
   private static final Pattern DEFAULT_UNBOUNDED_SUBREDDIT_PATTERN = Pattern.compile(SUBREDDIT_PATTERN);
 
   /**
    * /u/$user.
    */
-  private static final String USER_PATTERN = "/?u(?:ser)?/([a-zA-Z0-9-_.]+)(?:/)*";
+  private static final String USER_PATTERN = "(?:^|[ ]+)\\/?u(?:ser)?\\/([a-zA-Z0-9-_.]+)(?:\\/)*";
   private static final Pattern DEFAULT_BOUNDED_USER_PATTERN = Pattern.compile("^" + USER_PATTERN + "$");
   private static final Pattern DEFAULT_UNBOUNDED_USER_PATTERN = Pattern.compile(USER_PATTERN);
 
