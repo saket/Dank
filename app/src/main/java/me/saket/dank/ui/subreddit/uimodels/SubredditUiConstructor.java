@@ -279,6 +279,12 @@ public class SubredditUiConstructor {
       bylineBuilder.append("NSFW");
       bylineBuilder.popSpan();
     }
+    if (submission.isStickied()) {
+      bylineBuilder.append(" \u00b7 ");
+      bylineBuilder.pushSpan(new ForegroundColorSpan(ContextCompat.getColor(c, R.color.green_A100)));
+      bylineBuilder.append("STICKY");
+      bylineBuilder.popSpan();
+    }
 
     SubmissionThumbnailTypeMinusNsfw thumbnailType = SubmissionThumbnailTypeMinusNsfw.Companion.parse(submission);
     Optional<SubredditSubmission.UiModel.Thumbnail> thumbnail;
@@ -356,9 +362,13 @@ public class SubredditUiConstructor {
     }
 
     // Just in case I forget again. This == row background, not thumbnail background.
-    Optional<Integer> rowBackgroundResource = submission.isNsfw()
-        ? Optional.of(R.drawable.background_subreddit_submission_nsfw)
-        : Optional.empty();
+    Optional<Integer> rowBackgroundResource = Optional.empty();
+
+    if (submission.isStickied()) {
+      rowBackgroundResource = Optional.of(R.drawable.background_subreddit_submission_sticky);
+    } else if (submission.isNsfw()) {
+      rowBackgroundResource = Optional.of(R.drawable.background_subreddit_submission_nsfw);
+    }
 
     return SubredditSubmission.UiModel.builder()
         .submission(submission)
