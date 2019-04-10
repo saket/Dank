@@ -127,7 +127,7 @@ public class UrlRouter {
           // Smart linking.
           if (defaultWebBrowser == DefaultWebBrowser.DANK_INTERNAL_BROWSER) {
             String packageNameForDeepLink = findAllowedPackageNameForDeepLink(url);
-            if (packageNameForDeepLink != null && isPackageNameInstalled(context, packageNameForDeepLink)) {
+            if (packageNameForDeepLink != null && isPackageNameInstalledAndEnabled(context, packageNameForDeepLink)) {
               return Intents.createForOpeningUrl(url).setPackage(packageNameForDeepLink);
             }
           }
@@ -228,12 +228,10 @@ public class UrlRouter {
     }
   }
 
-  public static boolean isPackageNameInstalled(Context context, String packageName) {
+  public static boolean isPackageNameInstalledAndEnabled(Context context, String packageName) {
     PackageManager packageManager = context.getPackageManager();
     try {
-      packageManager.getPackageInfo(packageName, PackageManager.GET_ACTIVITIES);
-      return true;
-
+      return packageManager.getApplicationInfo(packageName, 0).enabled;
     } catch (PackageManager.NameNotFoundException ignored) {
       return false;
     }
