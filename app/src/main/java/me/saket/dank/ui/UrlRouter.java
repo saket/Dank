@@ -126,10 +126,20 @@ public class UrlRouter {
 
           // Smart linking.
           if (defaultWebBrowser == DefaultWebBrowser.DANK_INTERNAL_BROWSER) {
-            String packageNameForDeepLink = findAllowedPackageNameForDeepLink(url);
-            if (packageNameForDeepLink != null && isPackageNameInstalledAndEnabled(context, packageNameForDeepLink)) {
-              return Intents.createForOpeningUrl(url).setPackage(packageNameForDeepLink);
-            }
+              String packageNameForDeepLink = findAllowedPackageNameForDeepLink(url);
+              if (packageNameForDeepLink != null) {
+                  if (isPackageNameInstalledAndEnabled(context, packageNameForDeepLink))
+                      return Intents.createForOpeningUrl(url).setPackage(packageNameForDeepLink);
+                  else {
+                      /*
+                        third-party apps for only YouTube are supported at the moment.
+                        There can be more checks here if third-party apps for other services are supported too.
+                       */
+                      Intent youtubeIntent = Intents.createForYouTube(url);
+                      if (youtubeIntent != null && Intents.hasAppToHandleIntent(context, youtubeIntent))
+                          return youtubeIntent;
+                  }
+              }
           }
           return defaultWebBrowser.intentForUrl(context, url, expandFromRect);
 
@@ -217,7 +227,7 @@ public class UrlRouter {
       return null;
     }
 
-    if (urlHost.endsWith("youtube.com") || urlHost.endsWith("youtu.be")) {
+    if (UrlParser.isYouTubeUrl(urlHost)) {
       return "com.google.android.youtube";
 
     } else if (UrlParser.isGooglePlayUrl(urlHost, URI.getPath())) {

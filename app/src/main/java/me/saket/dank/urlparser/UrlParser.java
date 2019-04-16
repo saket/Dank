@@ -10,6 +10,8 @@ import net.dean.jraw.models.Submission;
 
 import java.util.concurrent.ExecutionException;
 import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
 import javax.inject.Inject;
 import javax.inject.Named;
 
@@ -365,6 +367,22 @@ public class UrlParser {
 
   public static boolean isGooglePlayUrl(String urlHost, String uriPath) {
     return urlHost.endsWith("play.google.com") && uriPath.startsWith("/store");
+  }
+
+  public static boolean isYouTubeUrl(String urlHost) {
+       return (urlHost.endsWith("youtube.com") || urlHost.endsWith("youtu.be"));
+  }
+
+  @Nullable
+  public static String getVideoIDFromYouTubeUrl(String url){
+    String videoId = null;
+    String regex = "http(?:s)?:\\/\\/(?:m.)?(?:www\\.)?youtu(?:\\.be\\/|be\\.com\\/(?:watch\\?(?:feature=youtu.be\\&)?v=|v\\/|embed\\/|user\\/(?:[\\w#]+\\/)+))([^&#?\\n]+)";
+    Pattern pattern = Pattern.compile(regex, Pattern.CASE_INSENSITIVE);
+    Matcher matcher = pattern.matcher(url);
+    if(matcher.find()){
+      videoId = matcher.group(1);
+    }
+    return videoId;
   }
 
   public void clearCache() {
