@@ -35,11 +35,12 @@
       android:name=".ui.splash.SplashActivity"
       android:theme="@style/DankTheme.Splash" />
 
+    <!-- windowSoftInputMode is set in code -->
     <activity
       android:name=".ui.subreddit.SubredditActivity"
       android:launchMode="singleTask"
       android:theme="@style/DankTheme"
-      android:windowSoftInputMode="adjustResize" />
+      android:windowSoftInputMode="adjustNothing" />
 
     <activity android:name=".ui.subreddit.SubredditActivityWithTransparentWindowBackground" />
 
@@ -114,6 +115,11 @@
       android:launchMode="singleTask"
       android:theme="@style/DankTheme.DialogLikeActivity"
       android:windowSoftInputMode="adjustNothing" />
+
+    <activity
+      android:name=".ui.post.CreateNewPostActivity"
+      android:theme="@style/DankTheme.DialogLikeActivity"
+      android:windowSoftInputMode="adjustResize" />
 
     <activity
       android:name=".deeplinks.DeepLinkHandlingActivity"

@@ -1,0 +1,210 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout android:id="@+id/createnewpost_background"
+  xmlns:android="http://schemas.android.com/apk/res/android"
+  xmlns:app="http://schemas.android.com/apk/res-auto"
+  xmlns:tools="http://schemas.android.com/tools"
+  android:layout_width="match_parent"
+  android:layout_height="match_parent"
+  android:background="@color/black_opacity_40"
+  android:orientation="vertical"
+  tools:context=".ui.post.CreateNewPostActivity">
+
+  <!-- clipToOutline is set in code. -->
+  <LinearLayout
+    android:id="@+id/createnewpost_dialog_container"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:layout_margin="@dimen/spacing16"
+    android:background="@drawable/background_popup_window"
+    android:clickable="true"
+    android:elevation="@dimen/elevation_fab"
+    android:focusable="false"
+    tools:ignore="KeyboardInaccessibleWidget,UselessParent">
+
+    <me.saket.dank.widgets.ViewFlipperWithDebugPreview
+      android:layout_width="match_parent"
+      android:layout_height="match_parent"
+      app:debug_displayedChild="0">
+
+      <!--<LinearLayout-->
+      <!--android:id="@+id/createnewpost_subreddit_container"-->
+      <!--android:layout_width="match_parent"-->
+      <!--android:layout_height="wrap_content"-->
+      <!--android:orientation="vertical"-->
+      <!--android:paddingBottom="@dimen/spacing16">-->
+
+      <!--<me.saket.dank.widgets.DankToolbar-->
+      <!--style="@style/DankToolbar"-->
+      <!--android:background="@null"-->
+      <!--app:title="New Post" />-->
+
+      <!--<TextView-->
+      <!--android:layout_width="match_parent"-->
+      <!--android:layout_height="wrap_content"-->
+      <!--android:layout_marginEnd="@dimen/spacing16"-->
+      <!--android:layout_marginStart="@dimen/spacing16"-->
+      <!--android:text="Choose where to post" />-->
+
+      <!--<EditText-->
+      <!--android:layout_width="match_parent"-->
+      <!--android:layout_height="wrap_content"-->
+      <!--android:layout_marginEnd="@dimen/spacing12"-->
+      <!--android:layout_marginStart="@dimen/spacing12"-->
+      <!--android:hint="Type subreddit name" />-->
+      <!--</LinearLayout>-->
+
+      <LinearLayout
+        android:id="@+id/createnewpost_post_content_container"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:orientation="vertical">
+
+        <ScrollView
+          android:layout_width="match_parent"
+          android:layout_height="0dp"
+          android:layout_weight="1"
+          android:fillViewport="true">
+
+          <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical">
+
+            <LinearLayout
+              android:layout_width="match_parent"
+              android:layout_height="wrap_content">
+
+              <EditText
+                android:id="@+id/createnewpost_title"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginEnd="@dimen/spacing16"
+                android:layout_marginStart="@dimen/spacing16"
+                android:layout_marginTop="@dimen/spacing16"
+                android:layout_weight="1"
+                android:background="@null"
+                android:hint="Post title…"
+                android:imeOptions="actionNext"
+                android:inputType="textCapSentences"
+                android:maxLines="1"
+                android:paddingBottom="@dimen/spacing8" />
+
+              <ImageButton
+                android:id="@+id/createnewpost_close"
+                android:contentDescription="Abandon creation of new post"
+                android:layout_width="32dp"
+                android:layout_marginEnd="@dimen/spacing8"
+                android:layout_marginTop="@dimen/spacing8"
+                android:layout_height="32dp"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:src="@drawable/ic_close_20dp" />
+            </LinearLayout>
+
+            <me.saket.dank.widgets.EditTextWithBackspaceListener
+              android:id="@+id/createnewpost_body"
+              android:layout_width="match_parent"
+              android:layout_height="0dp"
+              android:layout_marginEnd="@dimen/spacing16"
+              android:layout_marginStart="@dimen/spacing16"
+              android:layout_weight="1"
+              android:background="@null"
+              android:gravity="top"
+              android:hint="Type post or paste a url…"
+              android:inputType="textMultiLine|textCapSentences"
+              android:paddingBottom="@dimen/spacing16"
+              android:paddingTop="@dimen/spacing8" />
+
+            <LinearLayout
+              android:layout_width="wrap_content"
+              android:layout_height="wrap_content"
+              android:layout_marginBottom="@dimen/spacing8"
+              android:layout_marginEnd="@dimen/spacing16">
+
+              <me.saket.dank.widgets.TintableCompoundDrawableButton
+                style="@style/DankButton.Borderless"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="@dimen/spacing4"
+                android:drawablePadding="@dimen/spacing8"
+                android:drawableStart="@drawable/ic_image_16dp"
+                android:minHeight="0dp"
+                android:text="Add image"
+                android:textColor="@color/white_opacity_75" />
+            </LinearLayout>
+          </LinearLayout>
+        </ScrollView>
+
+        <View
+          style="@style/DankSeparator.VerticalContent"
+          android:background="@color/black_opacity_20" />
+
+        <LinearLayout
+          android:layout_width="match_parent"
+          android:layout_height="52dp"
+          android:background="@color/black_opacity_10"
+          android:gravity="center_vertical"
+          android:orientation="horizontal">
+
+          <TextView
+            android:id="@+id/createnewpost_post_type"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="@dimen/spacing16"
+            android:background="@drawable/background_createnewpost_bottombar_chip"
+            android:gravity="center_vertical"
+            android:paddingBottom="2dp"
+            android:paddingEnd="4dp"
+            android:paddingStart="4dp"
+            android:paddingTop="2dp"
+            android:text="Self-text" />
+
+          <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="@dimen/spacing4"
+            android:gravity="center_vertical"
+            android:text="in"
+            android:textColor="@color/white_opacity_50" />
+
+          <TextView
+            android:id="@+id/createnewpost_selected_subreddit"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="@dimen/spacing4"
+            android:background="@drawable/background_createnewpost_bottombar_chip"
+            android:gravity="center_vertical"
+            android:paddingBottom="2dp"
+            android:paddingEnd="4dp"
+            android:paddingStart="4dp"
+            android:paddingTop="2dp"
+            android:text="r/Android" />
+
+          <Space
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1" />
+
+          <ImageButton
+            android:id="@+id/createnewpost_go_fullscreen"
+            android:layout_width="44dp"
+            android:layout_height="match_parent"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:contentDescription="Go fullscreen"
+            android:padding="@dimen/spacing12"
+            android:src="@drawable/ic_fullscreen_24dp"
+            android:tint="@color/gray_400" />
+
+          <ImageButton
+            android:id="@+id/createnewpost_submit"
+            android:layout_width="wrap_content"
+            android:layout_height="match_parent"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:contentDescription="Submit post"
+            android:padding="@dimen/spacing12"
+            android:src="@drawable/ic_send_20dp"
+            android:tint="@color/gray_400" />
+        </LinearLayout>
+      </LinearLayout>
+    </me.saket.dank.widgets.ViewFlipperWithDebugPreview>
+  </LinearLayout>
+</FrameLayout>

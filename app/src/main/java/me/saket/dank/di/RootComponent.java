@@ -2,6 +2,8 @@ package me.saket.dank.di;
 
 import com.squareup.moshi.Moshi;
 
+import org.jetbrains.annotations.NotNull;
+
 import javax.inject.Singleton;
 
 import dagger.Component;
@@ -29,6 +31,7 @@ import me.saket.dank.ui.media.BaseMediaViewerFragment;
 import me.saket.dank.ui.media.MediaAlbumViewerActivity;
 import me.saket.dank.ui.media.MediaImageFragment;
 import me.saket.dank.ui.media.MediaVideoFragment;
+import me.saket.dank.ui.post.CreateNewPostActivity;
 import me.saket.dank.ui.preferences.HiddenPreferencesActivity;
 import me.saket.dank.ui.preferences.MessageCheckFrequencyPreferencePopup;
 import me.saket.dank.ui.preferences.PreferenceGroupsScreen;
@@ -153,4 +156,6 @@ public interface RootComponent {
   void inject(MessageCheckFrequencyPreferencePopup target);
 
   void inject(NestedOptionsPopupMenu target);
+
+  void inject(@NotNull CreateNewPostActivity target);
 }

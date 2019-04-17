@@ -118,6 +118,6 @@
     android:tint="@color/white"
     app:backgroundTint="@color/submission_fab"
     app:elevation="@dimen/elevation_fab"
-    app:rippleColor="@color/gray_500"
+    app:rippleColor="@color/submission_fab_ripple"
     tools:visibility="visible" />
 </merge>

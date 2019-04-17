@@ -18,6 +18,10 @@ buildscript {
       flexmark        : '0.27.0',
       timber          : '4.6.0',
       junit           : '4.12',
+      mockito         : '2.23.4',
+      mockitoKotlin   : '2.1.0',
+      powerMockito    : '2.0.0',
+      truth           : '0.40',
       deeplinkDispatch: '3.1.1',
       androidTest     : '1.0.2',
       kotlin          : '1.3.11',
@@ -30,7 +34,7 @@ buildscript {
   }
 
   dependencies {
-    classpath 'com.android.tools.build:gradle:3.2.1'
+    classpath 'com.android.tools.build:gradle:3.3.0'
     classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$versions.kotlin"
   }
 }

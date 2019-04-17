@@ -91,7 +91,6 @@ public class UserAuthListenerTest {
         .assertComplete()
         .assertNoErrors();
 
-    verify(userAuthListener).handleLoggedOut();
     verify(subscriptionRepository).removeAll();
   }
 

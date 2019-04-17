@@ -89,9 +89,11 @@ dependencies {
   implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk7:$versions.kotlin"
 
   testImplementation "junit:junit:$versions.junit"
-  testImplementation 'org.powermock:powermock-module-junit4:1.6.6'
-  testImplementation 'org.powermock:powermock-api-mockito:1.6.6'
-  testImplementation "com.google.truth:truth:0.40"
+  testImplementation "org.mockito:mockito-core:$versions.mockito"
+  testImplementation "com.nhaarman.mockitokotlin2:mockito-kotlin:$versions.mockitoKotlin"
+  testImplementation "org.powermock:powermock-module-junit4:$versions.powerMockito"
+  testImplementation "org.powermock:powermock-api-mockito2:$versions.powerMockito"
+  testImplementation "com.google.truth:truth:$versions.truth"
 
   androidTestImplementation "com.android.support:support-annotations:$versions.supportLib"
   androidTestImplementation "com.android.support.test:runner:$versions.androidTest"

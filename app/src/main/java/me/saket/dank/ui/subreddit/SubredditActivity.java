@@ -11,12 +11,14 @@ import static me.saket.dank.utils.Views.setPaddingTop;
 import static me.saket.dank.utils.Views.touchLiesOn;
 
 import android.animation.LayoutTransition;
+import android.app.ActivityOptions;
 import android.content.Context;
 import android.content.Intent;
 import android.graphics.Rect;
 import android.os.Bundle;
 import android.os.Parcelable;
 import android.support.annotation.Nullable;
+import android.support.design.widget.FloatingActionButton;
 import android.support.transition.TransitionManager;
 import android.support.transition.TransitionSet;
 import android.support.v7.util.DiffUtil;
@@ -30,6 +32,7 @@ import android.widget.TextView;
 import com.f2prateek.rx.preferences2.Preference;
 import com.github.zagum.expandicon.ExpandIconView;
 import com.jakewharton.rxbinding2.internal.Notification;
+import com.jakewharton.rxbinding2.support.v7.widget.RxRecyclerView;
 import com.jakewharton.rxrelay2.BehaviorRelay;
 import com.jakewharton.rxrelay2.PublishRelay;
 import com.jakewharton.rxrelay2.Relay;
@@ -62,11 +65,13 @@ import me.saket.dank.data.UserPreferences;
 import me.saket.dank.di.Dank;
 import me.saket.dank.reddit.Reddit;
 import me.saket.dank.ui.DankPullCollapsibleActivity;
+import me.saket.dank.ui.ScreenDestroyed;
 import me.saket.dank.ui.UiEvent;
 import me.saket.dank.ui.UrlRouter;
 import me.saket.dank.ui.authentication.LoginActivity;
 import me.saket.dank.ui.compose.InsertGifDialog;
 import me.saket.dank.ui.giphy.GiphyGif;
+import me.saket.dank.ui.post.CreateNewPostActivity;
 import me.saket.dank.ui.preferences.UserPreferencesActivity;
 import me.saket.dank.ui.submission.ArchivedSubmissionDialogActivity;
 import me.saket.dank.ui.submission.CachedSubmissionFolder;
@@ -131,6 +136,7 @@ public class SubredditActivity extends DankPullCollapsibleActivity
   @BindView(R.id.subreddit_toolbar_expandable_sheet) ToolbarExpandableSheet toolbarSheet;
   @BindView(R.id.subreddit_progress) View fullscreenProgressView;
   @BindView(R.id.subreddit_submission_errorState) ErrorStateView fullscreenErrorStateView;
+  @BindView(R.id.subreddit_post) FloatingActionButton postFab;
 
   // TODO: convert all to lazy injections.
   @Inject SubmissionRepository submissionRepository;
@@ -216,6 +222,7 @@ public class SubredditActivity extends DankPullCollapsibleActivity
     loadSubmissions(savedState == null);
     setupSubmissionPage();
     setupToolbarSheet();
+    setupCreateNewPostFab();
 
     // Restore state of subreddit picker sheet / user profile sheet.
     if (savedState != null) {
@@ -357,15 +364,31 @@ public class SubredditActivity extends DankPullCollapsibleActivity
   private void setupController() {
     uiEvents.onNext(SubredditScreenCreateEvent.create());
 
-    subredditChangesStream
-        .map(name -> SubredditChangeEvent.create(name))
-        .takeUntil(lifecycle().onDestroy())
-        .subscribe(uiEvents);
+    Observable<UiEvent> screenDestroys = lifecycle()
+        .onDestroy()
+        .map(o -> ScreenDestroyed.INSTANCE);
+
+    Observable<UiEvent> subredditChanges = subredditChangesStream
+        .map(SubredditChanged::new);
 
     uiEvents
+        .mergeWith(Observable.merge(subredditChanges, screenDestroys, listScrolls(), submissionPageStateChanges()))
         .compose(subredditController.get())
-        .takeUntil(lifecycle().onDestroy())
-        .subscribe(uiChange -> uiChange.render(this));
+        .takeUntil(screenDestroys)
+        .observeOn(mainThread())
+        .subscribe(uiChange -> uiChange.invoke(this));
+  }
+
+  private Observable<UiEvent> listScrolls() {
+    return RxRecyclerView
+        .scrollEvents(submissionRecyclerView)
+        .map(o -> new SubredditListScrolled(o.dy()));
+  }
+
+  private Observable<UiEvent> submissionPageStateChanges() {
+    return RxExpandablePage
+        .stateChanges(submissionPage)
+        .map(SubmissionPageStateChanged::new);
   }
 
   private void setupSubmissionPage() {
@@ -816,6 +839,36 @@ public class SubredditActivity extends DankPullCollapsibleActivity
 
   private boolean isUserProfileSheetVisible() {
     return !toolbarSheet.isCollapsed() && toolbarSheet.getChildAt(0) instanceof UserProfileSheetView;
+  }
+
+// ======== FAB ======== //
+
+  private void setupCreateNewPostFab() {
+    postFab.setOnClickListener(o -> {
+      Pair<Intent, ActivityOptions> intentAndOptions = CreateNewPostActivity.intentWithFabTransform(
+          this,
+          postFab,
+          R.color.subreddit_fab,
+          R.drawable.ic_edit_white_24dp
+      );
+      startActivity(intentAndOptions.first(), intentAndOptions.second().toBundle());
+    });
+  }
+
+  @Override
+  public void setFabVisible(boolean visible) {
+    if (visible) {
+      postFab.show();
+    } else {
+      postFab.hide();
+    }
+  }
+
+// ======== OTHER STUFF ======== //
+
+  @Override
+  public void setWindowSoftInputMode(WindowSoftInputMode mode) {
+    getWindow().setSoftInputMode(mode.getFrameworkValue());
   }
 
   @Override

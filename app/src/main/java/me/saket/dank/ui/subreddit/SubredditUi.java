@@ -13,4 +13,8 @@ public interface SubredditUi {
   void populateSubmission(Submission submission, DankSubmissionRequest submissionRequest, String currentSubredditName);
 
   void expandSubmissionRow(View submissionRowView, long submissionRowId);
+
+  void setFabVisible(boolean visible);
+
+  void setWindowSoftInputMode(WindowSoftInputMode mode);
 }

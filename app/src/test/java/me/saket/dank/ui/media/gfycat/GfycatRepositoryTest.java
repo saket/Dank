@@ -109,7 +109,7 @@ public class GfycatRepositoryTest {
     when(data.isAccessTokenRequired())
         .thenAnswer(o -> tokenRequired);
     doAnswer(invocation -> {
-      tokenRequired = invocation.getArgumentAt(0, boolean.class);
+      tokenRequired = invocation.getArgument(0);
       //noinspection ReturnOfNull
       return null;
     }).when(data).setAccessTokenRequired(anyBoolean());
