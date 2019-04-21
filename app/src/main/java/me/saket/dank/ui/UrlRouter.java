@@ -151,9 +151,9 @@ public class UrlRouter {
 
       } catch (ActivityNotFoundException e) {
         String toastMessage = Optional.ofNullable(intent.getData())
-                .map(data -> data.toString())
-                .map(uri -> context.getString(R.string.common_error_no_app_found_to_handle_url, uri))
-                .orElse(context.getString(R.string.common_error_no_app_found_to_handle_this_action));
+            .map(data -> data.toString())
+            .map(uri -> context.getString(R.string.common_error_no_app_found_to_handle_url, uri))
+            .orElse(context.getString(R.string.common_error_no_app_found_to_handle_this_action));
         Toast.makeText(context, toastMessage, Toast.LENGTH_SHORT).show();
       }
     }
