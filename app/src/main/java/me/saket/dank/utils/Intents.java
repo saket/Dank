@@ -8,6 +8,7 @@ import android.support.annotation.Nullable;
 import android.support.v4.app.ShareCompat;
 
 import me.saket.dank.R;
+import me.saket.dank.urlparser.UrlParser;
 
 /**
  * Utility methods related to Intents.
@@ -78,6 +79,16 @@ public class Intents {
       return playStoreIntent;
     } else {
       return Intents.createForOpeningUrl("https://play.google.com/store/apps/details?id=" + context.getPackageName());
+    }
+  }
+
+  public static Intent createForYouTube(String videoUrl) {
+    String videoId = UrlParser.videoIdFromYouTubeUrl(videoUrl);
+    if (videoId != null) {
+      String formattedYouTuneIntentURL = "vnd.youtube://" + videoId;
+      return Intents.createForOpeningUrl(formattedYouTuneIntentURL);
+    } else {
+      return Intents.createForOpeningUrl(videoUrl);
     }
   }
 

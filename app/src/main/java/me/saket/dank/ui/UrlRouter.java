@@ -26,12 +26,15 @@ import me.saket.dank.ui.preferences.DefaultWebBrowser;
 import me.saket.dank.ui.submission.SubmissionPageLayoutActivity;
 import me.saket.dank.ui.subreddit.SubredditActivityWithTransparentWindowBackground;
 import me.saket.dank.ui.user.UserProfilePopup;
+import me.saket.dank.urlparser.Deeplink;
 import me.saket.dank.urlparser.Link;
 import me.saket.dank.urlparser.MediaLink;
+import me.saket.dank.urlparser.PlayStoreDeepLink;
 import me.saket.dank.urlparser.RedditSubmissionLink;
 import me.saket.dank.urlparser.RedditSubredditLink;
 import me.saket.dank.urlparser.RedditUserLink;
 import me.saket.dank.urlparser.UrlParser;
+import me.saket.dank.urlparser.YouTubeDeepLink;
 import me.saket.dank.utils.DeviceInfo;
 import me.saket.dank.utils.Intents;
 import me.saket.dank.utils.Optional;
@@ -125,13 +128,12 @@ public class UrlRouter {
           DefaultWebBrowser defaultWebBrowser = defaultWebBrowserPref.get();
 
           // Smart linking.
-          if (defaultWebBrowser == DefaultWebBrowser.DANK_INTERNAL_BROWSER) {
-            String packageNameForDeepLink = findAllowedPackageNameForDeepLink(url);
-            if (packageNameForDeepLink != null && isPackageNameInstalledAndEnabled(context, packageNameForDeepLink)) {
-              return Intents.createForOpeningUrl(url).setPackage(packageNameForDeepLink);
-            }
+          @Nullable Deeplink deeplink = findAllowedPackageNameForDeepLink(url);
+          if (deeplink == null) {
+            return defaultWebBrowser.intentForUrl(context, url, expandFromRect);
+          } else {
+            return deeplink.intent(context);
           }
-          return defaultWebBrowser.intentForUrl(context, url, expandFromRect);
 
         } else {
           return Intents.createForOpeningUrl(url);
@@ -209,7 +211,7 @@ public class UrlRouter {
    * TODO: Add Twitter, Instagram, Spotify, Netflix, Medium, Nytimes, Wikipedia, Sound cloud, Google photos,
    */
   @Nullable
-  public static String findAllowedPackageNameForDeepLink(String url) {
+  public static Deeplink findAllowedPackageNameForDeepLink(String url) {
     Uri URI = Uri.parse(url);
     String urlHost = URI.getHost();
 
@@ -217,11 +219,11 @@ public class UrlRouter {
       return null;
     }
 
-    if (urlHost.endsWith("youtube.com") || urlHost.endsWith("youtu.be")) {
-      return "com.google.android.youtube";
+    if (UrlParser.isYouTubeUrl(urlHost)) {
+      return new YouTubeDeepLink(url);
 
     } else if (UrlParser.isGooglePlayUrl(urlHost, URI.getPath())) {
-      return "com.android.vending";
+      return new PlayStoreDeepLink(url);
 
     } else {
       return null;

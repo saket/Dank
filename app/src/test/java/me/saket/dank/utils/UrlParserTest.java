@@ -480,6 +480,17 @@ public class UrlParserTest {
     assertThat(((StreamableUnresolvedLink) parsedLink).videoId()).isEqualTo("jawcl");
   }
 
+  @Test
+  public void parseYouTubeUrl() {
+    String url = "https://www.youtube.com/watch?v=3tCBIDzF34M";
+    assertEquals(UrlParser.isYouTubeUrl(url), true);
+    assertEquals(UrlParser.videoIdFromYouTubeUrl(url), "3tCBIDzF34M");
+
+    url = "https://youtu.be/3tCBIDzF34M";
+    assertEquals(UrlParser.isYouTubeUrl(url), true);
+    assertEquals(UrlParser.videoIdFromYouTubeUrl(url), "3tCBIDzF34M");
+  }
+
   // TODO: Extract this into an @Rule.
   public static Uri createMockUriFor(String url) {
     Uri mockUri = mock(Uri.class);
