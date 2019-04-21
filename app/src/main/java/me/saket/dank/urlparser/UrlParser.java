@@ -370,16 +370,16 @@ public class UrlParser {
   }
 
   public static boolean isYouTubeUrl(String urlHost) {
-       return (urlHost.endsWith("youtube.com") || urlHost.endsWith("youtu.be"));
+    return (urlHost.endsWith("youtube.com") || urlHost.endsWith("youtu.be"));
   }
 
   @Nullable
-  public static String getVideoIDFromYouTubeUrl(String url){
+  public static String videoIdFromYouTubeUrl(String url){
     String videoId = null;
     String regex = "http(?:s)?:\\/\\/(?:m.)?(?:www\\.)?youtu(?:\\.be\\/|be\\.com\\/(?:watch\\?(?:feature=youtu.be\\&)?v=|v\\/|embed\\/|user\\/(?:[\\w#]+\\/)+))([^&#?\\n]+)";
     Pattern pattern = Pattern.compile(regex, Pattern.CASE_INSENSITIVE);
     Matcher matcher = pattern.matcher(url);
-    if(matcher.find()){
+    if (matcher.find()) {
       videoId = matcher.group(1);
     }
     return videoId;

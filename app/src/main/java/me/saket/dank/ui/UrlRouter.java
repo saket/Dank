@@ -26,12 +26,15 @@ import me.saket.dank.ui.preferences.DefaultWebBrowser;
 import me.saket.dank.ui.submission.SubmissionPageLayoutActivity;
 import me.saket.dank.ui.subreddit.SubredditActivityWithTransparentWindowBackground;
 import me.saket.dank.ui.user.UserProfilePopup;
+import me.saket.dank.urlparser.Deeplink;
 import me.saket.dank.urlparser.Link;
 import me.saket.dank.urlparser.MediaLink;
+import me.saket.dank.urlparser.PlayStoreDeepLink;
 import me.saket.dank.urlparser.RedditSubmissionLink;
 import me.saket.dank.urlparser.RedditSubredditLink;
 import me.saket.dank.urlparser.RedditUserLink;
 import me.saket.dank.urlparser.UrlParser;
+import me.saket.dank.urlparser.YouTubeDeepLink;
 import me.saket.dank.utils.DeviceInfo;
 import me.saket.dank.utils.Intents;
 import me.saket.dank.utils.Optional;
@@ -125,23 +128,12 @@ public class UrlRouter {
           DefaultWebBrowser defaultWebBrowser = defaultWebBrowserPref.get();
 
           // Smart linking.
-          if (defaultWebBrowser == DefaultWebBrowser.DANK_INTERNAL_BROWSER) {
-              String packageNameForDeepLink = findAllowedPackageNameForDeepLink(url);
-              if (packageNameForDeepLink != null) {
-                  if (isPackageNameInstalledAndEnabled(context, packageNameForDeepLink))
-                      return Intents.createForOpeningUrl(url).setPackage(packageNameForDeepLink);
-                  else {
-                      /*
-                        third-party apps for only YouTube are supported at the moment.
-                        There can be more checks here if third-party apps for other services are supported too.
-                       */
-                      Intent youtubeIntent = Intents.createForYouTube(url);
-                      if (youtubeIntent != null && Intents.hasAppToHandleIntent(context, youtubeIntent))
-                          return youtubeIntent;
-                  }
-              }
+          @Nullable Deeplink deeplink = findAllowedPackageNameForDeepLink(url);
+          if (deeplink == null) {
+            return defaultWebBrowser.intentForUrl(context, url, expandFromRect);
+          } else {
+            return deeplink.intent(context);
           }
-          return defaultWebBrowser.intentForUrl(context, url, expandFromRect);
 
         } else {
           return Intents.createForOpeningUrl(url);
@@ -159,9 +151,9 @@ public class UrlRouter {
 
       } catch (ActivityNotFoundException e) {
         String toastMessage = Optional.ofNullable(intent.getData())
-            .map(data -> data.toString())
-            .map(uri -> context.getString(R.string.common_error_no_app_found_to_handle_url, uri))
-            .orElse(context.getString(R.string.common_error_no_app_found_to_handle_this_action));
+                .map(data -> data.toString())
+                .map(uri -> context.getString(R.string.common_error_no_app_found_to_handle_url, uri))
+                .orElse(context.getString(R.string.common_error_no_app_found_to_handle_this_action));
         Toast.makeText(context, toastMessage, Toast.LENGTH_SHORT).show();
       }
     }
@@ -219,7 +211,7 @@ public class UrlRouter {
    * TODO: Add Twitter, Instagram, Spotify, Netflix, Medium, Nytimes, Wikipedia, Sound cloud, Google photos,
    */
   @Nullable
-  public static String findAllowedPackageNameForDeepLink(String url) {
+  public static Deeplink findAllowedPackageNameForDeepLink(String url) {
     Uri URI = Uri.parse(url);
     String urlHost = URI.getHost();
 
@@ -228,10 +220,10 @@ public class UrlRouter {
     }
 
     if (UrlParser.isYouTubeUrl(urlHost)) {
-      return "com.google.android.youtube";
+      return new YouTubeDeepLink(url);
 
     } else if (UrlParser.isGooglePlayUrl(urlHost, URI.getPath())) {
-      return "com.android.vending";
+      return new PlayStoreDeepLink(url);
 
     } else {
       return null;

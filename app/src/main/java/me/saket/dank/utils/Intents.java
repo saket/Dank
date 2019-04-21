@@ -55,22 +55,22 @@ public class Intents {
   @CheckResult
   public static Intent createForSharingMedia(Context context, Uri mediaContentUri) {
     Intent shareIntent = new Intent().setAction(Intent.ACTION_SEND)
-        .putExtra(ShareCompat.EXTRA_CALLING_PACKAGE, context.getPackageName())
-        .addFlags(Intent.FLAG_ACTIVITY_NEW_DOCUMENT)
-        .putExtra(Intent.EXTRA_STREAM, mediaContentUri)
-        .setType(context.getContentResolver().getType(mediaContentUri))
-        .addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+            .putExtra(ShareCompat.EXTRA_CALLING_PACKAGE, context.getPackageName())
+            .addFlags(Intent.FLAG_ACTIVITY_NEW_DOCUMENT)
+            .putExtra(Intent.EXTRA_STREAM, mediaContentUri)
+            .setType(context.getContentResolver().getType(mediaContentUri))
+            .addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
     return Intent.createChooser(shareIntent, context.getString(R.string.common_share_sheet_title));
   }
 
   @CheckResult
   public static Intent createForViewingMedia(Context context, Uri mediaContentUri) {
     return new Intent().setAction(Intent.ACTION_VIEW)
-        .putExtra(ShareCompat.EXTRA_CALLING_PACKAGE, context.getPackageName())
-        .addFlags(Intent.FLAG_ACTIVITY_NEW_DOCUMENT)
-        .putExtra(Intent.EXTRA_STREAM, mediaContentUri)
-        .setType(context.getContentResolver().getType(mediaContentUri))
-        .addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+            .putExtra(ShareCompat.EXTRA_CALLING_PACKAGE, context.getPackageName())
+            .addFlags(Intent.FLAG_ACTIVITY_NEW_DOCUMENT)
+            .putExtra(Intent.EXTRA_STREAM, mediaContentUri)
+            .setType(context.getContentResolver().getType(mediaContentUri))
+            .addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
   }
 
   public static Intent createForPlayStoreListing(Context context, String packageName) {
@@ -82,14 +82,14 @@ public class Intents {
     }
   }
 
-  @Nullable
   public static Intent createForYouTube(String videoUrl) {
-      String videoId = UrlParser.getVideoIDFromYouTubeUrl(videoUrl);
-      if (videoId != null) {
-          String formattedYouTuneIntentURL = "vnd.youtube://" + videoId;
-          return Intents.createForOpeningUrl(formattedYouTuneIntentURL);
-      } else
-          return null;
+    String videoId = UrlParser.videoIdFromYouTubeUrl(videoUrl);
+    if (videoId != null) {
+      String formattedYouTuneIntentURL = "vnd.youtube://" + videoId;
+      return Intents.createForOpeningUrl(formattedYouTuneIntentURL);
+    } else {
+      return Intents.createForOpeningUrl(videoUrl);
+    }
   }
 
   public static Intent createForEmail(String emailAddress) {
