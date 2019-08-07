@@ -33,6 +33,8 @@ import me.saket.dank.ui.preferences.HiddenPreferencesActivity;
 import me.saket.dank.ui.preferences.MessageCheckFrequencyPreferencePopup;
 import me.saket.dank.ui.preferences.PreferenceGroupsScreen;
 import me.saket.dank.ui.preferences.TypefaceInflationInterceptor;
+import me.saket.dank.ui.preferences.gestures.submissions.SubmissionGesturesPreferenceScreen;
+import me.saket.dank.ui.preferences.gestures.submissions.SubmissionSwipeActionPreferenceChoicePopup;
 import me.saket.dank.ui.submission.CommentOptionsPopup;
 import me.saket.dank.ui.submission.LinkOptionsPopup;
 import me.saket.dank.ui.submission.SubmissionPageLayout;
@@ -153,4 +155,8 @@ public interface RootComponent {
   void inject(MessageCheckFrequencyPreferencePopup target);
 
   void inject(NestedOptionsPopupMenu target);
+
+  void inject(SubmissionGesturesPreferenceScreen target);
+
+  void inject(SubmissionSwipeActionPreferenceChoicePopup target);
 }

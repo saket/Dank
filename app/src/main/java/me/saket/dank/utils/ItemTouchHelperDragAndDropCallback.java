@@ -57,11 +57,10 @@ public abstract class ItemTouchHelperDragAndDropCallback extends ItemTouchHelper
     if (source.getItemViewType() != target.getItemViewType()) {
       return false;
     }
-    onItemMove(source, target);
-    return true;    // True to indicate movement was handled.
+    return onItemMove(source, target);
   }
 
-  protected abstract void onItemMove(RecyclerView.ViewHolder source, RecyclerView.ViewHolder target);
+  protected abstract boolean onItemMove(RecyclerView.ViewHolder source, RecyclerView.ViewHolder target);
 
   @Override
   public void onSwiped(RecyclerView.ViewHolder viewHolder, int i) {

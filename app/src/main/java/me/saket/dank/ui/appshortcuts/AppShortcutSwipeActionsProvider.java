@@ -10,6 +10,7 @@ import me.saket.dank.R;
 import me.saket.dank.widgets.swipe.SwipeAction;
 import me.saket.dank.widgets.swipe.SwipeActions;
 import me.saket.dank.widgets.swipe.SwipeActionsHolder;
+import me.saket.dank.widgets.swipe.SwipeDirection;
 import me.saket.dank.widgets.swipe.SwipeTriggerRippleDrawable.RippleType;
 import me.saket.dank.widgets.swipe.SwipeableLayout;
 import me.saket.dank.widgets.swipe.SwipeableLayout.SwipeActionIconProvider;
@@ -59,7 +60,7 @@ public class AppShortcutSwipeActionsProvider {
     };
   }
 
-  public void performSwipeAction(SwipeAction swipeAction, AppShortcut shortcut, SwipeableLayout swipeableLayout) {
+  public void performSwipeAction(SwipeAction swipeAction, AppShortcut shortcut, SwipeableLayout swipeableLayout, SwipeDirection swipeDirection) {
     switch (swipeAction.labelRes()) {
       case ACTION_NAME_DELETE:
         deleteSwipeActions.accept(shortcut);
@@ -68,6 +69,6 @@ public class AppShortcutSwipeActionsProvider {
       default:
         throw new AssertionError("Unknown swipe action: " + swipeAction);
     }
-    swipeableLayout.playRippleAnimation(swipeAction, RippleType.REGISTER);
+    swipeableLayout.playRippleAnimation(swipeAction, RippleType.REGISTER, swipeDirection);
   }
 }

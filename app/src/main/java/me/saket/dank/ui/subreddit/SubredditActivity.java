@@ -585,7 +585,7 @@ public class SubredditActivity extends DankPullCollapsibleActivity
         .map(SubredditScreenUiModel::rowUiModels)
         .observeOn(io())
         .toFlowable(BackpressureStrategy.LATEST)
-        .compose(RxDiffUtil.calculateDiff(SubmissionItemDiffer::create))
+        .compose(RxDiffUtil.calculate(SubmissionItemDiffer.INSTANCE))
         .toObservable()
         .observeOn(mainThread());
 

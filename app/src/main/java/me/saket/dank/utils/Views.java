@@ -3,10 +3,8 @@ package me.saket.dank.utils;
 import android.content.res.Resources;
 import android.graphics.Point;
 import android.graphics.Rect;
-import android.graphics.drawable.Drawable;
 import android.support.annotation.CheckResult;
 import android.support.annotation.DrawableRes;
-import android.support.annotation.Nullable;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.ViewTreeObserver;
@@ -211,21 +209,21 @@ public class Views {
     view.setLayoutParams(params);
   }
 
-  public static void setCompoundDrawableStart(TextView textView, @Nullable Drawable icon) {
+  public static void setCompoundDrawableStart(TextView textView, @DrawableRes int iconResId) {
     textView.setCompoundDrawablesRelativeWithIntrinsicBounds(
-        icon,
-        textView.getCompoundDrawables()[1],
-        textView.getCompoundDrawables()[2],
-        textView.getCompoundDrawables()[3]
+        iconResId != 0 ? textView.getContext().getDrawable(iconResId) : null,
+        textView.getCompoundDrawablesRelative()[1],
+        textView.getCompoundDrawablesRelative()[2],
+        textView.getCompoundDrawablesRelative()[3]
     );
   }
 
   public static void setCompoundDrawableEnd(TextView textView, @DrawableRes int iconResId) {
     textView.setCompoundDrawablesRelativeWithIntrinsicBounds(
-        textView.getCompoundDrawables()[0],
-        textView.getCompoundDrawables()[1],
+        textView.getCompoundDrawablesRelative()[0],
+        textView.getCompoundDrawablesRelative()[1],
         iconResId != 0 ? textView.getContext().getDrawable(iconResId) : null,
-        textView.getCompoundDrawables()[3]
+        textView.getCompoundDrawablesRelative()[3]
     );
   }
 

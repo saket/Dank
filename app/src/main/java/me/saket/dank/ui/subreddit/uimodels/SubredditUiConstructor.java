@@ -16,6 +16,7 @@ import net.dean.jraw.models.SubmissionPreview;
 import net.dean.jraw.models.VoteDirection;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Locale;
 import javax.inject.Inject;
@@ -25,6 +26,7 @@ import me.saket.dank.R;
 import me.saket.dank.data.EmptyState;
 import me.saket.dank.data.ErrorResolver;
 import me.saket.dank.data.ErrorState;
+import me.saket.dank.ui.preferences.gestures.submissions.SubmissionSwipeActionsRepository;
 import me.saket.dank.ui.submission.BookmarksRepository;
 import me.saket.dank.ui.submission.CachedSubmissionFolder;
 import me.saket.dank.ui.submission.PrivateSubredditException;
@@ -40,6 +42,7 @@ import me.saket.dank.utils.Themes;
 import me.saket.dank.utils.Truss;
 import me.saket.dank.vote.VotingManager;
 import me.saket.dank.walkthrough.SubmissionGesturesWalkthrough;
+import me.saket.dank.widgets.swipe.SwipeActions;
 
 public class SubredditUiConstructor {
 
@@ -54,6 +57,7 @@ public class SubredditUiConstructor {
   private final Preference<Boolean> showSubmissionThumbnailsOnLeft;
   private final ErrorResolver errorResolver;
   private final Lazy<BookmarksRepository> bookmarksRepository;
+  private final Lazy<SubmissionSwipeActionsRepository> swipeActionsRepository;
 
   @Inject
   public SubredditUiConstructor(
@@ -64,8 +68,9 @@ public class SubredditUiConstructor {
       @Named("comment_count_in_submission_list_byline") Preference<Boolean> showCommentCountInByline,
       @Named("show_nsfw_content") Preference<Boolean> showNsfwContent,
       @Named("show_submission_thumbnails") Preference<Boolean> showThumbnailsPref,
-      @Named("show_submission_thumbnails_on_left") Preference<Boolean> showSubmissionThumbnailsOnLeft)
-  {
+      @Named("show_submission_thumbnails_on_left") Preference<Boolean> showSubmissionThumbnailsOnLeft,
+      Lazy<SubmissionSwipeActionsRepository> swipeActionsRepository
+  ) {
     this.votingManager = votingManager;
     this.errorResolver = errorResolver;
     this.bookmarksRepository = bookmarksRepository;
@@ -74,6 +79,7 @@ public class SubredditUiConstructor {
     this.showNsfwContent = showNsfwContent;
     this.showThumbnailsPref = showThumbnailsPref;
     this.showSubmissionThumbnailsOnLeft = showSubmissionThumbnailsOnLeft;
+    this.swipeActionsRepository = swipeActionsRepository;
   }
 
   @CheckResult
@@ -100,7 +106,7 @@ public class SubredditUiConstructor {
     Observable<Boolean> sharedFullscreenProgressVisibilities = fullscreenProgressVisibilities(cachedSubmissionLists, paginationResults)
         .share();
 
-    return Observable.combineLatest(
+    return Observable.combineLatest(Arrays.asList(
         sharedFullscreenProgressVisibilities.distinctUntilChanged(),
         fullscreenErrors(cachedSubmissionLists, paginationResults).distinctUntilChanged(),
         fullscreenEmptyStates(cachedSubmissionLists, paginationResults).distinctUntilChanged(),
@@ -109,40 +115,41 @@ public class SubredditUiConstructor {
         gesturesWalkthrough.get().walkthroughRows(),
         cachedSubmissionLists,
         submissionFolderStream,
-        externalChanges,
-        (fullscreenProgressVisible,
-            optFullscreenError,
-            optEmptyState,
-            toolbarRefreshVisible,
-            optPagination,
-            optWalkthroughRow,
-            optCachedSubs,
-            folder,
-            o) ->
-        {
-          int rowCount = optPagination.map(p -> 1).orElse(0) + optCachedSubs.map(subs -> subs.size()).orElse(0);
-          List<SubredditScreenUiModel.SubmissionRowUiModel> rowUiModels = new ArrayList<>(rowCount);
+        swipeActionsRepository.get().getSwipeActions().distinctUntilChanged(),
+        externalChanges
+    ), (data) -> {
+      Boolean fullscreenProgressVisible = (Boolean) data[0];
+      Optional<ErrorState> optFullscreenError = (Optional<ErrorState>) data[1];
+      Optional<EmptyState> optEmptyState = (Optional<EmptyState>) data[2];
+      Boolean toolbarRefreshVisible = (Boolean) data[3];
+      Optional<SubredditSubmissionPagination.UiModel> optPagination = (Optional<SubredditSubmissionPagination.UiModel>) data[4];
+      Optional<SubmissionGesturesWalkthrough.UiModel> optWalkthroughRow = (Optional<SubmissionGesturesWalkthrough.UiModel>) data[5];
+      Optional<List<Submission>> optCachedSubs = (Optional<List<Submission>>) data[6];
+      CachedSubmissionFolder folder = (CachedSubmissionFolder) data[7];
+      SwipeActions swipeActions = (SwipeActions) data[8];
+      int rowCount = optPagination.map(p -> 1).orElse(0) + optCachedSubs.map(subs -> subs.size()).orElse(0);
+      List<SubredditScreenUiModel.SubmissionRowUiModel> rowUiModels = new ArrayList<>(rowCount);
 
-          optCachedSubs.ifPresent(cachedSubs -> {
-            optWalkthroughRow.ifPresent(walkthroughUiModel -> {
-              rowUiModels.add(walkthroughUiModel);
-            });
-
-            for (Submission submission : cachedSubs) {
-              int pendingSyncReplyCount = 0;  // TODO v2:  Get this from database.
-              rowUiModels.add(submissionUiModel(context, submission, pendingSyncReplyCount, folder.subredditName()));
-            }
-          });
-          optPagination.ifPresent(pagination -> rowUiModels.add(pagination));
-
-          return SubredditScreenUiModel.builder()
-              .fullscreenProgressVisible(fullscreenProgressVisible)
-              .fullscreenError(optFullscreenError)
-              .emptyState(optEmptyState)
-              .toolbarRefreshVisible(toolbarRefreshVisible)
-              .rowUiModels(rowUiModels)
-              .build();
+      optCachedSubs.ifPresent(cachedSubs -> {
+        optWalkthroughRow.ifPresent(walkthroughUiModel -> {
+          rowUiModels.add(walkthroughUiModel);
         });
+
+        for (Submission submission : cachedSubs) {
+          int pendingSyncReplyCount = 0;  // TODO v2:  Get this from database.
+          rowUiModels.add(submissionUiModel(context, submission, pendingSyncReplyCount, folder.subredditName(), swipeActions));
+        }
+      });
+      optPagination.ifPresent(pagination -> rowUiModels.add(pagination));
+
+      return SubredditScreenUiModel.builder()
+          .fullscreenProgressVisible(fullscreenProgressVisible)
+          .fullscreenError(optFullscreenError)
+          .emptyState(optEmptyState)
+          .toolbarRefreshVisible(toolbarRefreshVisible)
+          .rowUiModels(rowUiModels)
+          .build();
+    });
   }
 
   private Observable<Boolean> fullscreenProgressVisibilities(
@@ -242,12 +249,13 @@ public class SubredditUiConstructor {
     );
   }
 
-  private SubredditSubmission.UiModel submissionUiModel(
+  public SubredditSubmission.UiModel submissionUiModel(
       Context c,
       Submission submission,
       Integer pendingSyncReplyCount,
-      String subredditName)
-  {
+      String subredditName,
+      SwipeActions swipeActions
+  ) {
     int submissionScore = votingManager.getScoreAfterAdjustingPendingVote(submission);
     VoteDirection voteDirection = votingManager.getPendingOrDefaultVote(submission, submission.getVote());
     int postedAndPendingCommentCount = submission.getCommentCount() + pendingSyncReplyCount;
@@ -380,6 +388,7 @@ public class SubredditUiConstructor {
         .byline(bylineBuilder.build(), postedAndPendingCommentCount)
         .backgroundDrawableRes(rowBackgroundResource)
         .isSaved(bookmarksRepository.get().isSaved(submission))
+        .swipeActions(swipeActions)
         .build();
   }
 

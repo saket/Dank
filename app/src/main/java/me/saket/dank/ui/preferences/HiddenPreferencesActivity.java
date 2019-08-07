@@ -16,18 +16,21 @@ import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.ScrollView;
 
+import butterknife.BindView;
+import butterknife.ButterKnife;
 import com.bumptech.glide.Glide;
+import com.f2prateek.rx.preferences2.Preference;
 import com.squareup.sqlbrite2.BriteDatabase;
+import dagger.Lazy;
+import io.reactivex.Completable;
+import io.reactivex.schedulers.Schedulers;
+import timber.log.Timber;
 
+import java.util.List;
 import java.util.concurrent.TimeUnit;
 import javax.inject.Inject;
 import javax.inject.Named;
 
-import butterknife.BindView;
-import butterknife.ButterKnife;
-import dagger.Lazy;
-import io.reactivex.Completable;
-import io.reactivex.schedulers.Schedulers;
 import me.saket.dank.R;
 import me.saket.dank.data.LinkMetadataRepository;
 import me.saket.dank.di.Dank;
@@ -38,6 +41,7 @@ import me.saket.dank.ui.appshortcuts.AppShortcutRepository;
 import me.saket.dank.ui.media.MediaHostRepository;
 import me.saket.dank.ui.submission.SubmissionCommentTreeUiConstructor;
 import me.saket.dank.ui.submission.SubmissionRepository;
+import me.saket.dank.ui.subreddit.SubmissionSwipeAction;
 import me.saket.dank.ui.subscriptions.SubscriptionRepository;
 import me.saket.dank.ui.user.messages.CachedMessage;
 import me.saket.dank.urlparser.UrlParser;
@@ -46,7 +50,6 @@ import me.saket.dank.utils.Views;
 import me.saket.dank.utils.markdown.Markdown;
 import me.saket.dank.vote.VotingManager;
 import me.saket.dank.widgets.InboxUI.IndependentExpandablePageLayout;
-import timber.log.Timber;
 
 @SuppressLint("SetTextI18n")
 public class HiddenPreferencesActivity extends DankPullCollapsibleActivity {
@@ -67,6 +70,8 @@ public class HiddenPreferencesActivity extends DankPullCollapsibleActivity {
   @Inject Lazy<MediaHostRepository> mediaHostRepository;
   @Inject Lazy<AppShortcutRepository> appShortcutRepository;
   @Inject @Named("walkthroughs") Lazy<SharedPreferences> sharedPreferences;
+  @Inject @Named("submission_start_swipe_actions") Lazy<Preference<List<SubmissionSwipeAction>>> startSwipeActionsPref;
+  @Inject @Named("submission_end_swipe_actions") Lazy<Preference<List<SubmissionSwipeAction>>> endSwipeActionsPref;
 
   public static void start(Context context) {
     context.startActivity(new Intent(context, HiddenPreferencesActivity.class));
@@ -185,6 +190,11 @@ public class HiddenPreferencesActivity extends DankPullCollapsibleActivity {
 
     addButton("Reset collapsed comments", o -> {
       SubmissionCommentTreeUiConstructor.COLLAPSED_COMMENT_IDS.clear();
+    });
+
+    addButton("Reset swipe action preferences", o -> {
+      startSwipeActionsPref.get().delete();
+      endSwipeActionsPref.get().delete();
     });
   }
 

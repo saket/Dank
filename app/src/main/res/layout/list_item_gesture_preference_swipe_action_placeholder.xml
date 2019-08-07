@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+  android:layout_width="match_parent"
+  android:layout_height="wrap_content"
+  android:orientation="vertical"
+  android:outlineProvider="background">
+
+  <me.saket.dank.widgets.TintableCompoundDrawableButton
+    android:id="@+id/item_gesturepreferences_swipeaction_add"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_marginStart="-2dp"
+    android:background="?attr/selectableItemBackground"
+    android:drawableStart="@drawable/ic_add_circle_24dp"
+    android:drawablePadding="@dimen/spacing16"
+    android:gravity="center_vertical|start"
+    android:orientation="vertical"
+    android:paddingStart="@dimen/spacing16"
+    android:paddingTop="@dimen/spacing16"
+    android:paddingEnd="@dimen/spacing12"
+    android:paddingBottom="@dimen/spacing16"
+    android:text="@string/gesturepreferences_add_new_action"
+    android:textAllCaps="false"
+    android:textColor="@color/white_opacity_40" />
+
+  <View
+    style="@style/DankSeparator.VerticalContent"
+    android:layout_marginStart="56dp" />
+</LinearLayout>

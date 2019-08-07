@@ -254,7 +254,7 @@ public class ConfigureAppShortcutsActivity extends DankActivity {
   private ItemTouchHelperDragAndDropCallback createDragAndDropCallbacks() {
     return new ItemTouchHelperDragAndDropCallback() {
       @Override
-      protected void onItemMove(ViewHolder source, ViewHolder target) {
+      protected boolean onItemMove(ViewHolder source, ViewHolder target) {
         AppShortcutViewHolder sourceViewHolder = (AppShortcutViewHolder) source;
         AppShortcutViewHolder targetViewHolder = (AppShortcutViewHolder) target;
 
@@ -283,6 +283,7 @@ public class ConfigureAppShortcutsActivity extends DankActivity {
               .subscribeOn(io())
               .subscribe();
         }
+        return true;
       }
     };
   }

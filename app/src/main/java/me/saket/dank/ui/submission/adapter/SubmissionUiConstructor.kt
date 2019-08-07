@@ -16,6 +16,7 @@ import me.saket.dank.BuildConfig
 import me.saket.dank.R
 import me.saket.dank.data.ResolvedError
 import me.saket.dank.reply.ReplyRepository
+import me.saket.dank.ui.preferences.gestures.submissions.SubmissionSwipeActionsRepository
 import me.saket.dank.ui.submission.BookmarksRepository
 import me.saket.dank.ui.submission.ParentThread
 import me.saket.dank.ui.submission.SubmissionAndComments
@@ -38,20 +39,21 @@ import me.saket.dank.utils.lifecycle.LifecycleStreams
 import me.saket.dank.utils.markdown.Markdown
 import me.saket.dank.vote.VotingManager
 import me.saket.dank.widgets.span.RoundedBackgroundSpan
+import me.saket.dank.widgets.swipe.SwipeActions
 import net.dean.jraw.models.Submission
 import timber.log.Timber
 import java.util.ArrayList
 import java.util.Collections
 import javax.inject.Inject
 
-class SubmissionUiConstructor @Inject
-constructor(
+class SubmissionUiConstructor @Inject constructor(
     private val contentLinkUiModelConstructor: SubmissionContentLinkUiConstructor,
     private val replyRepository: ReplyRepository,
     private val votingManager: VotingManager,
     private val markdown: Markdown,
     private val userSessionRepository: UserSessionRepository,
-    private val bookmarksRepository: Lazy<BookmarksRepository>
+    private val bookmarksRepository: Lazy<BookmarksRepository>,
+    private val swipeActionsRepository: SubmissionSwipeActionsRepository
 ) {
 
   @CheckResult
@@ -130,10 +132,11 @@ constructor(
               .merge(votingManager.streamChanges(), bookmarksRepository.get().streamChanges())
               .startWith(NOTHING)
 
-          val headerUiModels = CombineLatestWithLog.from<Context, Submission, Optional<SubmissionContentLinkUiModel>, Any, SubmissionCommentsHeader.UiModel>(
+          val headerUiModels = CombineLatestWithLog.from<Context, Submission, Optional<SubmissionContentLinkUiModel>, SwipeActions, SubmissionCommentsHeader.UiModel>(
               O.of("ext-change", externalChanges.map { context }),
               O.of("submission 2", sharedSubmissionDatum2.map { it.submission }.distinctUntilChanged()),
               O.of("content-link", contentLinkUiModels),
+              O.of("swipe-actions", swipeActionsRepository.swipeActions.distinctUntilChanged()),
               ::headerUiModel
           )
 
@@ -219,7 +222,8 @@ constructor(
   private fun headerUiModel(
       context: Context,
       submission: Submission,
-      contentLinkUiModel: Optional<SubmissionContentLinkUiModel>
+      contentLinkUiModel: Optional<SubmissionContentLinkUiModel>,
+      swipeActions: SwipeActions
   ): SubmissionCommentsHeader.UiModel {
     val pendingOrDefaultVote = votingManager.getPendingOrDefaultVote(submission, submission.vote)
     val voteDirectionColor = Themes.voteColor(pendingOrDefaultVote)
@@ -277,6 +281,7 @@ constructor(
         .optionalContentLinkModel(contentLinkUiModel)
         .submission(submission)
         .isSaved(bookmarksRepository.get().isSaved(submission))
+        .swipeActions(swipeActions)
         .build()
   }
 

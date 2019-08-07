@@ -14,9 +14,25 @@
     android:layout_height="wrap_content"
     app:navigationIcon="@drawable/ic_toolbar_close_24dp" />
 
-  <TextView
+
+  <LinearLayout
     android:layout_width="wrap_content"
     android:layout_height="wrap_content"
     android:layout_centerInParent="true"
-    android:text="@string/work_in_progress" />
+    android:gravity="center_horizontal"
+    android:orientation="vertical">
+
+    <TextView
+      android:layout_width="wrap_content"
+      android:layout_height="wrap_content"
+      android:layout_marginBottom="@dimen/spacing16"
+      android:text="ᕕ( ᐛ )ᕗ"
+      android:textSize="@dimen/textsize24"
+      tools:ignore="HardcodedText" />
+
+    <TextView
+      android:layout_width="wrap_content"
+      android:layout_height="wrap_content"
+      android:text="@string/work_in_progress" />
+  </LinearLayout>
 </me.saket.dank.ui.preferences.gestures.CommentGesturesPreferenceScreen>

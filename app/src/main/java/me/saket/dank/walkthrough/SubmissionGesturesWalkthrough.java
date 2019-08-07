@@ -28,8 +28,13 @@ import java.util.List;
 import javax.inject.Inject;
 import javax.inject.Named;
 
+import dagger.Lazy;
+import io.reactivex.Observable;
+import net.dean.jraw.models.Submission;
+
 import me.saket.dank.R;
 import me.saket.dank.ui.preferences.TypefaceInflationInterceptor;
+import me.saket.dank.ui.preferences.gestures.submissions.SubmissionSwipeActionsRepository;
 import me.saket.dank.ui.subreddit.SubmissionSwipeActionsProvider;
 import me.saket.dank.ui.subreddit.SubredditSubmissionsAdapter;
 import me.saket.dank.ui.subreddit.uimodels.SubredditScreenUiModel;
@@ -37,6 +42,7 @@ import me.saket.dank.utils.Optional;
 import me.saket.dank.widgets.swipe.SwipeAction;
 import me.saket.dank.widgets.swipe.SwipeActionIconView;
 import me.saket.dank.widgets.swipe.SwipeActions;
+import me.saket.dank.widgets.swipe.SwipeDirection;
 import me.saket.dank.widgets.swipe.SwipeTriggerRippleDrawable.RippleType;
 import me.saket.dank.widgets.swipe.SwipeableLayout;
 import me.saket.dank.widgets.swipe.SwipeableLayout.SwipeActionIconProvider;
@@ -169,8 +175,8 @@ public class SubmissionGesturesWalkthrough {
       SwipeableLayout swipeableLayout = holder.getSwipeableLayout();
       swipeableLayout.setSwipeActions(swipeActionsProvider.actions());
       swipeableLayout.setSwipeActionIconProvider(swipeActionsProvider);
-      swipeableLayout.setOnPerformSwipeActionListener(action ->
-          swipeActionsProvider.perform(action, holder, swipeableLayout, clickStream)
+      swipeableLayout.setOnPerformSwipeActionListener((action, swipeDirection) ->
+          swipeActionsProvider.perform(action, holder, swipeableLayout, clickStream, swipeDirection)
       );
       return holder;
     }
@@ -192,24 +198,30 @@ public class SubmissionGesturesWalkthrough {
 
   public static class WalkthroughSwipeActionsProvider implements SwipeActionIconProvider {
     private final SubmissionSwipeActionsProvider submissionSwipeActionsProvider;
+    private SubmissionSwipeActionsRepository submissionSwipeActionsRepository;
     private int discoveryCount = 0;
     private SwipeAction lastPerformedAction;
+    private Submission syntheticSubmission = new SyntheticSubmission(3, "Here's a heart-warming photo to start your journey");
 
     @Inject
-    public WalkthroughSwipeActionsProvider(SubmissionSwipeActionsProvider submissionSwipeActionsProvider) {
+    public WalkthroughSwipeActionsProvider(
+        SubmissionSwipeActionsProvider submissionSwipeActionsProvider,
+        SubmissionSwipeActionsRepository submissionSwipeActionsRepository
+    ) {
       this.submissionSwipeActionsProvider = submissionSwipeActionsProvider;
+      this.submissionSwipeActionsRepository = submissionSwipeActionsRepository;
     }
 
     public SwipeActions actions() {
-      return submissionSwipeActionsProvider.actionsWithSave();
+      return submissionSwipeActionsRepository.getDefaultSwipeActions();
     }
 
     @Override
     public void showSwipeActionIcon(SwipeActionIconView imageView, @Nullable SwipeAction oldAction, SwipeAction newAction) {
-      submissionSwipeActionsProvider.showSwipeActionIcon(imageView, oldAction, newAction);
+      submissionSwipeActionsProvider.showSwipeActionIcon(imageView, oldAction, newAction, syntheticSubmission);
     }
 
-    public void perform(SwipeAction action, ViewHolder holder, SwipeableLayout layout, Relay<SubmissionGestureWalkthroughProceedEvent> clickStream) {
+    public void perform(SwipeAction action, ViewHolder holder, SwipeableLayout layout, Relay<SubmissionGestureWalkthroughProceedEvent> clickStream, SwipeDirection swipeDirection) {
       Context context = layout.getContext();
       holder.titleSwitcherView.setText(String.format("'%s'", context.getString(action.labelRes())));
       TextView titleView = (TextView) holder.titleSwitcherView.getChildAt(holder.titleSwitcherView.getDisplayedChild());
@@ -226,7 +238,7 @@ public class SubmissionGesturesWalkthrough {
         lastPerformedAction = action;
       }
 
-      layout.playRippleAnimation(action, isUndoAction ? RippleType.UNDO : RippleType.REGISTER);
+      layout.playRippleAnimation(action, isUndoAction ? RippleType.UNDO : RippleType.REGISTER, swipeDirection);
 
       switch (discoveryCount) {
         case 1:

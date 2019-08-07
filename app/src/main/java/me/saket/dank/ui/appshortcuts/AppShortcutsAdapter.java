@@ -29,6 +29,7 @@ import me.saket.dank.utils.Pair;
 import me.saket.dank.utils.RecyclerViewArrayAdapter;
 import me.saket.dank.utils.ItemTouchHelperDragAndDropCallback;
 import me.saket.dank.utils.lifecycle.LifecycleStreams;
+import me.saket.dank.widgets.swipe.SwipeDirection;
 import me.saket.dank.widgets.swipe.SwipeableLayout;
 import me.saket.dank.widgets.swipe.ViewHolderWithSwipeActions;
 
@@ -144,8 +145,8 @@ public class AppShortcutsAdapter extends RecyclerViewArrayAdapter<AppShortcutScr
     public void setupDeleteGesture(AppShortcutSwipeActionsProvider swipeActionsProvider) {
       swipeableLayout.setSwipeActionIconProvider(swipeActionsProvider.iconProvider());
       swipeableLayout.setSwipeActions(swipeActionsProvider.actions());
-      swipeableLayout.setOnPerformSwipeActionListener(action ->
-          swipeActionsProvider.performSwipeAction(action, shortcut, swipeableLayout)
+      swipeableLayout.setOnPerformSwipeActionListener((action, swipeDirection) ->
+          swipeActionsProvider.performSwipeAction(action, shortcut, swipeableLayout, swipeDirection)
       );
     }
 

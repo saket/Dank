@@ -30,6 +30,7 @@ import me.saket.dank.ui.submission.CommentSwipeActionsProvider;
 import me.saket.dank.ui.submission.events.CommentClicked;
 import me.saket.dank.utils.DankLinkMovementMethod;
 import me.saket.dank.widgets.IndentedLayout;
+import me.saket.dank.widgets.swipe.SwipeDirection;
 import me.saket.dank.widgets.swipe.SwipeableLayout;
 import me.saket.dank.widgets.swipe.ViewHolderWithSwipeActions;
 
@@ -138,8 +139,8 @@ public interface SubmissionRemoteComment {
     public void setupGestures(CommentSwipeActionsProvider commentSwipeActionsProvider) {
       getSwipeableLayout().setSwipeActionIconProvider(commentSwipeActionsProvider.iconProvider());
       getSwipeableLayout().setSwipeActions(commentSwipeActionsProvider.actions());
-      getSwipeableLayout().setOnPerformSwipeActionListener(action ->
-          commentSwipeActionsProvider.performSwipeAction(action, uiModel.comment(), getSwipeableLayout())
+      getSwipeableLayout().setOnPerformSwipeActionListener((action, swipeDirection) ->
+          commentSwipeActionsProvider.performSwipeAction(action, uiModel.comment(), getSwipeableLayout(), swipeDirection)
       );
     }
 

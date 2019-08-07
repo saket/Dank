@@ -28,9 +28,11 @@
   <string name="userprefs_group_gestures">Gestures</string>
   <string name="userprefs_customize_submission_gestures">Submission gesture actions</string>
   <string name="userprefs_customize_comment_gestures">Comment gesture actions</string>
+  <string name="userprefs_gestures_summary_disabled">Disabled</string>
+  <string name="userprefs_gestures_summary_last_separator">and</string>
 
-  <string name="userprefs_gestures_group_left">Left</string>
-  <string name="userprefs_gestures_group_right">Right</string>
+  <string name="userprefs_gestures_group_swipe_start_to_end">Swipe left to right</string>
+  <string name="userprefs_gestures_group_swipe_end_to_start">Swipe right to left</string>
 
   <string name="userprefs_group_messaging">Messaging</string>
   <string name="userprefs_check_for_new_messages">Poll for new messages</string>
@@ -160,6 +162,10 @@
     <item name="android:background">@color/gray_850</item>
     <item name="android:translationZ">1dp</item>
     <item name="android:paddingTop">@dimen/userprefs_item_padding</item>
+  </style>
+
+  <style name="DankUserPreferenceDraggable" parent="DankUserPreferenceButton">
+    <!--<item name="android:clickable">false</item>-->
   </style>
 
   <!-- DIMENS -->

@@ -1,21 +1,54 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<me.saket.dank.widgets.swipe.SwipeableLayout xmlns:android="http://schemas.android.com/apk/res/android"
   xmlns:tools="http://schemas.android.com/tools"
+  android:id="@+id/item_gesturepreferences_swipeaction_swipeable_layout"
   android:layout_width="match_parent"
   android:layout_height="wrap_content"
-  android:orientation="vertical"
-  tools:background="@color/window_background">
+  android:background="@color/window_background">
 
-  <TextView
-    android:id="@+id/item_gesturepreferences_swipeaction_label"
+  <me.saket.dank.widgets.swipe.SwipeActionIconView
+    style="@style/DankSwipeableLayoutIcon"
+    android:layout_width="wrap_content"
+    android:layout_height="match_parent" />
+
+  <LinearLayout
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:drawableEnd="@drawable/ic_drag_handle_24dp"
-    android:drawablePadding="@dimen/spacing16"
-    android:drawableStart="@drawable/ic_arrow_upward_12dp"
-    android:padding="@dimen/spacing16"
-    tools:ignore="SelectableText"
-    tools:text="Upvote" />
+    android:orientation="vertical">
 
-  <View style="@style/DankSeparator.VerticalContent" />
-</LinearLayout>
+    <LinearLayout
+      android:layout_width="match_parent"
+      android:layout_height="wrap_content"
+      android:orientation="horizontal">
+
+      <me.saket.dank.widgets.TintableCompoundDrawableTextView
+        android:id="@+id/item_gesturepreferences_swipeaction_label"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:drawableStart="@drawable/ic_save_20dp"
+        android:drawablePadding="@dimen/spacing16"
+        android:ellipsize="end"
+        android:maxLines="1"
+        android:padding="@dimen/spacing16"
+        android:textColor="@color/white_opacity_90"
+        tools:ignore="SelectableText"
+        tools:text="Save" />
+
+      <ImageButton
+        android:id="@+id/item_gesturepreferences_swipeaction_drag"
+        android:layout_width="wrap_content"
+        android:layout_height="match_parent"
+        android:background="@null"
+        android:contentDescription="@string/gesturepreferences_cd_reorder_swipeaction"
+        android:padding="@dimen/spacing16"
+        android:src="@drawable/ic_drag_handle_24dp"
+        android:tint="@color/gray_500" />
+    </LinearLayout>
+
+    <View
+      style="@style/DankSeparator.VerticalContent"
+      android:layout_marginStart="56dp" />
+  </LinearLayout>
+</me.saket.dank.widgets.swipe.SwipeableLayout>
+

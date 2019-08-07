@@ -9,6 +9,7 @@ import java.util.List;
 /**
  * DIffUtils.Callback + generics.
  */
+@Deprecated
 public abstract class SimpleDiffUtilsCallbacks<T> extends DiffUtil.Callback {
 
   private final List<T> oldItems;

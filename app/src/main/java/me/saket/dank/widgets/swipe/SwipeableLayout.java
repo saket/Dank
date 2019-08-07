@@ -17,9 +17,10 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.FrameLayout;
 
+import timber.log.Timber;
+
 import me.saket.dank.utils.Animations;
 import me.saket.dank.utils.Views;
-import timber.log.Timber;
 
 public class SwipeableLayout extends FrameLayout {
 
@@ -29,6 +30,7 @@ public class SwipeableLayout extends FrameLayout {
   private SwipeActions swipeActions;
   private SwipeActionIconView actionIconView;
   private SwipeAction activeSwipeAction;
+  private SwipeDirection activeSwipeDirection;
   private boolean swipeDistanceThresholdCrossed;
   private ObjectAnimator translationAnimator;
   private BackgroundDrawable backgroundDrawable;
@@ -53,7 +55,7 @@ public class SwipeableLayout extends FrameLayout {
      * Called when the finger is lifted on an action. Only called when the swipe threshold (presently at
      * 40% of the icon) is crossed.
      */
-    void onPerformSwipeAction(SwipeAction action);
+    void onPerformSwipeAction(SwipeAction action, SwipeDirection swipeDirection);
   }
 
   public SwipeableLayout(Context context, AttributeSet attrs) {
@@ -87,6 +89,7 @@ public class SwipeableLayout extends FrameLayout {
 
     if (!enabled) {
       activeSwipeAction = null;
+      activeSwipeDirection = null;
       setSwipeDistanceThresholdCrossed(false);
     }
   }
@@ -153,7 +156,9 @@ public class SwipeableLayout extends FrameLayout {
       backgroundDrawable.setBounds(0, 0, (int) translationX, getBottom() - getTop());
     }
 
-    if (swipeEnabled) {
+    SwipeDirection swipeDirection = swipingFromEndToStart ? SwipeDirection.END_TO_START : SwipeDirection.START_TO_END;
+
+    if (isSwipeEnabled(swipeDirection)) {
       swipeActionTriggerDrawable.setBounds((int) translationX, 0, (int) (getWidth() + translationX), getHeight());
 
       // Move the icon along with the View being swiped.
@@ -162,21 +167,20 @@ public class SwipeableLayout extends FrameLayout {
       } else {
         actionIconView.setTranslationX(translationX - actionIconView.getWidth());
       }
+      actionIconView.setVisibility(View.VISIBLE);
 
       if (translationX == 0f) {
-        backgroundDrawable.animateColorTransition(Color.TRANSPARENT);
-        setSwipeDistanceThresholdCrossed(false);
-        activeSwipeAction = null;
-
+        resetSwipeState();
       } else {
         if (!isSettlingBackToPosition()) {
           SwipeAction swipeAction = swipingFromEndToStart
-              ? swipeActions.endActions().findActionAtSwipeDistance(getWidth(), translationXAbs, SwipeDirection.END_TO_START)
-              : swipeActions.startActions().findActionAtSwipeDistance(getWidth(), translationXAbs, SwipeDirection.START_TO_END);
+              ? swipeActions.endActions().findActionAtSwipeDistance(getWidth(), translationXAbs, swipeDirection)
+              : swipeActions.startActions().findActionAtSwipeDistance(getWidth(), translationXAbs, swipeDirection);
 
-          if (activeSwipeAction != swipeAction) {
+          if (activeSwipeAction != swipeAction || activeSwipeDirection != swipeDirection) {
             SwipeAction oldAction = activeSwipeAction;
             activeSwipeAction = swipeAction;
+            activeSwipeDirection = swipeDirection;
 
             // Request an update to the icon.
             swipeActionIconProvider.showSwipeActionIcon(actionIconView, oldAction, swipeAction);
@@ -190,7 +194,17 @@ public class SwipeableLayout extends FrameLayout {
           setSwipeDistanceThresholdCrossed(swipeThresholdCrossed);
         }
       }
+    } else {
+      resetSwipeState();
     }
+  }
+
+  private void resetSwipeState() {
+    backgroundDrawable.animateColorTransition(Color.TRANSPARENT);
+    setSwipeDistanceThresholdCrossed(false);
+    activeSwipeAction = null;
+    activeSwipeDirection = null;
+    actionIconView.setVisibility(View.GONE);
   }
 
   /**
@@ -212,7 +226,7 @@ public class SwipeableLayout extends FrameLayout {
 
   public void handleOnRelease() {
     if (hasCrossedSwipeDistanceThreshold()) {
-      onPerformSwipeActionListener.onPerformSwipeAction(activeSwipeAction);
+      onPerformSwipeActionListener.onPerformSwipeAction(activeSwipeAction, activeSwipeDirection);
     }
   }
 
@@ -232,8 +246,19 @@ public class SwipeableLayout extends FrameLayout {
     return swipeDistanceThresholdCrossed;
   }
 
-  public boolean isSwipeEnabled() {
-    return swipeEnabled;
+  public boolean isSwipeEnabled(SwipeDirection swipeDirection) {
+    if (!swipeEnabled) {
+      return false;
+    }
+    switch (swipeDirection) {
+      case END_TO_START:
+        return swipeActions.endActions().hasActions();
+      case START_TO_END:
+        return swipeActions.startActions().hasActions();
+
+      default:
+        throw new IllegalArgumentException("Unknown swipe direction: " + swipeDirection);
+    }
   }
 
   private static class BackgroundDrawable extends LayerDrawable {
@@ -298,12 +323,11 @@ public class SwipeableLayout extends FrameLayout {
 // ======== RIPPLE DRAWABLE ======== //
 
   /**
-   * Called from {@link OnPerformSwipeActionListener#onPerformSwipeAction(SwipeAction)}, when a swipe action is performed.
+   * Called from {@link OnPerformSwipeActionListener#onPerformSwipeAction(SwipeAction, SwipeDirection)}, when a swipe action is performed.
    */
-  public void playRippleAnimation(SwipeAction forAction, SwipeTriggerRippleDrawable.RippleType swipeRippleType) {
+  public void playRippleAnimation(SwipeAction forAction, SwipeTriggerRippleDrawable.RippleType swipeRippleType, SwipeDirection fromDirection) {
     int swipeActionColor = ContextCompat.getColor(getContext(), forAction.backgroundColorRes());
-    SwipeDirection rippleDirection = swipeActions.startActions().contains(forAction) ? SwipeDirection.START_TO_END : SwipeDirection.END_TO_START;
-    swipeActionTriggerDrawable.play(swipeActionColor, rippleDirection, swipeRippleType);
+    swipeActionTriggerDrawable.play(swipeActionColor, fromDirection, swipeRippleType);
   }
 
   @Override

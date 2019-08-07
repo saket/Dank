@@ -91,11 +91,15 @@ public class RecyclerSwipeListener extends RecyclerView.SimpleOnItemTouchListene
         }
 
         // Add inertia if swiping isn't enabled.
-        if (!viewBeingSwiped.isSwipeEnabled()) {
+        float swipeTranslation = viewBeingSwiped.getSwipeTranslation();
+        boolean swipingFromEndToStart = swipeTranslation < 0f;
+        boolean swipingBackToPosition = Math.signum(swipeTranslation) == Math.signum(distanceX);
+        SwipeDirection swipeDirection = swipingFromEndToStart ? SwipeDirection.END_TO_START : SwipeDirection.START_TO_END;
+        if (!swipingBackToPosition && !viewBeingSwiped.isSwipeEnabled(swipeDirection)) {
           distanceX /= 10;
         }
 
-        float newTranslationX = viewBeingSwiped.getSwipeTranslation() - distanceX;
+        float newTranslationX = swipeTranslation - distanceX;
         float newTranslationXWithinBounds = clamp(newTranslationX, -viewBeingSwiped.getWidth(), viewBeingSwiped.getWidth());
         viewBeingSwiped.setSwipeTranslation(newTranslationXWithinBounds);
         return true;

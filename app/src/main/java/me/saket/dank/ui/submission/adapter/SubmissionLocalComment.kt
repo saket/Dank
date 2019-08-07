@@ -69,7 +69,7 @@ interface SubmissionLocalComment {
     fun setupGestures(commentSwipeActionsProvider: CommentSwipeActionsProvider) {
       swipeableLayout.setSwipeActionIconProvider(commentSwipeActionsProvider.iconProvider())
       swipeableLayout.setSwipeActions(commentSwipeActionsProvider.actions())
-      swipeableLayout.setOnPerformSwipeActionListener { /* TODO.*/ }
+      swipeableLayout.setOnPerformSwipeActionListener { _, _ -> /* TODO.*/ }
     }
 
     fun setupClicks(uiEvents: PublishRelay<UiEvent>) {
@@ -107,7 +107,7 @@ interface SubmissionLocalComment {
       bodyView.maxLines = uiModel.bodyMaxLines
 
       // TODO: Add support for locally posted replies too.
-      swipeableLayout.isSwipeEnabled = false
+      swipeableLayout.setSwipeEnabled(false)
     }
 
     fun renderPartialChanges(payloads: List<Any>) {

@@ -24,6 +24,7 @@ import me.saket.dank.widgets.swipe.SwipeAction;
 import me.saket.dank.widgets.swipe.SwipeActionIconView;
 import me.saket.dank.widgets.swipe.SwipeActions;
 import me.saket.dank.widgets.swipe.SwipeActionsHolder;
+import me.saket.dank.widgets.swipe.SwipeDirection;
 import me.saket.dank.widgets.swipe.SwipeTriggerRippleDrawable.RippleType;
 import me.saket.dank.widgets.swipe.SwipeableLayout;
 import me.saket.dank.widgets.swipe.SwipeableLayout.SwipeActionIconProvider;
@@ -122,7 +123,7 @@ public class CommentSwipeActionsProvider {
     imageView.setRotation(0);
   }
 
-  public void performSwipeAction(SwipeAction swipeAction, Comment comment, SwipeableLayout swipeableLayout) {
+  public void performSwipeAction(SwipeAction swipeAction, Comment comment, SwipeableLayout swipeableLayout, SwipeDirection swipeDirection) {
     if (needsLogin(swipeAction, comment)) {
       // Delay because showing LoginActivity for the first time stutters SwipeableLayout's reset animation.
       swipeableLayout.postDelayed(
@@ -164,7 +165,7 @@ public class CommentSwipeActionsProvider {
         throw new UnsupportedOperationException("Unknown swipe action: " + swipeAction);
     }
 
-    swipeableLayout.playRippleAnimation(swipeAction, isUndoAction ? RippleType.UNDO : RippleType.REGISTER);
+    swipeableLayout.playRippleAnimation(swipeAction, isUndoAction ? RippleType.UNDO : RippleType.REGISTER, swipeDirection);
   }
 
   private boolean needsLogin(SwipeAction swipeAction, Comment comment) {

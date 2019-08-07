@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<me.saket.dank.ui.preferences.gestures.SubmissionGesturesPreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android"
+<me.saket.dank.ui.preferences.gestures.submissions.SubmissionGesturesPreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android"
   xmlns:app="http://schemas.android.com/apk/res-auto"
   xmlns:tools="http://schemas.android.com/tools"
   android:layout_width="match_parent"
@@ -14,24 +14,10 @@
     android:layout_height="wrap_content"
     app:navigationIcon="@drawable/ic_toolbar_close_24dp" />
 
-  <LinearLayout
-    android:layout_width="wrap_content"
-    android:layout_height="wrap_content"
-    android:layout_centerInParent="true"
-    android:gravity="center_horizontal"
-    android:orientation="vertical">
-
-    <TextView
-      android:layout_width="wrap_content"
-      android:layout_height="wrap_content"
-      android:layout_marginBottom="@dimen/spacing16"
-      android:text="ᕕ( ᐛ )ᕗ"
-      android:textSize="@dimen/textsize24"
-      tools:ignore="HardcodedText" />
-
-    <TextView
-      android:layout_width="wrap_content"
-      android:layout_height="wrap_content"
-      android:text="@string/work_in_progress" />
-  </LinearLayout>
-</me.saket.dank.ui.preferences.gestures.SubmissionGesturesPreferenceScreen>
+  <android.support.v7.widget.RecyclerView
+    android:id="@+id/userpreferences_gestures_recyclerview"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:layout_below="@+id/userpreferences_gestures_toolbar"
+    tools:listitem="@layout/list_item_gesture_preference_swipe_action" />
+</me.saket.dank.ui.preferences.gestures.submissions.SubmissionGesturesPreferenceScreen>

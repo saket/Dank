@@ -28,7 +28,7 @@ class SyntheticSubmissionAndComments {
     val body2 = "Comments (and their replies) can be collapsed by tapping on them."
     val body3 = "Drag the cat's image downwards and release to close this tutorial."
 
-    submission = SyntheticSubmission(commentCount = 3)
+    submission = SyntheticSubmission(commentCount = 3, title = "Here's a heart-warming photo to start your journey")
 
     val comment2 = SyntheticComment(body2, submission)
     val comment1And2 = SyntheticComment(body, submission, listOf(comment2))
@@ -44,7 +44,8 @@ class SyntheticSubmissionAndComments {
 }
 
 class SyntheticSubmission(
-    private val commentCount: Int
+  private val commentCount: Int,
+  private val title: String
 ) : Submission() {
 
   override fun getCommentCount(): Int = commentCount
@@ -67,7 +68,7 @@ class SyntheticSubmission(
 
   override fun getDomain(): String = "i.imgur.com"
 
-  override fun getTitle(): String = "Here's a heart-warming photo to start your journey"
+  override fun getTitle(): String = title
 
   override fun isHidden(): Boolean = false
 

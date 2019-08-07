@@ -16,14 +16,14 @@ import android.widget.TextView;
 import com.google.auto.value.AutoValue;
 import com.jakewharton.rxrelay2.PublishRelay;
 import com.jakewharton.rxrelay2.Relay;
-
+import io.reactivex.Observable;
 import net.dean.jraw.models.Submission;
 import net.dean.jraw.models.VoteDirection;
+import timber.log.Timber;
 
 import java.util.List;
 import javax.inject.Inject;
 
-import io.reactivex.Observable;
 import me.saket.dank.BuildConfig;
 import me.saket.dank.R;
 import me.saket.dank.data.SpannableWithTextEquality;
@@ -37,9 +37,10 @@ import me.saket.dank.utils.Optional;
 import me.saket.dank.utils.Pair;
 import me.saket.dank.utils.lifecycle.LifecycleStreams;
 import me.saket.dank.widgets.AnimatedProgressBar;
+import me.saket.dank.widgets.swipe.SwipeActions;
+import me.saket.dank.widgets.swipe.SwipeDirection;
 import me.saket.dank.widgets.swipe.SwipeableLayout;
 import me.saket.dank.widgets.swipe.ViewHolderWithSwipeActions;
-import timber.log.Timber;
 
 public interface SubmissionCommentsHeader {
 
@@ -50,6 +51,7 @@ public interface SubmissionCommentsHeader {
     SUBMISSION_TITLE,
     SUBMISSION_BYLINE,
     SUBMISSION_SAVE_STATUS,
+    SUBMISSION_SWIPE_ACTIONS,
     CONTENT_LINK,
     CONTENT_LINK_THUMBNAIL,
     CONTENT_LINK_FAVICON,
@@ -81,6 +83,8 @@ public interface SubmissionCommentsHeader {
     abstract Submission submission();
 
     public abstract boolean isSaved();
+
+    public abstract SwipeActions swipeActions();
 
     @Override
     public SubmissionCommentRowType type() {
@@ -118,6 +122,8 @@ public interface SubmissionCommentsHeader {
       abstract Builder submission(Submission submission);
 
       public abstract Builder isSaved(boolean saved);
+
+      public abstract Builder swipeActions(SwipeActions swipeActions);
 
       abstract UiModel build();
     }
@@ -186,9 +192,11 @@ public interface SubmissionCommentsHeader {
     }
 
     public void setupGestures(SubmissionSwipeActionsProvider swipeActionsProvider) {
-      getSwipeableLayout().setSwipeActionIconProvider(swipeActionsProvider);
-      getSwipeableLayout().setOnPerformSwipeActionListener(action -> {
-        swipeActionsProvider.performSwipeAction(action, uiModel.submission(), getSwipeableLayout());
+      getSwipeableLayout().setSwipeActionIconProvider((imageView, oldAction, newAction) -> {
+        swipeActionsProvider.showSwipeActionIcon(imageView, oldAction, newAction, uiModel.submission());
+      });
+      getSwipeableLayout().setOnPerformSwipeActionListener((action, swipeDirection) -> {
+        swipeActionsProvider.performSwipeAction(action, uiModel.submission(), getSwipeableLayout(), swipeDirection);
       });
     }
 
@@ -231,7 +239,7 @@ public interface SubmissionCommentsHeader {
       titleView.setText(uiModel.title());
     }
 
-    public void renderPartialChanges(List<Object> payloads, SubmissionSwipeActionsProvider swipeActionsProvider) {
+    public void renderPartialChanges(List<Object> payloads) {
       for (Object payload : payloads) {
         //noinspection unchecked
         for (PartialChange partialChange : (List<PartialChange>) payload) {
@@ -245,7 +253,8 @@ public interface SubmissionCommentsHeader {
               break;
 
             case SUBMISSION_SAVE_STATUS:
-              getSwipeableLayout().setSwipeActions(swipeActionsProvider.actionsFor(uiModel.submission()));
+            case SUBMISSION_SWIPE_ACTIONS:
+              getSwipeableLayout().setSwipeActions(uiModel.swipeActions());
               break;
 
             case CONTENT_LINK:
@@ -426,7 +435,7 @@ public interface SubmissionCommentsHeader {
     @Override
     public void onBindViewHolder(ViewHolder holder, UiModel uiModel) {
       holder.setUiModel(uiModel);
-      holder.getSwipeableLayout().setSwipeActions(swipeActionsProvider.actionsFor(uiModel.submission()));
+      holder.getSwipeableLayout().setSwipeActions(uiModel.swipeActions());
       holder.render();
 
       headerBindStream.accept(Optional.of(holder));
@@ -435,7 +444,7 @@ public interface SubmissionCommentsHeader {
     @Override
     public void onBindViewHolder(ViewHolder holder, UiModel uiModel, List<Object> payloads) {
       holder.setUiModel(uiModel);
-      holder.renderPartialChanges(payloads, swipeActionsProvider);
+      holder.renderPartialChanges(payloads);
     }
 
     @Override
@@ -445,7 +454,7 @@ public interface SubmissionCommentsHeader {
 
     @CheckResult
     public Observable<SwipeEvent> swipeEvents() {
-      return swipeActionsProvider.swipeEvents;
+      return swipeActionsProvider.getSwipeEvents();
     }
   }
 }

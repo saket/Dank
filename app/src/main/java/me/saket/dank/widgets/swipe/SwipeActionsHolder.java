@@ -1,6 +1,7 @@
 package me.saket.dank.widgets.swipe;
 
 import android.support.annotation.CheckResult;
+import android.support.v4.util.ObjectsCompat;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -18,6 +19,23 @@ public class SwipeActionsHolder {
 
   public static Builder builder() {
     return new Builder();
+  }
+
+  public List<SwipeAction> actions() {
+    return actions;
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+    SwipeActionsHolder that = (SwipeActionsHolder) o;
+    return ObjectsCompat.equals(actions, that.actions);
+  }
+
+  @Override
+  public int hashCode() {
+    return ObjectsCompat.hash(actions);
   }
 
   /**
@@ -63,8 +81,8 @@ public class SwipeActionsHolder {
     }
   }
 
-  public boolean contains(SwipeAction swipeAction) {
-    return actions.contains(swipeAction);
+  public boolean hasActions() {
+    return !actions.isEmpty();
   }
 
   // TODO: avoid creating a new iterator because this method gets called on every motion event.

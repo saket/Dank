@@ -46,7 +46,7 @@ public interface UserPreferenceSectionHeader  {
 
     private UiModel uiModel;
 
-    private ViewHolder(View itemView) {
+    protected ViewHolder(View itemView) {
       super(itemView);
       ButterKnife.bind(this, itemView);
     }

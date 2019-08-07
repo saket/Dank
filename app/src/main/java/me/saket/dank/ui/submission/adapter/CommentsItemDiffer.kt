@@ -74,6 +74,9 @@ class CommentsItemDiffer private constructor(
         if (oldHeader.isSaved != newHeader.isSaved) {
           partialChanges.add(SubmissionCommentsHeader.PartialChange.SUBMISSION_SAVE_STATUS)
         }
+        if (oldHeader.swipeActions() != newHeader.swipeActions()) {
+          partialChanges.add(SubmissionCommentsHeader.PartialChange.SUBMISSION_SWIPE_ACTIONS)
+        }
 
         //Timber.i("--------------------");
         //Timber.i(partialChanges.toString());

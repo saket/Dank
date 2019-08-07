@@ -11,7 +11,9 @@ import dagger.Module;
 import dagger.Provides;
 import io.reactivex.Observable;
 
+import java.util.Arrays;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import javax.inject.Named;
@@ -22,7 +24,9 @@ import me.saket.dank.data.CachePreFillThing;
 import me.saket.dank.ui.preferences.DefaultWebBrowser;
 import me.saket.dank.ui.preferences.NetworkStrategy;
 import me.saket.dank.ui.preferences.TypefaceResource;
+import me.saket.dank.ui.subreddit.SubmissionSwipeAction;
 import me.saket.dank.utils.DeviceInfo;
+import me.saket.dank.utils.RxPreferencesEnumListTypeAdapter;
 import me.saket.dank.utils.RxPreferencesEnumTypeAdapter;
 import me.saket.dank.utils.TimeInterval;
 
@@ -204,5 +208,36 @@ public class UserPreferencesModule {
         ? DefaultWebBrowser.CHROME_CUSTOM_TABS
         : DefaultWebBrowser.DANK_INTERNAL_BROWSER;
     return rxPrefs.getObject("default_web_browser", defaultValue, enumAdapter);
+  }
+
+  @Provides
+  RxPreferencesEnumListTypeAdapter<SubmissionSwipeAction> submissionSwipeActionEnumListTypeAdapter() {
+    return new RxPreferencesEnumListTypeAdapter<>(SubmissionSwipeAction.class);
+  }
+
+  @Provides
+  @Named("submission_start_swipe_actions")
+  Preference<List<SubmissionSwipeAction>> submissionStartSwipeActionsPref(
+      @Named("user_prefs") RxSharedPreferences rxPrefs,
+      RxPreferencesEnumListTypeAdapter<SubmissionSwipeAction> enumListAdapter
+  ) {
+    List<SubmissionSwipeAction> defaultValue = Arrays.asList(
+        SubmissionSwipeAction.Options,
+        SubmissionSwipeAction.Save
+    );
+    return rxPrefs.getObject("submission_start_swipe_actions", defaultValue, enumListAdapter);
+  }
+
+  @Provides
+  @Named("submission_end_swipe_actions")
+  Preference<List<SubmissionSwipeAction>> submissionEndSwipeActionsPref(
+      @Named("user_prefs") RxSharedPreferences rxPrefs,
+      RxPreferencesEnumListTypeAdapter<SubmissionSwipeAction> enumListAdapter
+  ) {
+    List<SubmissionSwipeAction> defaultValue = Arrays.asList(
+        SubmissionSwipeAction.Upvote,
+        SubmissionSwipeAction.Downvote
+    );
+    return rxPrefs.getObject("submission_end_swipe_actions", defaultValue, enumListAdapter);
   }
 }
