@@ -72,14 +72,7 @@ class PreferenceGroupsScreen(context: Context, attrs: AttributeSet) :
 
     toolbar.setNavigationOnClickListener { (context as UserPreferencesActivity).onClickPreferencesToolbarUp() }
 
-    setPullToCollapseIntercepter { _, downX, downY, upwardPagePull ->
-      val touchLiesOnList = Views.touchLiesOn(preferenceRecyclerView, downX, downY)
-      val canListScrollFurther = {
-        val directionInt = if (upwardPagePull) 1 else -1
-        preferenceRecyclerView.canScrollVertically(directionInt)
-      }
-      touchLiesOnList && canListScrollFurther()
-    }
+    setPullToCollapseIntercepter(Views.verticalScrollPullToCollapseIntercepter(preferenceRecyclerView))
 
     lifecycle = LifecycleOwnerViews.create(this, (context as LifecycleOwnerActivity).lifecycle())
 

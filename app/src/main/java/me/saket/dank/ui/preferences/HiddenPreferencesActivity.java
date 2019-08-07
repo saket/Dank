@@ -84,10 +84,7 @@ public class HiddenPreferencesActivity extends DankPullCollapsibleActivity {
     setupContentExpandablePage(activityContentPage);
     expandFromBelowToolbar();
 
-    activityContentPage.setPullToCollapseIntercepter((event, downX, downY, upwardPagePull) -> {
-      //noinspection CodeBlock2Expr
-      return Views.touchLiesOn(contentScrollView, downX, downY) && contentScrollView.canScrollVertically(upwardPagePull ? 1 : -1);
-    });
+    activityContentPage.setPullToCollapseIntercepter(Views.verticalScrollPullToCollapseIntercepter(contentScrollView));
   }
 
   @Override

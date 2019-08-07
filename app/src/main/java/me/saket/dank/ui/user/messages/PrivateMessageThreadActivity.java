@@ -5,7 +5,6 @@ import static io.reactivex.schedulers.Schedulers.io;
 import static me.saket.dank.utils.RxUtils.doNothing;
 import static me.saket.dank.utils.RxUtils.doNothingCompletable;
 import static me.saket.dank.utils.RxUtils.logError;
-import static me.saket.dank.utils.Views.touchLiesOn;
 
 import android.content.Context;
 import android.content.Intent;
@@ -67,6 +66,7 @@ import me.saket.dank.utils.Optional;
 import me.saket.dank.utils.Pair;
 import me.saket.dank.utils.RxDiffUtil;
 import me.saket.dank.utils.Truss;
+import me.saket.dank.utils.Views;
 import me.saket.dank.utils.itemanimators.SlideUpAlphaAnimator;
 import me.saket.dank.utils.markdown.Markdown;
 import me.saket.dank.widgets.ErrorStateView;
@@ -136,9 +136,7 @@ public class PrivateMessageThreadActivity extends DankPullCollapsibleActivity {
     setTitle(getIntent().getStringExtra(KEY_THREAD_SECOND_PARTY_NAME));
     setupContentExpandablePage(contentPage);
     expandFrom(getIntent().getParcelableExtra(KEY_EXPAND_FROM_SHAPE));
-    contentPage.setPullToCollapseIntercepter((event, downX, downY, upwardPagePull) ->
-        touchLiesOn(messageRecyclerView, downX, downY) && messageRecyclerView.canScrollVertically(upwardPagePull ? 1 : -1)
-    );
+    contentPage.setPullToCollapseIntercepter(Views.verticalScrollPullToCollapseIntercepter(messageRecyclerView));
 
     // windowSoftInputMode is set to hidden in manifest so that the keyboard
     // doesn't show up on start, but we do want the reply field to be focused

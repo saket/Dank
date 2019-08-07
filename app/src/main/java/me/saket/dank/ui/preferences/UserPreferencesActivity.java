@@ -60,10 +60,7 @@ public class UserPreferencesActivity extends DankPullCollapsibleActivity {
     activityContentPage.setNestedExpandablePage(preferencesGroupsPage);
     expandFromBelowToolbar();
 
-    activityContentPage.setPullToCollapseIntercepter((event, downX, downY, upwardPagePull) -> {
-      //noinspection CodeBlock2Expr
-      return Views.touchLiesOn(preferenceList, downX, downY) && preferenceList.canScrollVertically(upwardPagePull ? 1 : -1);
-    });
+    activityContentPage.setPullToCollapseIntercepter(Views.verticalScrollPullToCollapseIntercepter(preferenceList));
   }
 
   @Override

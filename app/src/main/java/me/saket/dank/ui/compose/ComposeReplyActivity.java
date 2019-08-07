@@ -106,10 +106,7 @@ public class ComposeReplyActivity extends DankPullCollapsibleActivity
 
     setupContentExpandablePage(pageLayout);
     expandFromBelowToolbar();
-    pageLayout.setPullToCollapseIntercepter((event, downX, downY, upwardPagePull) -> {
-      //noinspection CodeBlock2Expr
-      return Views.touchLiesOn(replyScrollView, downX, downY) && replyScrollView.canScrollVertically(upwardPagePull ? 1 : -1);
-    });
+    pageLayout.setPullToCollapseIntercepter(Views.verticalScrollPullToCollapseIntercepter(replyScrollView));
   }
 
   @Override

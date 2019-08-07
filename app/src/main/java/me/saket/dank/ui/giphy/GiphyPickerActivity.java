@@ -94,10 +94,7 @@ public class GiphyPickerActivity extends DankPullCollapsibleActivity {
     setupContentExpandablePage(activityContentPage);
     expandFromBelowToolbar();
 
-    activityContentPage.setPullToCollapseIntercepter((event, downX, downY, upwardPagePull) -> {
-      //noinspection CodeBlock2Expr
-      return Views.touchLiesOn(gifRecyclerView, downX, downY) && gifRecyclerView.canScrollVertically(upwardPagePull ? 1 : -1);
-    });
+    activityContentPage.setPullToCollapseIntercepter(Views.verticalScrollPullToCollapseIntercepter(gifRecyclerView));
   }
 
   @OnClick(R.id.giphypicker_giphy_attribution)

@@ -1,7 +1,5 @@
 package me.saket.dank.ui.webview;
 
-import static me.saket.dank.utils.Views.touchLiesOn;
-
 import android.annotation.SuppressLint;
 import android.content.Context;
 import android.content.Intent;
@@ -23,6 +21,7 @@ import me.saket.dank.R;
 import me.saket.dank.ui.DankPullCollapsibleActivity;
 import me.saket.dank.utils.Intents;
 import me.saket.dank.utils.Urls;
+import me.saket.dank.utils.Views;
 import me.saket.dank.widgets.InboxUI.IndependentExpandablePageLayout;
 
 /**
@@ -93,9 +92,7 @@ public class WebViewActivity extends DankPullCollapsibleActivity {
     super.setupContentExpandablePage(activityContentPage);
 
     // Trigger pull-to-collapse only if the page cannot be scrolled any further in the direction of scroll.
-    activityContentPage.setPullToCollapseIntercepter((event, downX, downY, upwardPagePull) ->
-        touchLiesOn(webView, downX, downY) && webView.canScrollVertically(upwardPagePull ? +1 : -1)
-    );
+    activityContentPage.setPullToCollapseIntercepter(Views.verticalScrollPullToCollapseIntercepter(webView));
   }
 
   @Override

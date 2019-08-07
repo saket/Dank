@@ -16,6 +16,8 @@ import android.widget.TextView;
 import io.reactivex.Completable;
 import timber.log.Timber;
 
+import me.saket.dank.widgets.InboxUI.ExpandablePageLayout;
+
 /**
  * Utility methods for Views.
  * <p>
@@ -264,5 +266,14 @@ public class Views {
   public static void setTextWithCursor(EditText editText, CharSequence string) {
     editText.setText(string);
     editText.setSelection(string.length());
+  }
+
+  public static ExpandablePageLayout.OnPullToCollapseIntercepter verticalScrollPullToCollapseIntercepter(View view) {
+    return (event, downX, downY, upwardPagePull) -> {
+      boolean touchLiesOnList = Views.touchLiesOn(view, downX, downY);
+      int directionInt = upwardPagePull ? 1 : -1;
+      boolean canListScrollFurther = view.canScrollVertically(directionInt);
+      return touchLiesOnList && canListScrollFurther;
+    };
   }
 }
