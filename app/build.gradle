@@ -22,6 +22,9 @@ repositories {
   maven { url "http://maven.onehippo.com/maven2/" }
 }
 
+final def signingPropertiesFile = rootProject.file("signing/keystore.properties")
+final def enableReleaseSigning = signingPropertiesFile.exists()
+
 android {
   compileSdkVersion versions.compileSdk
 
@@ -35,6 +38,27 @@ android {
     testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
   }
 
+  signingConfigs {
+    debug {
+      storeFile rootProject.file("signing/app-debug.jks")
+      storePassword "android"
+      keyAlias "androiddebugkey"
+      keyPassword "android"
+    }
+
+    if (enableReleaseSigning) {
+      final def signingProperties = new Properties()
+      signingProperties.load(new FileInputStream(signingPropertiesFile))
+
+      release {
+        keyAlias signingProperties['keyAlias']
+        keyPassword signingProperties['keyPassword']
+        storeFile rootProject.file("signing/app-release.jks")
+        storePassword signingProperties['storePassword']
+      }
+    }
+  }
+
   buildTypes {
     debug {
       applicationIdSuffix ".debug"
@@ -43,15 +67,10 @@ android {
     release {
       minifyEnabled false
       proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
-    }
-  }
 
-  signingConfigs {
-    debug {
-      storeFile rootProject.file("signing/app-debug.jks")
-      storePassword "android"
-      keyAlias "androiddebugkey"
-      keyPassword "android"
+      if (enableReleaseSigning) {
+        signingConfig signingConfigs.release
+      }
     }
   }
 
