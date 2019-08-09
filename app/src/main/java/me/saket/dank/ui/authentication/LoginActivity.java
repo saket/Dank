@@ -2,6 +2,7 @@ package me.saket.dank.ui.authentication;
 
 import static me.saket.dank.utils.RxUtils.applySchedulersCompletable;
 
+import android.annotation.SuppressLint;
 import android.content.Context;
 import android.content.Intent;
 import android.graphics.Bitmap;
@@ -17,19 +18,20 @@ import android.webkit.WebView;
 import android.webkit.WebViewClient;
 import android.widget.Toast;
 
-import javax.inject.Inject;
-
 import butterknife.BindView;
 import butterknife.ButterKnife;
 import dagger.Lazy;
 import io.reactivex.Completable;
+import timber.log.Timber;
+
+import javax.inject.Inject;
+
 import me.saket.dank.R;
 import me.saket.dank.di.Dank;
 import me.saket.dank.reddit.Reddit;
 import me.saket.dank.reddit.jraw.UserLoginHelper;
 import me.saket.dank.ui.DankActivity;
 import me.saket.dank.ui.user.UserSessionRepository;
-import timber.log.Timber;
 
 public class LoginActivity extends DankActivity {
 
@@ -50,6 +52,7 @@ public class LoginActivity extends DankActivity {
   }
 
   @Override
+  @SuppressLint("SetJavaScriptEnabled")
   protected void onCreate(@Nullable Bundle savedInstanceState) {
     Dank.dependencyInjector().inject(this);
     super.onCreate(savedInstanceState);
@@ -93,6 +96,8 @@ public class LoginActivity extends DankActivity {
     // a Nougat emulator. Haven't tested on other devices.
     webView.clearFormData();
     webView.getSettings().setSaveFormData(false);
+    webView.getSettings().setJavaScriptEnabled(true);
+    webView.getSettings().setDomStorageEnabled(true);
 
     userLoginHelper = reddit.get().login().loginHelper();
     webView.loadUrl(userLoginHelper.authorizationUrl());
