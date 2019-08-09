@@ -44,6 +44,15 @@ workflow_filter_all: &workflow_filter_all
     tags:
       only: /.*/
 
+setup_signing: &setup_signing
+  run:
+    name: Setting-up signing configuration
+    command: signing/setup.sh $ENCRYPT_KEY
+cleanup_signing: &cleanup_signing
+  run:
+    name: Cleaning-up signing configuration
+    command: signing/cleanup.sh
+
 jobs:
   build_debug:
     <<: *config_android
@@ -54,10 +63,30 @@ jobs:
       - run:
           name: Download Dependencies
           command: ./gradlew dependencies
-      - run:
-          name: Assemble and Test APKs
-          command: ./gradlew bundleDebug assembleDebug
       - <<: *save_cache
+      - run:
+          name: Assemble debug APKs
+          command: ./gradlew :app:bundleDebug :app:assembleDebug
+      - store_artifacts:
+          path: app/build/outputs
+          destination: outputs
+      - <<: *persist_workspace
+
+  build_release:
+    <<: *config_android
+    steps:
+      - <<: *update_sdk
+      - checkout
+      - <<: *restore_cache
+      - <<: *setup_signing
+      - run:
+          name: Download Dependencies
+          command: ./gradlew dependencies
+      - <<: *save_cache
+      - run:
+          name: Assemble release APKs
+          command: ./gradlew :app:bundleRelease :app:assembleRelease
+      - <<: *cleanup_signing
       - store_artifacts:
           path: app/build/outputs
           destination: outputs
@@ -92,12 +121,12 @@ jobs:
     steps:
       - <<: *attach_workspace
       - run:
-          name: Publish Pre-Release on GitHub
+          name: Publish Release on GitHub
           command: |
             go get github.com/tcnksm/ghr
-            DEBUG_APK="Dank_${CIRCLE_TAG}_debug.apk"
-            mv ~/dank/app/build/outputs/apk/debug/app-debug.apk ${DEBUG_APK}
-            ghr -t ${GITHUB_TOKEN} -u ${CIRCLE_PROJECT_USERNAME} -r ${CIRCLE_PROJECT_REPONAME} -c ${CIRCLE_SHA1} -delete ${CIRCLE_TAG} ${DEBUG_APK}
+            RELEASE_APK="Dank_${CIRCLE_TAG}.apk"
+            mv ~/dank/app/build/outputs/apk/release/app-release.apk ${RELEASE_APK}
+            ghr -t ${GITHUB_TOKEN} -u ${CIRCLE_PROJECT_USERNAME} -r ${CIRCLE_PROJECT_REPONAME} -c ${CIRCLE_SHA1} -delete ${CIRCLE_TAG} ${RELEASE_APK}
 
 workflows:
   version: 2
@@ -108,9 +137,15 @@ workflows:
 #      - check:
 #          requires:
 #            - build_debug
+      - build_release:
+          filters:
+            tags:
+              only: /^\d+\.\d+(\.\d+)?$/
+            branches:
+              ignore: /.*/
       - publish_github_release:
           requires:
-            - build_debug
+            - build_release
           filters:
             tags:
               only: /^\d+\.\d+(\.\d+)?$/
