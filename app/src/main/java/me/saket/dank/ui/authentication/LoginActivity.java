@@ -88,6 +88,8 @@ public class LoginActivity extends DankActivity {
         } else if (url.contains("error=")) {
           Toast.makeText(LoginActivity.this, R.string.login_error_oauth_permission_rejected, Toast.LENGTH_LONG).show();
           webView.stopLoading();
+          setResult(RESULT_CANCELED);
+          finish();
         }
       }
     });
