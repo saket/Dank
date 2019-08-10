@@ -1,22 +1,18 @@
-![Dank](http://saket.me/wp-content/uploads/2018/04/dank_cover.jpg)
+[![CircleCI](https://circleci.com/gh/Tunous/Dank.svg?style=svg)](https://circleci.com/gh/Tunous/Dank) [![GitHub release](https://img.shields.io/github/release/Tunous/Dank)](https://github.com/Tunous/Dank/releases)
 
-### Here lies the greatest Reddit app that was never released
+![Dank](https://saket.me/wp-content/uploads/2018/04/dank_cover.jpg)
 
-I started building Dank as a side project in January 2017. It was my playground for exploring Android. It was also an attempt to showcase a beautiful experience of what Android can offer to its users. There are many Reddit apps out there, but they’re all bland. There’s nothing inspirational about them.
+### Here lives the greatest open-source Reddit app
 
-You can read more about the features here: https://saket.me/dank. An APK of the last release can be [found here](https://github.com/saket/Dank/releases).
+This is a fork of a Reddit application named **Dank** created by [@saket](https://github.com/saket). You can find the original repository [here](https://github.com/saket/Dank) and read about why the original code has been archived and open sourced in [this blog post](https://saket.me/sunsetting-dank/).
 
-I would love to continue working on Dank, but maintaining a side project is like having two jobs. I can’t do it anymore so I’m releasing the source and archiving the project. Please read this blog post for understanding my reasons behind this decision: http://saket.me/sunsetting-dank.
+### Download the APK
 
-The source code is a gigantic mess of a hundred different ideas barely hanging onto each other. Do not go inside expecting to find inspiration for good code. It’s quite the opposite. If anything, Dank can be an inspiration for UI ideas. Somewhat along the lines of [Nick Butcher’s Plaid](https://github.com/nickbutcher/plaid).
+You can download an APK of the latest release [here](https://github.com/Tunous/Dank/releases). The app is currently not availabe for download from the Google Play Store.
 
-I have so far been able to clean up some parts of Dank and release them separately:
+### Read about what's new
 
-* [Flick](https://saket.me/flick-dismissible-images/): library for dismissing images with flick gesture
-* [InboxRecyclerView](https://saket.me/inboxrecyclerview/): building expandable descendant navigation, inspired by Google Inbox
-* [FluidKeyboardResize](https://saket.me/smoothly-reacting-to-keyboard/): smoothly reacting to keyboard visibility changes in Android
-
-I’d like to open source Dank’s WYSIWYG markdown editor, but I haven’t been able to find time for it yet. I will appreciate it if someone else can help me with it.
+All the changes made to the application are being documented in a changelog file. You can find it [here](CHANGELOG.md).
 
 ### License
 ```
