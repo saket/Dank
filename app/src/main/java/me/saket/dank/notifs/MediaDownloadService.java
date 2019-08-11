@@ -7,6 +7,7 @@ import android.Manifest;
 import android.app.Notification;
 import android.app.PendingIntent;
 import android.app.Service;
+import android.content.ContentValues;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
@@ -16,6 +17,7 @@ import android.media.session.MediaSession;
 import android.net.Uri;
 import android.os.Build;
 import android.os.IBinder;
+import android.provider.MediaStore;
 import android.support.annotation.Nullable;
 import android.support.v4.app.NotificationCompat;
 import android.support.v4.app.NotificationManagerCompat;
@@ -357,7 +359,7 @@ public class MediaDownloadService extends Service {
 
     PendingIntent viewImagePendingIntent = PendingIntent.getActivity(this,
         createPendingIntentRequestId(REQUESTCODE_OPEN_IMAGE_PREFIX_, notificationId),
-        Intents.createForViewingMedia(this, mediaContentUri),
+        Intents.createForViewingMedia(this, mediaContentUri, completedDownloadJob.mediaLink().isVideo()),
         PendingIntent.FLAG_CANCEL_CURRENT
     );
 
@@ -588,6 +590,13 @@ public class MediaDownloadService extends Service {
         String mediaFileName = Urls.parseFileNameWithExtension(downloadedMediaLink.highQualityUrl());
         //noinspection LambdaParameterTypeCanBeSpecified,ConstantConditions
         File userAccessibleFile = Files2.INSTANCE.copyFileToPicturesDirectory(getResources(), downloadJobUpdate.downloadedFile(), mediaFileName);
+
+        //broadcast file
+        ContentValues values = new ContentValues();
+        values.put(MediaStore.Images.Media.TITLE, mediaFileName);
+        values.put(MediaStore.Images.Media.DISPLAY_NAME, mediaFileName);
+        getContentResolver().insert(MediaStore.Images.Media.EXTERNAL_CONTENT_URI,values);
+
         return MediaDownloadJob.downloaded(downloadedMediaLink, userAccessibleFile, downloadJobUpdate.timestamp());
 
       } else {

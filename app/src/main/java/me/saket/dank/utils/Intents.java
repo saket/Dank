@@ -63,13 +63,13 @@ public class Intents {
   }
 
   @CheckResult
-  public static Intent createForViewingMedia(Context context, Uri mediaContentUri) {
+  public static Intent createForViewingMedia(Context context, Uri mediaContentUri, Boolean isVideo) {
     return new Intent().setAction(Intent.ACTION_VIEW)
         .putExtra(ShareCompat.EXTRA_CALLING_PACKAGE, context.getPackageName())
         .addFlags(Intent.FLAG_ACTIVITY_NEW_DOCUMENT)
         .putExtra(Intent.EXTRA_STREAM, mediaContentUri)
-        .setType(context.getContentResolver().getType(mediaContentUri))
-        .addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+        .addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+        .setDataAndType(mediaContentUri, (!isVideo) ? "image/*" : "video/*");
   }
 
   public static Intent createForPlayStoreListing(Context context, String packageName) {
