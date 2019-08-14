@@ -10,7 +10,7 @@
 
   <external-path
     name="dank-video-cache"
-    path="Android/data/me.saket.dank/cache/video-cache/" />
+    path="Android/data/me.thanel.dank/cache/video-cache/" />
 
   <external-path
     name="dank-media"

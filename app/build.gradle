@@ -29,7 +29,7 @@ android {
   compileSdkVersion versions.compileSdk
 
   defaultConfig {
-    applicationId "me.saket.dank"
+    applicationId "me.thanel.dank"
     minSdkVersion versions.minSdk
     targetSdkVersion versions.compileSdk
     versionCode 15

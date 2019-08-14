@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
   <string name="app_launcher_label">Dank (d)</string>
-  <string name="file_provider_authority">me.saket.dank.debug.fileprovider</string>
+  <string name="file_provider_authority">me.thanel.dank.debug.fileprovider</string>
 </resources>

@@ -8,7 +8,7 @@
   <string name="reddit_app_redirect_url">http://saket.me</string>
 
   <integer name="recycle_drafts_older_than_num_days">14</integer>
-  <string name="file_provider_authority">me.saket.dank.fileprovider</string>
+  <string name="file_provider_authority">me.thanel.dank.fileprovider</string>
   <string name="image_download_directory_name">@string/app_name</string>  <!-- /external/Pictures/Dank -->
 
   <string-array name="inbox_folder_names">
