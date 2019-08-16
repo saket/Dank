@@ -509,7 +509,10 @@ public class UrlParserTest {
           String[] queryAndArg = queryAndArgParam.split("=");
           queryAndArgs.put(queryAndArg[0], queryAndArg[1]);
         }
-        when(mockUri.getQueryParameter(anyString())).thenAnswer(invocation -> queryAndArgs.get(invocation.getArgument(0)));
+        when(mockUri.getQueryParameter(anyString())).thenAnswer(invocation -> {
+          String parameter = invocation.getArgument(0);
+          return queryAndArgs.get(parameter);
+        });
       }
     }
     return mockUri;

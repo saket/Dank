@@ -12,6 +12,7 @@ import android.util.Size;
 
 import com.f2prateek.rx.preferences2.Preference;
 
+import io.reactivex.observers.TestObserver;
 import net.dean.jraw.models.Submission;
 
 import org.junit.Before;
@@ -134,9 +135,9 @@ public class CachePreFillerShould {
 
     when(urlParser.parse(any(), any())).thenReturn(ExternalLink.create(url));
 
-    //noinspection ConstantConditions
-    cachePreFiller.preFillInParallelThreads(submissions, 160)
-        .test()
+    TestObserver<Void> preFillObserver = cachePreFiller.preFillInParallelThreads(submissions, 160).test();
+    preFillObserver.awaitTerminalEvent();
+    preFillObserver
         .assertNoErrors()
         .assertComplete();
 
