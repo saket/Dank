@@ -78,12 +78,12 @@ public class UrlParserTest {
     //noinspection deprecation
     PowerMockito.when(Html.fromHtml(any(String.class))).thenAnswer(invocation -> {
       Spannable spannable = mock(Spannable.class);
-      PowerMockito.when(spannable.toString()).thenReturn(invocation.getArgumentAt(0, String.class));
+      PowerMockito.when(spannable.toString()).thenReturn(invocation.getArgument(0));
       return spannable;
     });
 
     PowerMockito.when(Uri.parse(anyString())).thenAnswer(invocation -> {
-      String url = invocation.getArgumentAt(0, String.class);
+      String url = invocation.getArgument(0);
       return createMockUriFor(url);
     });
   }
@@ -508,7 +508,7 @@ public class UrlParserTest {
           String[] queryAndArg = queryAndArgParam.split("=");
           queryAndArgs.put(queryAndArg[0], queryAndArg[1]);
         }
-        when(mockUri.getQueryParameter(anyString())).thenAnswer(invocation -> queryAndArgs.get(invocation.getArgumentAt(0, String.class)));
+        when(mockUri.getQueryParameter(anyString())).thenAnswer(invocation -> queryAndArgs.get(invocation.getArgument(0)));
       }
     }
     return mockUri;

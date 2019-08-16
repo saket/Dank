@@ -21,7 +21,7 @@ public class UrlsTest {
     PowerMockito.mockStatic(Uri.class);
 
     PowerMockito.when(Uri.parse(anyString())).thenAnswer(invocation -> {
-      String url = invocation.getArgumentAt(0, String.class);
+      String url = invocation.getArgument(0);
       return UrlParserTest.createMockUriFor(url);
     });
   }

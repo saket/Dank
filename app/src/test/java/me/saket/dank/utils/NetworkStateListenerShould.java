@@ -42,7 +42,7 @@ public class NetworkStateListenerShould {
     when(connectivityManager.getActiveNetworkInfo()).thenReturn(networkInfo);
 
     doAnswer(invocation -> {
-      ConnectivityManager.NetworkCallback callbacks = invocation.getArgumentAt(1, ConnectivityManager.NetworkCallback.class);
+      ConnectivityManager.NetworkCallback callbacks = invocation.getArgument(1);
       callbacks.onAvailable(mock(Network.class));
       //noinspection ReturnOfNull
       return null;
