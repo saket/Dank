@@ -73,7 +73,11 @@ public class Strings {
     return substringWithBounds;
   }
 
-  public static boolean isNullOrEmpty(@Nullable CharSequence string) {
-    return string == null || string.length() == 0;
+  public static int firstNonWhitespaceCharacterIndex(String string, int startIndex) {
+    int length = string.length();
+    while (startIndex < length && Character.isWhitespace(string.charAt(startIndex))) {
+      startIndex += 1;
+    }
+    return startIndex;
   }
 }

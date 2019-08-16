@@ -1,6 +1,7 @@
 package me.saket.dank.utils.markdown.markwon;
 
 import static junit.framework.Assert.assertEquals;
+import static junit.framework.Assert.assertTrue;
 
 import org.junit.Test;
 
@@ -21,9 +22,9 @@ public class AutoRedditLinkExtensionTest {
     List<RedditLinkSpan> links = processor.extractLinks(markdown);
 
     assertEquals(links.size(), 4);
-    assertEquals(true, links.contains(RedditLinkSpan.create("https://reddit.com/r/pics", 7, 14)));
-    assertEquals(true, links.contains(RedditLinkSpan.create("https://reddit.com/r/pics", 15, 21)));
-    assertEquals(true, links.contains(RedditLinkSpan.create("https://reddit.com/u/Saketme", 31, 42)));
-    assertEquals(true, links.contains(RedditLinkSpan.create("https://reddit.com/u/saketme", 43, 53)));
+    assertTrue(links.contains(RedditLinkSpan.create("https://reddit.com/r/pics", 7, 14)));
+    assertTrue(links.contains(RedditLinkSpan.create("https://reddit.com/r/pics", 15, 21)));
+    assertTrue(links.contains(RedditLinkSpan.create("https://reddit.com/u/Saketme", 31, 42)));
+    assertTrue(links.contains(RedditLinkSpan.create("https://reddit.com/u/saketme", 43, 53)));
   }
 }

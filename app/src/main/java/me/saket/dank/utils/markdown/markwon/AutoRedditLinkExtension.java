@@ -17,6 +17,7 @@ import javax.inject.Inject;
 
 import me.saket.dank.urlparser.UrlParserConfig;
 import me.saket.dank.utils.Optional;
+import me.saket.dank.utils.Strings;
 
 /**
  * Extension for automatically turning "r/subreddit" and "u/user" URLs into links.
@@ -78,8 +79,8 @@ public class AutoRedditLinkExtension implements Parser.ParserExtension {
 
       Matcher subredditMatcher = urlParserConfig.autoLinkSubredditPattern().matcher(literal);
       while (subredditMatcher.find()) {
-        int linkStartIndex = subredditMatcher.start(0);
-        int linkEndIndex = subredditMatcher.end(0);
+        int linkStartIndex = Strings.firstNonWhitespaceCharacterIndex(literal, subredditMatcher.start());
+        int linkEndIndex = subredditMatcher.end();
         String subredditName = subredditMatcher.group(1);
 
         if (linkSpans.isEmpty()) {
@@ -91,15 +92,14 @@ public class AutoRedditLinkExtension implements Parser.ParserExtension {
 
       Matcher userMatcher = urlParserConfig.autoLinkUserPattern().matcher(literal);
       while (userMatcher.find()) {
-        int linkStartIndex = userMatcher.start(0);
-        int linkEndIndex = userMatcher.end(0);
+        int linkStartIndex = Strings.firstNonWhitespaceCharacterIndex(literal, userMatcher.start());
+        int linkEndIndex = userMatcher.end();
         String userName = userMatcher.group(1);
 
         if (linkSpans.isEmpty()) {
           linkSpans = Optional.of(new ArrayList<>(4));
         }
         String url = String.format("https://reddit.com/u/%s", userName);
-        //Timber.i("url: %s", url);
         linkSpans.get().add(RedditLinkSpan.create(url, linkStartIndex, linkEndIndex));
       }
 
