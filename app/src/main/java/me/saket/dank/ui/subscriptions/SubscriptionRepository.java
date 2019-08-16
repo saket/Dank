@@ -11,8 +11,14 @@ import android.support.annotation.CheckResult;
 import android.support.annotation.VisibleForTesting;
 
 import com.squareup.sqlbrite2.BriteDatabase;
-
+import dagger.Lazy;
+import io.reactivex.Completable;
+import io.reactivex.Observable;
+import io.reactivex.Single;
+import io.reactivex.functions.Consumer;
+import io.reactivex.functions.Function;
 import net.dean.jraw.models.Subreddit;
+import timber.log.Timber;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -26,12 +32,6 @@ import java.util.Set;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 
-import dagger.Lazy;
-import io.reactivex.Completable;
-import io.reactivex.Observable;
-import io.reactivex.Single;
-import io.reactivex.functions.Consumer;
-import io.reactivex.functions.Function;
 import me.saket.dank.R;
 import me.saket.dank.data.UserPreferences;
 import me.saket.dank.reddit.Reddit;
@@ -39,7 +39,6 @@ import me.saket.dank.ui.subreddit.SubredditSearchResult;
 import me.saket.dank.ui.subreddit.SubredditSearchResult.Success;
 import me.saket.dank.ui.subreddit.Subscribeable;
 import me.saket.dank.ui.user.UserSessionRepository;
-import timber.log.Timber;
 
 /**
  * Manages:
@@ -337,6 +336,10 @@ public class SubscriptionRepository {
           if (localSub.isSubscribePending()) {
             // Oh okay, we haven't been able to make the subscribe API call yet.
             //noinspection ResultOfMethodCallIgnored
+            syncedListBuilder.add(localSub);
+
+          } else if (!reddit.get().subscriptions().needsRemoteSubscription(localSub.name())) {
+            // This subscription doesn't need to be on remote. Let's keep it.
             syncedListBuilder.add(localSub);
           }
           // Else, sub has been removed on remote! Will not add this sub.

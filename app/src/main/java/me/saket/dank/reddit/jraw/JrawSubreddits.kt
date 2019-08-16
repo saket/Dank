@@ -39,6 +39,9 @@ class JrawSubreddits(private val clients: Observable<RedditClient>) : Reddit.Sub
     if (subredditName.equals("popular", ignoreCase = true)) {
       return Single.just(Subscribeable.local("Popular"))
     }
+    if (subredditName.equals("all", ignoreCase = true)) {
+      return Single.just(Subscribeable.local("All"))
+    }
 
     return clients
         .firstOrError()

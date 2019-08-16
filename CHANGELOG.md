@@ -4,6 +4,9 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
+### Added
+- Subscribing to /r/all ([#28](https://github.com/Tunous/Dank/pull/28))
+
 ### Fixed
 - Clicking on notification doesn't open downloaded image ([#35](https://github.com/Tunous/Dank/pull/35))
 

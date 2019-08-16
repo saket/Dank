@@ -90,7 +90,9 @@ interface Reddit {
     fun remove(subreddit: Subreddit): Completable
 
     fun needsRemoteSubscription(subredditName: String): Boolean {
-      return !subredditName.equals("frontpage", ignoreCase = true) && !subredditName.equals("popular", ignoreCase = true)
+      return !subredditName.equals("frontpage", ignoreCase = true)
+          && !subredditName.equals("popular", ignoreCase = true)
+          && !subredditName.equals("all", ignoreCase = true)
     }
   }
 
