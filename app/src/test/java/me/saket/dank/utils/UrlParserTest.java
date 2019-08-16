@@ -2,6 +2,8 @@ package me.saket.dank.utils;
 
 import static com.google.common.truth.Truth.assertThat;
 import static junit.framework.Assert.assertEquals;
+import static org.mockito.AdditionalMatchers.or;
+import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Mockito.mock;
@@ -69,13 +71,12 @@ public class UrlParserTest {
     PowerMockito.mockStatic(Uri.class);
 
     PowerMockito.mockStatic(TextUtils.class);
-    PowerMockito.when(TextUtils.isEmpty(any(CharSequence.class))).thenAnswer(invocation -> {
-      CharSequence text = (CharSequence) invocation.getArguments()[0];
+    PowerMockito.when(TextUtils.isEmpty(or(any(CharSequence.class), isNull()))).thenAnswer(invocation -> {
+      CharSequence text = invocation.getArgument(0);
       return text == null || text.length() == 0;
     });
 
     PowerMockito.mockStatic(Html.class);
-    //noinspection deprecation
     PowerMockito.when(Html.fromHtml(any(String.class))).thenAnswer(invocation -> {
       Spannable spannable = mock(Spannable.class);
       PowerMockito.when(spannable.toString()).thenReturn(invocation.getArgument(0));
