@@ -111,6 +111,12 @@ tasks.withType(org.jetbrains.kotlin.gradle.tasks.KotlinCompile).all {
   }
 }
 
+task printVersionName {
+  doLast {
+    println android.defaultConfig.versionName
+  }
+}
+
 dependencies {
   implementation project(path: ':markdownhints')
 
