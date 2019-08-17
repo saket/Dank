@@ -2,7 +2,7 @@ package me.saket.dank.widgets;
 
 import android.content.Context;
 import android.graphics.Outline;
-import android.support.v7.widget.RecyclerView;
+import androidx.recyclerview.widget.RecyclerView;
 import android.util.AttributeSet;
 import android.view.MotionEvent;
 import android.view.View;

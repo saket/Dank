@@ -2,7 +2,7 @@ package me.saket.dank.widgets;
 
 import android.content.Context;
 import android.content.res.TypedArray;
-import android.support.annotation.CheckResult;
+import androidx.annotation.CheckResult;
 import android.util.AttributeSet;
 import android.view.Gravity;
 import android.view.LayoutInflater;

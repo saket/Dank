@@ -9,7 +9,7 @@ import android.database.sqlite.SQLiteDatabase;
 import android.graphics.drawable.Icon;
 import android.net.Uri;
 import android.os.Build;
-import android.support.annotation.CheckResult;
+import androidx.annotation.CheckResult;
 
 import com.squareup.sqlbrite2.BriteDatabase;
 

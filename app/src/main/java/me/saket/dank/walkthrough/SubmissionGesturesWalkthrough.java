@@ -2,11 +2,11 @@ package me.saket.dank.walkthrough;
 
 import android.content.Context;
 import android.content.res.Resources;
-import android.support.annotation.Nullable;
-import android.support.constraint.ConstraintLayout;
-import android.support.constraint.ConstraintSet;
-import android.support.v4.content.ContextCompat;
-import android.support.v7.widget.RecyclerView;
+import androidx.annotation.Nullable;
+import androidx.constraintlayout.widget.ConstraintLayout;
+import androidx.constraintlayout.widget.ConstraintSet;
+import androidx.core.content.ContextCompat;
+import androidx.recyclerview.widget.RecyclerView;
 import android.text.TextUtils;
 import android.util.TypedValue;
 import android.view.LayoutInflater;
@@ -28,8 +28,6 @@ import java.util.List;
 import javax.inject.Inject;
 import javax.inject.Named;
 
-import dagger.Lazy;
-import io.reactivex.Observable;
 import net.dean.jraw.models.Submission;
 
 import me.saket.dank.R;

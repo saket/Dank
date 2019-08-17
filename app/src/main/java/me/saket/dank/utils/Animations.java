@@ -2,12 +2,12 @@ package me.saket.dank.utils;
 
 import android.animation.Animator;
 import android.animation.TimeInterpolator;
-import android.support.annotation.Nullable;
-import android.support.transition.ChangeBounds;
-import android.support.transition.Fade;
-import android.support.transition.TransitionSet;
-import android.support.v4.view.animation.FastOutLinearInInterpolator;
-import android.support.v4.view.animation.FastOutSlowInInterpolator;
+import androidx.annotation.Nullable;
+import androidx.transition.ChangeBounds;
+import androidx.transition.Fade;
+import androidx.transition.TransitionSet;
+import androidx.interpolator.view.animation.FastOutLinearInInterpolator;
+import androidx.interpolator.view.animation.FastOutSlowInInterpolator;
 import android.util.ArrayMap;
 import android.view.animation.Interpolator;
 

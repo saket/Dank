@@ -16,12 +16,12 @@
 
 package me.saket.dank.utils;
 
-import android.support.annotation.Nullable;
+import androidx.annotation.Nullable;
 
 import com.google.auto.value.AutoValue;
 
 /**
- * Copied from {@link android.support.v4.util.Pair} to remove all @Nullable annotations.
+ * Copied from {@link androidx.core.util.Pair} to remove all @Nullable annotations.
  * <p>
  * Container to ease passing around a tuple of two objects.
  */

@@ -4,7 +4,7 @@ import android.annotation.SuppressLint;
 import android.content.Context;
 import android.graphics.Canvas;
 import android.graphics.RectF;
-import android.support.annotation.NonNull;
+import androidx.annotation.NonNull;
 import android.util.AttributeSet;
 import android.view.GestureDetector;
 import android.view.MotionEvent;
@@ -17,8 +17,6 @@ import com.alexvasilkov.gestures.views.GestureImageView;
 
 import java.util.HashMap;
 import java.util.Map;
-
-import timber.log.Timber;
 
 /**
  * This wrapper exists so that we can easily change libraries in the future. It has happened once so far

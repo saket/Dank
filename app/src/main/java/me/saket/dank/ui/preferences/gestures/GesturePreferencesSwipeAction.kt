@@ -1,9 +1,9 @@
 package me.saket.dank.ui.preferences.gestures
 
 import android.annotation.SuppressLint
-import android.support.annotation.CheckResult
-import android.support.annotation.DrawableRes
-import android.support.v7.widget.RecyclerView
+import androidx.annotation.CheckResult
+import androidx.annotation.DrawableRes
+import androidx.recyclerview.widget.RecyclerView
 import android.view.LayoutInflater
 import android.view.MotionEvent
 import android.view.View

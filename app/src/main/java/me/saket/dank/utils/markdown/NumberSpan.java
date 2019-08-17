@@ -19,7 +19,7 @@ package me.saket.dank.utils.markdown;
 
 import android.graphics.Canvas;
 import android.graphics.Paint;
-import android.support.annotation.Px;
+import androidx.annotation.Px;
 import android.text.Layout;
 import android.text.Spanned;
 import android.text.style.LeadingMarginSpan;

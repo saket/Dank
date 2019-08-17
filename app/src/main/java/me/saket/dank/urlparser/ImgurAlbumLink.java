@@ -1,15 +1,13 @@
 package me.saket.dank.urlparser;
 
 import android.os.Parcelable;
-import android.support.annotation.Nullable;
+import androidx.annotation.Nullable;
 
 import com.google.auto.value.AutoValue;
 import com.squareup.moshi.JsonAdapter;
 import com.squareup.moshi.Moshi;
 
 import java.util.List;
-
-import me.saket.dank.utils.Urls;
 
 @AutoValue
 public abstract class ImgurAlbumLink extends MediaLink implements Parcelable {

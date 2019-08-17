@@ -2,8 +2,8 @@ package me.saket.dank.cache;
 
 import android.app.Application;
 import android.graphics.drawable.Drawable;
-import android.support.annotation.CheckResult;
-import android.support.annotation.Px;
+import androidx.annotation.CheckResult;
+import androidx.annotation.Px;
 
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.Priority;

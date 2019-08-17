@@ -1,8 +1,8 @@
 package me.saket.dank.ui.preferences;
 
 import android.content.Context;
-import android.support.annotation.DrawableRes;
-import android.support.annotation.StringRes;
+import androidx.annotation.DrawableRes;
+import androidx.annotation.StringRes;
 
 import com.f2prateek.rx.preferences2.Preference;
 import com.google.auto.value.AutoValue;

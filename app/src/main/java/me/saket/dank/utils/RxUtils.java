@@ -3,7 +3,7 @@ package me.saket.dank.utils;
 import android.annotation.SuppressLint;
 import android.os.Build;
 import android.os.Looper;
-import android.support.annotation.CheckResult;
+import androidx.annotation.CheckResult;
 
 import io.reactivex.CompletableTransformer;
 import io.reactivex.Observable;

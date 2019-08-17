@@ -1,6 +1,6 @@
 package me.saket.dank.utils.lifecycle;
 
-import android.support.annotation.CheckResult;
+import androidx.annotation.CheckResult;
 import android.view.View;
 
 import com.jakewharton.rxrelay2.BehaviorRelay;

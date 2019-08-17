@@ -2,7 +2,7 @@ package me.saket.dank.widgets;
 
 import android.content.Context;
 import android.graphics.Color;
-import android.support.v7.widget.AppCompatImageButton;
+import androidx.appcompat.widget.AppCompatImageButton;
 import android.util.AttributeSet;
 
 /**

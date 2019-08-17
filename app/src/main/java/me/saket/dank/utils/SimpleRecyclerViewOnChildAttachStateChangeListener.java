@@ -1,6 +1,6 @@
 package me.saket.dank.utils;
 
-import android.support.v7.widget.RecyclerView;
+import androidx.recyclerview.widget.RecyclerView;
 import android.view.View;
 
 public abstract class SimpleRecyclerViewOnChildAttachStateChangeListener implements RecyclerView.OnChildAttachStateChangeListener {

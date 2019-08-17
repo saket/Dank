@@ -1,6 +1,6 @@
 package me.saket.dank.ui.submission;
 
-import android.support.annotation.CheckResult;
+import androidx.annotation.CheckResult;
 
 import com.jakewharton.rxrelay2.PublishRelay;
 import com.jakewharton.rxrelay2.Relay;

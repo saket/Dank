@@ -5,7 +5,7 @@ import static java.lang.Integer.parseInt;
 import android.app.Application;
 import android.content.Context;
 import android.content.SharedPreferences;
-import android.support.annotation.CheckResult;
+import androidx.annotation.CheckResult;
 
 import com.jakewharton.rxrelay2.BehaviorRelay;
 import com.jakewharton.rxrelay2.Relay;

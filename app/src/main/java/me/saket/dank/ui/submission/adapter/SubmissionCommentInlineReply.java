@@ -3,8 +3,8 @@ package me.saket.dank.ui.submission.adapter;
 import static io.reactivex.android.schedulers.AndroidSchedulers.mainThread;
 import static io.reactivex.schedulers.Schedulers.io;
 
-import android.support.annotation.CheckResult;
-import android.support.v7.widget.RecyclerView;
+import androidx.annotation.CheckResult;
+import androidx.recyclerview.widget.RecyclerView;
 import android.text.Editable;
 import android.view.LayoutInflater;
 import android.view.View;

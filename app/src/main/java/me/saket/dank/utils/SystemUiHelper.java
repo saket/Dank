@@ -3,7 +3,7 @@ package me.saket.dank.utils;
 import android.app.Activity;
 import android.os.Handler;
 import android.os.Looper;
-import android.support.annotation.Nullable;
+import androidx.annotation.Nullable;
 
 /**
  * Helper for controlling the visibility of the System UI across the various API levels. To use this API, instantiate an instance of this class with

@@ -3,7 +3,7 @@ package me.saket.dank.utils;
 import android.graphics.Bitmap;
 import android.graphics.Color;
 import android.net.Uri;
-import android.support.annotation.Nullable;
+import androidx.annotation.Nullable;
 import android.view.View;
 
 import com.devbrackets.android.exomedia.core.video.exo.ExoTextureVideoView;

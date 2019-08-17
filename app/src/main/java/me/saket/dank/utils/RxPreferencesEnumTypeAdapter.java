@@ -1,6 +1,6 @@
 package me.saket.dank.utils;
 
-import android.support.annotation.NonNull;
+import androidx.annotation.NonNull;
 
 import com.f2prateek.rx.preferences2.Preference;
 

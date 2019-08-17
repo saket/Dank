@@ -1,6 +1,6 @@
 package me.saket.dank.markdownhints.spans;
 
-import android.support.annotation.NonNull;
+import androidx.annotation.NonNull;
 
 import ru.noties.markwon.spans.CodeSpan;
 import ru.noties.markwon.spans.SpannableTheme;

@@ -6,8 +6,8 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
-import android.support.annotation.CheckResult;
-import android.support.v4.app.RemoteInput;
+import androidx.annotation.CheckResult;
+import androidx.core.app.RemoteInput;
 import android.widget.Toast;
 
 import net.dean.jraw.models.Message;

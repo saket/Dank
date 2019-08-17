@@ -81,7 +81,7 @@
     android:theme="@style/SubredditPickerSearchFieldTheme"
     tools:ignore="RtlSymmetry" />
 
-  <android.support.v7.widget.RecyclerView
+  <androidx.recyclerview.widget.RecyclerView
     android:id="@+id/subredditpicker_subreddit_list"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
@@ -111,7 +111,7 @@
       android:indeterminateTint="@color/gray_600" />
   </FrameLayout>
 
-  <android.support.design.widget.FloatingActionButton
+  <com.google.android.material.floatingactionbutton.FloatingActionButton
     android:id="@+id/subredditpicker_save_fab"
     style="@style/DankFAB"
     android:contentDescription="@string/cd_subredditpicker_save_changes"

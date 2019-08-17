@@ -1,6 +1,6 @@
 package me.saket.dank.data;
 
-import android.support.annotation.StringRes;
+import androidx.annotation.StringRes;
 
 import com.google.auto.value.AutoValue;
 

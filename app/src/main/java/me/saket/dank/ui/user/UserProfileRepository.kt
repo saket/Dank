@@ -1,6 +1,6 @@
 package me.saket.dank.ui.user
 
-import android.support.annotation.CheckResult
+import androidx.annotation.CheckResult
 import com.nytimes.android.external.fs3.filesystem.FileSystem
 import com.nytimes.android.external.store3.base.impl.MemoryPolicy
 import com.nytimes.android.external.store3.base.impl.Store

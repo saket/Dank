@@ -3,9 +3,9 @@ package me.saket.dank.ui.preferences;
 import android.content.res.Resources;
 import android.graphics.Typeface;
 import android.os.Build;
-import android.support.annotation.FontRes;
-import android.support.annotation.NonNull;
-import android.support.annotation.RequiresApi;
+import androidx.annotation.FontRes;
+import androidx.annotation.NonNull;
+import androidx.annotation.RequiresApi;
 
 import com.f2prateek.rx.preferences2.Preference;
 import com.google.auto.value.AutoValue;

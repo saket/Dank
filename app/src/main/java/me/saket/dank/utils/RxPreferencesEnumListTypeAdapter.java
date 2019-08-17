@@ -1,10 +1,9 @@
 package me.saket.dank.utils;
 
-import android.support.annotation.NonNull;
+import androidx.annotation.NonNull;
 import android.text.TextUtils;
 
 import com.f2prateek.rx.preferences2.Preference;
-import org.w3c.dom.Text;
 
 import java.util.ArrayList;
 import java.util.Collections;

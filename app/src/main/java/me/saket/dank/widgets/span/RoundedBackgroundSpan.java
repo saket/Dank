@@ -4,8 +4,8 @@ import android.graphics.Canvas;
 import android.graphics.Paint;
 import android.graphics.Rect;
 import android.graphics.RectF;
-import android.support.annotation.ColorInt;
-import android.support.annotation.Px;
+import androidx.annotation.ColorInt;
+import androidx.annotation.Px;
 import android.text.style.LineHeightSpan;
 import android.text.style.ReplacementSpan;
 

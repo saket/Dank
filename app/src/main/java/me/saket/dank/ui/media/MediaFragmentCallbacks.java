@@ -1,6 +1,6 @@
 package me.saket.dank.ui.media;
 
-import android.support.annotation.CheckResult;
+import androidx.annotation.CheckResult;
 
 import net.dean.jraw.models.SubmissionPreview;
 

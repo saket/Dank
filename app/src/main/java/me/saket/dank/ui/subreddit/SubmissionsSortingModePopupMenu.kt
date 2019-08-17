@@ -1,7 +1,7 @@
 package me.saket.dank.ui.subreddit
 
 import android.content.Context
-import android.support.v7.widget.PopupMenu
+import androidx.appcompat.widget.PopupMenu
 import android.view.Gravity
 import android.view.View
 import me.saket.dank.R

@@ -3,7 +3,7 @@ package me.saket.dank.vote;
 import android.app.Application;
 import android.content.SharedPreferences;
 import android.os.Looper;
-import android.support.annotation.CheckResult;
+import androidx.annotation.CheckResult;
 
 import com.squareup.moshi.Moshi;
 

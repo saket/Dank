@@ -110,7 +110,7 @@
     because FAB-morphing shared-element-transition won't take tint into
     consideration that has been manually applied here.
    -->
-  <android.support.design.widget.FloatingActionButton
+  <com.google.android.material.floatingactionbutton.FloatingActionButton
     android:id="@+id/submission_reply"
     style="@style/DankFAB"
     android:layout_margin="@dimen/spacing16"

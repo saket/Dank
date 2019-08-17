@@ -1,7 +1,7 @@
 package me.saket.dank.ui.preferences.gestures
 
-import android.support.annotation.CheckResult
-import android.support.annotation.StringRes
+import androidx.annotation.CheckResult
+import androidx.annotation.StringRes
 import com.jakewharton.rxrelay2.PublishRelay
 import me.saket.dank.R
 import me.saket.dank.widgets.swipe.*

@@ -3,7 +3,7 @@ package me.saket.dank.utils;
 import static me.saket.dank.utils.Preconditions.checkMainThread;
 import static me.saket.dank.utils.Preconditions.checkNotNull;
 
-import android.support.annotation.CheckResult;
+import androidx.annotation.CheckResult;
 import android.widget.PopupMenu;
 import android.widget.PopupWindow;
 

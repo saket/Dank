@@ -1,8 +1,8 @@
 package me.saket.dank.ui.subreddit.uimodels;
 
 import android.content.Context;
-import android.support.annotation.CheckResult;
-import android.support.v4.content.ContextCompat;
+import androidx.annotation.CheckResult;
+import androidx.core.content.ContextCompat;
 import android.text.Html;
 import android.text.style.ForegroundColorSpan;
 import android.widget.ImageView;

@@ -2,13 +2,13 @@ package me.saket.dank.ui;
 
 import android.content.Context;
 import android.os.Bundle;
-import android.support.annotation.NonNull;
-import android.support.annotation.Nullable;
-import android.support.v7.app.ActionBar;
 import android.view.View;
 
-import butterknife.ButterKnife;
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+import androidx.appcompat.app.ActionBar;
 import io.github.inflationx.viewpump.ViewPumpContextWrapper;
+
 import me.saket.dank.R;
 import me.saket.dank.utils.lifecycle.LifecycleOwnerActivity;
 
@@ -28,7 +28,7 @@ public abstract class DankActivity extends LifecycleOwnerActivity {
   }
 
   protected void findAndSetupToolbar() {
-    setSupportActionBar(ButterKnife.findById(this, R.id.toolbar));
+    setSupportActionBar(findViewById(R.id.toolbar));
   }
 
   /**

@@ -1,6 +1,6 @@
 package me.saket.dank.analytics;
 
-import android.support.annotation.Nullable;
+import androidx.annotation.Nullable;
 
 import timber.log.Timber;
 

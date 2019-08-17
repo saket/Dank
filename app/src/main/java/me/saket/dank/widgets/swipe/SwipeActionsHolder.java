@@ -1,7 +1,7 @@
 package me.saket.dank.widgets.swipe;
 
-import android.support.annotation.CheckResult;
-import android.support.v4.util.ObjectsCompat;
+import androidx.annotation.CheckResult;
+import androidx.core.util.ObjectsCompat;
 
 import java.util.ArrayList;
 import java.util.List;

@@ -1,7 +1,7 @@
 package me.saket.dank.utils;
 
 import android.content.Context;
-import android.support.v7.widget.LinearSmoothScroller;
+import androidx.recyclerview.widget.LinearSmoothScroller;
 
 public class LinearSmoothScrollerWithVerticalSnapPref extends LinearSmoothScroller {
   private final int snapPref;

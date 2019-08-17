@@ -1,7 +1,7 @@
 package me.saket.dank.markdownhints;
 
-import android.support.annotation.ColorInt;
-import android.support.annotation.Px;
+import androidx.annotation.ColorInt;
+import androidx.annotation.Px;
 
 import com.vladsch.flexmark.ast.BlockQuote;
 import com.vladsch.flexmark.ast.Code;

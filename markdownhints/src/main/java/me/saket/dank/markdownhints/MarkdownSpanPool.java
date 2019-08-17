@@ -2,8 +2,8 @@ package me.saket.dank.markdownhints;
 
 import android.annotation.SuppressLint;
 import android.graphics.Typeface;
-import android.support.annotation.ColorInt;
-import android.support.annotation.Px;
+import androidx.annotation.ColorInt;
+import androidx.annotation.Px;
 import android.text.style.ForegroundColorSpan;
 import android.text.style.LeadingMarginSpan;
 import android.text.style.StrikethroughSpan;

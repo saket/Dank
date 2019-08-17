@@ -1,6 +1,6 @@
 package me.saket.dank.di;
 
-import android.support.annotation.CheckResult;
+import androidx.annotation.CheckResult;
 
 import io.reactivex.Single;
 import me.saket.dank.data.StreamableVideoResponse;

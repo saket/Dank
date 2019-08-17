@@ -1,6 +1,6 @@
 package me.saket.dank.ui.subreddit.uimodels
 
-import android.support.v7.util.DiffUtil
+import androidx.recyclerview.widget.DiffUtil
 import me.saket.dank.ui.subreddit.uimodels.SubredditScreenUiModel.SubmissionRowUiModel
 
 object SubmissionItemDiffer : DiffUtil.ItemCallback<SubmissionRowUiModel>() {

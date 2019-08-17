@@ -1,10 +1,10 @@
 package me.saket.dank.ui.appshortcuts;
 
 import android.annotation.SuppressLint;
-import android.support.annotation.CheckResult;
-import android.support.annotation.NonNull;
-import android.support.v7.util.DiffUtil;
-import android.support.v7.widget.RecyclerView;
+import androidx.annotation.CheckResult;
+import androidx.annotation.NonNull;
+import androidx.recyclerview.widget.DiffUtil;
+import androidx.recyclerview.widget.RecyclerView;
 import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.View;
@@ -29,7 +29,6 @@ import me.saket.dank.utils.Pair;
 import me.saket.dank.utils.RecyclerViewArrayAdapter;
 import me.saket.dank.utils.ItemTouchHelperDragAndDropCallback;
 import me.saket.dank.utils.lifecycle.LifecycleStreams;
-import me.saket.dank.widgets.swipe.SwipeDirection;
 import me.saket.dank.widgets.swipe.SwipeableLayout;
 import me.saket.dank.widgets.swipe.ViewHolderWithSwipeActions;
 

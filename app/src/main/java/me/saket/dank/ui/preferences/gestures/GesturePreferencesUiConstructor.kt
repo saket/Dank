@@ -1,7 +1,7 @@
 package me.saket.dank.ui.preferences.gestures
 
 import android.content.Context
-import android.support.annotation.CheckResult
+import androidx.annotation.CheckResult
 import io.reactivex.Observable
 import me.saket.dank.R
 import me.saket.dank.ui.preferences.gestures.submissions.GesturePreferencesSubmissionPreview

@@ -3,8 +3,8 @@ package me.saket.dank.widgets.swipe;
 import static java.lang.Math.abs;
 import static me.saket.dank.utils.Math2.clamp;
 
-import android.support.v7.widget.RecyclerView;
-import android.support.v7.widget.helper.ItemTouchHelper;
+import androidx.recyclerview.widget.RecyclerView;
+import androidx.recyclerview.widget.ItemTouchHelper;
 import android.view.GestureDetector;
 import android.view.MotionEvent;
 import android.view.View;

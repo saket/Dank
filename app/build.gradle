@@ -35,7 +35,7 @@ android {
     versionCode 15
     versionName "0.7.3"
     multiDexEnabled true
-    testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
+    testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
   }
 
   signingConfigs {
@@ -121,15 +121,15 @@ dependencies {
   testImplementation 'org.powermock:powermock-api-mockito:1.6.6'
   testImplementation "com.google.truth:truth:0.40"
 
-  androidTestImplementation "com.android.support:support-annotations:$versions.supportLib"
-  androidTestImplementation "com.android.support.test:runner:$versions.androidTest"
-  androidTestImplementation "com.android.support.test:rules:$versions.androidTest"
+  androidTestImplementation 'androidx.annotation:annotation:1.1.0'
+  androidTestImplementation 'androidx.test:runner:1.2.0'
+  androidTestImplementation 'androidx.test:rules:1.2.0'
 
-  implementation "com.android.support:recyclerview-v7:$versions.supportLib"
-  implementation "com.android.support:support-annotations:$versions.supportLib"
-  implementation "com.android.support:design:$versions.supportLib"
-  implementation "com.android.support:customtabs:$versions.supportLib"
-  implementation "com.android.support:palette-v7:$versions.supportLib"
+  implementation 'androidx.recyclerview:recyclerview:1.0.0'
+  implementation 'androidx.annotation:annotation:1.1.0'
+  implementation 'com.google.android.material:material:1.0.0'
+  implementation 'androidx.browser:browser:1.0.0'
+  implementation 'androidx.palette:palette:1.0.0'
 
   implementation "com.squareup.moshi:moshi:$versions.moshi"
   kapt "com.squareup.moshi:moshi-kotlin-codegen:$versions.moshi"
@@ -163,9 +163,9 @@ dependencies {
   kapt "com.github.bumptech.glide:compiler:$versions.glide"
   implementation "com.github.bumptech.glide:okhttp3-integration:$versions.glide"
   implementation 'com.squareup.sqlbrite2:sqlbrite:2.0.0'
-  implementation "android.arch.persistence.room:runtime:$versions.room"
-  kapt "android.arch.persistence.room:compiler:$versions.room"
-  implementation "android.arch.persistence.room:rxjava2:$versions.room"
+  implementation 'androidx.room:room-runtime:2.1.0'
+  kapt 'androidx.room:room-compiler:2.1.0'
+  implementation 'androidx.room:room-rxjava2:2.1.0'
   implementation 'com.google.android:flexbox:0.3.0'
   implementation 'com.github.zagum:Android-ExpandIcon:1.1.1'
   implementation 'me.saket:better-link-movement-method:2.2.0'
@@ -209,5 +209,5 @@ dependencies {
   implementation "com.nytimes.android:filesystem3:$versions.nytStore"
   implementation "com.facebook.stetho:stetho:$versions.stetho"
   implementation "com.facebook.stetho:stetho-okhttp3:$versions.stetho"
-  implementation 'com.android.support.constraint:constraint-layout:1.1.3'
+  implementation 'androidx.constraintlayout:constraintlayout:1.1.3'
 }

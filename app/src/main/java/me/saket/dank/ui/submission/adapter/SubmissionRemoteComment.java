@@ -1,10 +1,10 @@
 package me.saket.dank.ui.submission.adapter;
 
 import android.annotation.SuppressLint;
-import android.support.annotation.CheckResult;
-import android.support.annotation.ColorInt;
-import android.support.annotation.ColorRes;
-import android.support.v7.widget.RecyclerView;
+import androidx.annotation.CheckResult;
+import androidx.annotation.ColorInt;
+import androidx.annotation.ColorRes;
+import androidx.recyclerview.widget.RecyclerView;
 import android.text.Spannable;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -30,7 +30,6 @@ import me.saket.dank.ui.submission.CommentSwipeActionsProvider;
 import me.saket.dank.ui.submission.events.CommentClicked;
 import me.saket.dank.utils.DankLinkMovementMethod;
 import me.saket.dank.widgets.IndentedLayout;
-import me.saket.dank.widgets.swipe.SwipeDirection;
 import me.saket.dank.widgets.swipe.SwipeableLayout;
 import me.saket.dank.widgets.swipe.ViewHolderWithSwipeActions;
 

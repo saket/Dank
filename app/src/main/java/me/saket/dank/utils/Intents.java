@@ -3,9 +3,9 @@ package me.saket.dank.utils;
 import android.content.Context;
 import android.content.Intent;
 import android.net.Uri;
-import android.support.annotation.CheckResult;
-import android.support.annotation.Nullable;
-import android.support.v4.app.ShareCompat;
+import androidx.annotation.CheckResult;
+import androidx.annotation.Nullable;
+import androidx.core.app.ShareCompat;
 
 import me.saket.dank.R;
 

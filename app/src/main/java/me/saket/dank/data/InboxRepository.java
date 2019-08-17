@@ -5,7 +5,7 @@ import static java.util.Collections.unmodifiableList;
 import android.content.ContentValues;
 import android.content.Context;
 import android.database.sqlite.SQLiteDatabase;
-import android.support.annotation.CheckResult;
+import androidx.annotation.CheckResult;
 
 import com.google.auto.value.AutoValue;
 import com.squareup.sqlbrite2.BriteDatabase;

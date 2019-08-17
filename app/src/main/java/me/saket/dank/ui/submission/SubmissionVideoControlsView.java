@@ -2,7 +2,7 @@ package me.saket.dank.ui.submission;
 
 import android.content.Context;
 import android.graphics.drawable.AnimatedVectorDrawable;
-import android.support.annotation.Px;
+import androidx.annotation.Px;
 import android.text.format.DateUtils;
 import android.view.ViewGroup;
 import android.widget.RelativeLayout;

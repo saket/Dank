@@ -2,11 +2,11 @@ package me.saket.dank.widgets;
 
 import android.animation.ValueAnimator;
 import android.content.Context;
-import android.support.annotation.CheckResult;
-import android.support.annotation.NonNull;
-import android.support.annotation.Px;
-import android.support.v4.view.NestedScrollingParent2;
-import android.support.v7.widget.RecyclerView;
+import androidx.annotation.CheckResult;
+import androidx.annotation.NonNull;
+import androidx.annotation.Px;
+import androidx.core.view.NestedScrollingParent2;
+import androidx.recyclerview.widget.RecyclerView;
 import android.util.AttributeSet;
 import android.view.View;
 import android.view.ViewGroup;

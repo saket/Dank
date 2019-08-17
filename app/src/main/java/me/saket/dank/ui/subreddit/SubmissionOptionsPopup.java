@@ -2,7 +2,7 @@ package me.saket.dank.ui.subreddit;
 
 import android.content.Context;
 import android.net.Uri;
-import android.support.v4.content.ContextCompat;
+import androidx.core.content.ContextCompat;
 import android.text.style.ForegroundColorSpan;
 import android.widget.Toast;
 

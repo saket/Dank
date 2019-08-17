@@ -4,7 +4,7 @@ import android.animation.ValueAnimator;
 import android.content.Context;
 import android.content.res.TypedArray;
 import android.graphics.Canvas;
-import android.support.annotation.FloatRange;
+import androidx.annotation.FloatRange;
 import android.util.AttributeSet;
 import android.view.View;
 

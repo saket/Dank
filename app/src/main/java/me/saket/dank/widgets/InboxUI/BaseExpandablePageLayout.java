@@ -6,7 +6,7 @@ import android.animation.ValueAnimator;
 import android.content.Context;
 import android.graphics.Outline;
 import android.graphics.Rect;
-import android.support.v4.view.animation.FastOutSlowInInterpolator;
+import androidx.interpolator.view.animation.FastOutSlowInInterpolator;
 import android.util.AttributeSet;
 import android.view.View;
 import android.view.ViewOutlineProvider;

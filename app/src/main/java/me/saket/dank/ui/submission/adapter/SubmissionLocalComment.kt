@@ -1,9 +1,9 @@
 package me.saket.dank.ui.submission.adapter
 
 import android.annotation.SuppressLint
-import android.support.annotation.ColorInt
-import android.support.annotation.ColorRes
-import android.support.v7.widget.RecyclerView
+import androidx.annotation.ColorInt
+import androidx.annotation.ColorRes
+import androidx.recyclerview.widget.RecyclerView
 import android.text.Spannable
 import android.view.LayoutInflater
 import android.view.View

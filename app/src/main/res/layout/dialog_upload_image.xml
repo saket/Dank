@@ -93,7 +93,7 @@
         android:inputType="textCapSentences"
         android:maxLines="1" />
 
-      <android.support.v7.widget.AppCompatTextView
+      <androidx.appcompat.widget.AppCompatTextView
         android:id="@+id/uploadimage_url"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"

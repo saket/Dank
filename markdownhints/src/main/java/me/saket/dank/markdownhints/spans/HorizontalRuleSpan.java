@@ -2,8 +2,8 @@ package me.saket.dank.markdownhints.spans;
 
 import android.graphics.Canvas;
 import android.graphics.Paint;
-import android.support.annotation.ColorInt;
-import android.support.annotation.Px;
+import androidx.annotation.ColorInt;
+import androidx.annotation.Px;
 import android.text.style.LineBackgroundSpan;
 
 public class HorizontalRuleSpan implements LineBackgroundSpan {

@@ -1,6 +1,6 @@
 package me.saket.dank.ui.subreddit
 
-import android.support.annotation.StringRes
+import androidx.annotation.StringRes
 import me.saket.dank.R
 
 enum class SubmissionSwipeAction(@StringRes val displayNameRes: Int) {

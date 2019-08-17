@@ -2,8 +2,8 @@ package me.saket.dank.reply;
 
 import android.content.SharedPreferences;
 import android.database.sqlite.SQLiteDatabase;
-import android.support.annotation.CheckResult;
-import android.support.annotation.VisibleForTesting;
+import androidx.annotation.CheckResult;
+import androidx.annotation.VisibleForTesting;
 
 import com.f2prateek.rx.preferences2.RxSharedPreferences;
 import com.squareup.moshi.JsonAdapter;

@@ -1,7 +1,7 @@
 package me.saket.dank.utils.lifecycle;
 
 import android.content.Intent;
-import android.support.annotation.CheckResult;
+import androidx.annotation.CheckResult;
 
 import io.reactivex.BackpressureStrategy;
 import io.reactivex.Flowable;

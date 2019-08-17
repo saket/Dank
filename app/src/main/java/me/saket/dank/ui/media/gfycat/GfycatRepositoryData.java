@@ -2,7 +2,7 @@ package me.saket.dank.ui.media.gfycat;
 
 import static java.lang.System.currentTimeMillis;
 
-import android.support.annotation.CheckResult;
+import androidx.annotation.CheckResult;
 
 import com.f2prateek.rx.preferences2.Preference;
 import com.f2prateek.rx.preferences2.RxSharedPreferences;

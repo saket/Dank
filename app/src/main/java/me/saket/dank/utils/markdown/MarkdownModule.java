@@ -1,7 +1,7 @@
 package me.saket.dank.utils.markdown;
 
 import android.app.Application;
-import android.support.v4.content.ContextCompat;
+import androidx.core.content.ContextCompat;
 
 import com.nytimes.android.external.cache3.Cache;
 import com.nytimes.android.external.cache3.CacheBuilder;

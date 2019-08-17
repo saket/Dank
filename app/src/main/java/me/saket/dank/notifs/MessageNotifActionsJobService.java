@@ -8,7 +8,7 @@ import android.app.job.JobScheduler;
 import android.content.ComponentName;
 import android.content.Context;
 import android.os.PersistableBundle;
-import android.support.annotation.CheckResult;
+import androidx.annotation.CheckResult;
 
 import net.dean.jraw.models.Message;
 

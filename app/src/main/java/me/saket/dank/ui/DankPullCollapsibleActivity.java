@@ -5,7 +5,7 @@ import static me.saket.dank.utils.Views.executeOnMeasure;
 import android.content.res.TypedArray;
 import android.graphics.Rect;
 import android.os.Bundle;
-import android.support.annotation.Nullable;
+import androidx.annotation.Nullable;
 import android.view.MenuItem;
 
 import me.saket.dank.widgets.InboxUI.IndependentExpandablePageLayout;

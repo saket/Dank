@@ -1,6 +1,6 @@
 package me.saket.dank.ui.user.messages
 
-import android.support.annotation.StringRes
+import androidx.annotation.StringRes
 import me.saket.dank.R
 import net.dean.jraw.references.InboxReference
 

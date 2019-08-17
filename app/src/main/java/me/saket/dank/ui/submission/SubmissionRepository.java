@@ -2,7 +2,7 @@ package me.saket.dank.ui.submission;
 
 import static io.reactivex.schedulers.Schedulers.io;
 
-import android.support.annotation.CheckResult;
+import androidx.annotation.CheckResult;
 
 import com.google.auto.value.AutoValue;
 import com.jakewharton.rxbinding2.internal.Notification;

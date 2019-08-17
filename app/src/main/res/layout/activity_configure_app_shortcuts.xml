@@ -43,7 +43,7 @@
         android:textColor="@color/white_opacity_50"
         android:textIsSelectable="false" />
 
-      <android.support.v7.widget.RecyclerView
+      <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/appshortcuts_shortcuts_recyclerview"
         android:layout_width="match_parent"
         android:layout_height="0dp"
@@ -95,7 +95,7 @@
         android:inputType="text"
         android:textColor="@color/color_accent" />
 
-      <android.support.v7.widget.RecyclerView
+      <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/appshortcuts_subreddits_recyclerview"
         android:layout_width="match_parent"
         android:layout_height="340dp"

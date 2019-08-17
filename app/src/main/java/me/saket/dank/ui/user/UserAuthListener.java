@@ -3,8 +3,8 @@ package me.saket.dank.ui.user;
 import static io.reactivex.schedulers.Schedulers.io;
 
 import android.content.Context;
-import android.support.annotation.CheckResult;
-import android.support.annotation.VisibleForTesting;
+import androidx.annotation.CheckResult;
+import androidx.annotation.VisibleForTesting;
 
 import com.f2prateek.rx.preferences2.Preference;
 

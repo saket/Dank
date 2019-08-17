@@ -18,11 +18,11 @@ import android.net.Uri;
 import android.os.Build;
 import android.os.IBinder;
 import android.provider.MediaStore;
-import android.support.annotation.Nullable;
-import android.support.v4.app.NotificationCompat;
-import android.support.v4.app.NotificationManagerCompat;
-import android.support.v4.content.ContextCompat;
-import android.support.v4.content.FileProvider;
+import androidx.annotation.Nullable;
+import androidx.core.app.NotificationCompat;
+import androidx.core.app.NotificationManagerCompat;
+import androidx.core.content.ContextCompat;
+import androidx.core.content.FileProvider;
 import android.support.v4.media.session.MediaSessionCompat;
 
 import com.bumptech.glide.Glide;
@@ -422,7 +422,7 @@ public class MediaDownloadService extends Service {
 
               notificationBuilder = notificationBuilder
                   .setLargeIcon(imageBitmap)
-                  .setStyle(new android.support.v4.media.app.NotificationCompat.MediaStyle()
+                  .setStyle(new androidx.media.app.NotificationCompat.MediaStyle()
                       .setMediaSession(dummyTokenCompat)
                       .setShowActionsInCompactView(0 /* index of share action */)
                   )

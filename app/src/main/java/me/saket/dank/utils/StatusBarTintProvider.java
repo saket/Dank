@@ -1,11 +1,11 @@
 package me.saket.dank.utils;
 
 import android.graphics.Bitmap;
-import android.support.annotation.CheckResult;
-import android.support.annotation.ColorInt;
-import android.support.annotation.FloatRange;
-import android.support.annotation.WorkerThread;
-import android.support.v7.graphics.Palette;
+import androidx.annotation.CheckResult;
+import androidx.annotation.ColorInt;
+import androidx.annotation.FloatRange;
+import androidx.annotation.WorkerThread;
+import androidx.palette.graphics.Palette;
 
 import io.reactivex.Single;
 import io.reactivex.functions.Function;
@@ -116,7 +116,7 @@ public class StatusBarTintProvider {
      */
     public static boolean isDark(@ColorInt int color) {
       float[] hsl = new float[3];
-      android.support.v4.graphics.ColorUtils.colorToHSL(color, hsl);
+      androidx.core.graphics.ColorUtils.colorToHSL(color, hsl);
       return isDark(hsl);
     }
 
@@ -132,7 +132,7 @@ public class StatusBarTintProvider {
     @ColorInt
     public static int scrimify(@ColorInt int color, boolean isDark, @FloatRange(from = 0f, to = 1f) float lightnessMultiplier) {
       float[] hsl = new float[3];
-      android.support.v4.graphics.ColorUtils.colorToHSL(color, hsl);
+      androidx.core.graphics.ColorUtils.colorToHSL(color, hsl);
 
       if (!isDark) {
         lightnessMultiplier += 1f;
@@ -141,7 +141,7 @@ public class StatusBarTintProvider {
       }
 
       hsl[2] = Math.max(0f, Math.min(1f, hsl[2] * lightnessMultiplier));
-      return android.support.v4.graphics.ColorUtils.HSLToColor(hsl);
+      return androidx.core.graphics.ColorUtils.HSLToColor(hsl);
     }
 
     @ColorInt

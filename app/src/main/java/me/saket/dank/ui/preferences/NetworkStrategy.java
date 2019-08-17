@@ -1,7 +1,7 @@
 package me.saket.dank.ui.preferences;
 
 import android.app.job.JobInfo;
-import android.support.annotation.StringRes;
+import androidx.annotation.StringRes;
 
 import me.saket.dank.R;
 

@@ -2,7 +2,7 @@ package me.saket.dank.utils;
 
 import static me.saket.dank.utils.Preconditions.checkNotNull;
 
-import android.support.annotation.Nullable;
+import androidx.annotation.Nullable;
 
 import com.squareup.moshi.JsonAdapter;
 import com.squareup.moshi.JsonReader;

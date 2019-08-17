@@ -2,12 +2,11 @@ package me.saket.dank.ui.submission.events;
 
 import android.app.Activity;
 import android.os.Bundle;
-import android.support.annotation.Nullable;
+import androidx.annotation.Nullable;
 
 import com.google.auto.value.AutoValue;
 
 import net.dean.jraw.models.Identifiable;
-import net.dean.jraw.models.PublicContribution;
 
 import me.saket.dank.ui.compose.ComposeReplyActivity;
 import me.saket.dank.ui.compose.ComposeStartOptions;

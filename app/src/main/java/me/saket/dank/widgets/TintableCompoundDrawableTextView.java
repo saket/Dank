@@ -2,8 +2,8 @@ package me.saket.dank.widgets;
 
 import android.content.Context;
 import android.graphics.drawable.Drawable;
-import android.support.annotation.ColorInt;
-import android.support.v7.widget.AppCompatTextView;
+import androidx.annotation.ColorInt;
+import androidx.appcompat.widget.AppCompatTextView;
 import android.util.AttributeSet;
 
 /**

@@ -1,6 +1,6 @@
 package me.saket.dank.utils.markdown.markwon;
 
-import android.support.annotation.VisibleForTesting;
+import androidx.annotation.VisibleForTesting;
 import android.text.SpannableStringBuilder;
 
 import com.nytimes.android.external.cache3.Cache;

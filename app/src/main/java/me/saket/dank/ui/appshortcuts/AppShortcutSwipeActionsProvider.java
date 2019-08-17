@@ -1,6 +1,6 @@
 package me.saket.dank.ui.appshortcuts;
 
-import android.support.annotation.StringRes;
+import androidx.annotation.StringRes;
 
 import com.jakewharton.rxrelay2.PublishRelay;
 

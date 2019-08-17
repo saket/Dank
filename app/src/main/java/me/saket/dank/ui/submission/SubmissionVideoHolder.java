@@ -3,7 +3,7 @@ package me.saket.dank.ui.submission;
 import static io.reactivex.android.schedulers.AndroidSchedulers.mainThread;
 
 import android.graphics.Bitmap;
-import android.support.annotation.CheckResult;
+import androidx.annotation.CheckResult;
 import android.util.Size;
 
 import com.danikula.videocache.HttpProxyCacheServer;

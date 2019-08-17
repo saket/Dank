@@ -1,6 +1,6 @@
 package me.saket.dank.cache;
 
-import android.support.annotation.NonNull;
+import androidx.annotation.NonNull;
 
 import com.nytimes.android.external.fs3.FSReader;
 import com.nytimes.android.external.fs3.FSWriter;

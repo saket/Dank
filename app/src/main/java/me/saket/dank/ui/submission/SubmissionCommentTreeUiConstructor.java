@@ -5,10 +5,10 @@ import static me.saket.dank.utils.Arrays2.immutable;
 import static me.saket.dank.utils.Preconditions.checkNotNull;
 
 import android.content.Context;
-import android.support.annotation.CheckResult;
-import android.support.annotation.ColorInt;
-import android.support.annotation.ColorRes;
-import android.support.v4.content.ContextCompat;
+import androidx.annotation.CheckResult;
+import androidx.annotation.ColorInt;
+import androidx.annotation.ColorRes;
+import androidx.core.content.ContextCompat;
 import android.text.style.ForegroundColorSpan;
 
 import net.dean.jraw.models.Comment;

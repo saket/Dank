@@ -23,7 +23,7 @@
     android:layout_marginTop="-60dp"
     android:visibility="gone" />
 
-  <android.support.v7.widget.RecyclerView
+  <androidx.recyclerview.widget.RecyclerView
     android:id="@+id/messagefolder_message_list"
     style="@style/DankRecyclerView"
     android:layout_width="match_parent"
@@ -45,7 +45,7 @@
     android:layout_height="match_parent"
     android:animateLayoutChanges="false">
 
-    <android.support.design.widget.FloatingActionButton
+    <com.google.android.material.floatingactionbutton.FloatingActionButton
       android:id="@+id/messagefolder_mark_all_as_read"
       style="@style/DankFAB"
       android:contentDescription="@string/cd_inbox_mark_all_unread_messages_as_read"

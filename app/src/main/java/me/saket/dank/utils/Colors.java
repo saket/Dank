@@ -1,8 +1,8 @@
 package me.saket.dank.utils;
 
 import android.graphics.Color;
-import android.support.annotation.ColorInt;
-import android.support.annotation.FloatRange;
+import androidx.annotation.ColorInt;
+import androidx.annotation.FloatRange;
 
 /**
  * Utility methods for manipulating colors.

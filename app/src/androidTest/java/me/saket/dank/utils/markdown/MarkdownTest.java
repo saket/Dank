@@ -3,8 +3,8 @@ package me.saket.dank.utils.markdown;
 import static junit.framework.Assert.assertEquals;
 
 import android.app.Application;
-import android.support.test.InstrumentationRegistry;
-import android.support.test.runner.AndroidJUnit4;
+import androidx.test.InstrumentationRegistry;
+import androidx.test.runner.AndroidJUnit4;
 
 import org.junit.Before;
 import org.junit.Test;

@@ -1,6 +1,6 @@
 package me.saket.dank.utils.lifecycle;
 
-import android.support.annotation.CheckResult;
+import androidx.annotation.CheckResult;
 
 import io.reactivex.Observable;
 import io.reactivex.subjects.PublishSubject;

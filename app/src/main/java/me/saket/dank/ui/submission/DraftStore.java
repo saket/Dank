@@ -1,6 +1,6 @@
 package me.saket.dank.ui.submission;
 
-import android.support.annotation.CheckResult;
+import androidx.annotation.CheckResult;
 
 import net.dean.jraw.models.Identifiable;
 

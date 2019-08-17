@@ -2,7 +2,7 @@ package me.saket.dank.ui.media;
 
 import static java.util.Collections.unmodifiableList;
 
-import android.support.annotation.CheckResult;
+import androidx.annotation.CheckResult;
 
 import com.nytimes.android.external.fs3.filesystem.FileSystem;
 import com.nytimes.android.external.store3.base.impl.MemoryPolicy;

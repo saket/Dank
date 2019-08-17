@@ -6,7 +6,7 @@ import android.content.Context
 import android.graphics.Point
 import android.graphics.Rect
 import android.graphics.drawable.Drawable
-import android.support.annotation.IdRes
+import androidx.annotation.IdRes
 import android.view.Gravity
 import android.view.LayoutInflater
 import android.view.View

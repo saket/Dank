@@ -1,6 +1,6 @@
 package me.saket.dank.utils.markdown.markwon;
 
-import android.support.annotation.ColorInt;
+import androidx.annotation.ColorInt;
 import android.text.TextPaint;
 import android.text.style.CharacterStyle;
 

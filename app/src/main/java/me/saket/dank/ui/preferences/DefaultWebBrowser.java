@@ -3,7 +3,7 @@ package me.saket.dank.ui.preferences;
 import android.content.Context;
 import android.content.Intent;
 import android.graphics.Rect;
-import android.support.annotation.StringRes;
+import androidx.annotation.StringRes;
 
 import me.saket.dank.R;
 import me.saket.dank.ui.webview.ChromeCustomTabsForwardingActivity;

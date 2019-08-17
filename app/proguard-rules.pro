@@ -18,3 +18,9 @@
 
 # Glide + OkHttp integration.
 -keep class com.bumptech.glide.integration.okhttp3.OkHttpGlideModule
+
+# DeepLinkDispatch
+-keep @interface com.airbnb.deeplinkdispatch.DeepLink
+-keepclasseswithmembers class * {
+    @com.airbnb.deeplinkdispatch.DeepLink <methods>;
+}

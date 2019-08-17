@@ -7,8 +7,8 @@ import static me.saket.dank.utils.RxUtils.applySchedulersSingle;
 import android.app.Application;
 import android.content.ContentValues;
 import android.database.sqlite.SQLiteDatabase;
-import android.support.annotation.CheckResult;
-import android.support.annotation.VisibleForTesting;
+import androidx.annotation.CheckResult;
+import androidx.annotation.VisibleForTesting;
 
 import com.squareup.sqlbrite2.BriteDatabase;
 import dagger.Lazy;

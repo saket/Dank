@@ -1,7 +1,7 @@
 package me.saket.dank.ui.preferences;
 
-import android.support.annotation.DrawableRes;
-import android.support.annotation.StringRes;
+import androidx.annotation.DrawableRes;
+import androidx.annotation.StringRes;
 
 import me.saket.dank.R;
 

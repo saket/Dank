@@ -2,7 +2,7 @@ package me.saket.dank.utils;
 
 import android.app.Activity;
 import android.content.Context;
-import android.support.annotation.CheckResult;
+import androidx.annotation.CheckResult;
 import android.view.View;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.EditText;

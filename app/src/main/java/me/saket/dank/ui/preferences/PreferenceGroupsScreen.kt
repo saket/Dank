@@ -5,9 +5,9 @@ import android.content.Intent
 import android.graphics.Point
 import android.os.Bundle
 import android.os.Parcelable
-import android.support.annotation.LayoutRes
-import android.support.v7.widget.RecyclerView
-import android.support.v7.widget.Toolbar
+import androidx.annotation.LayoutRes
+import androidx.recyclerview.widget.RecyclerView
+import androidx.appcompat.widget.Toolbar
 import android.util.AttributeSet
 import android.view.Gravity
 import android.view.LayoutInflater

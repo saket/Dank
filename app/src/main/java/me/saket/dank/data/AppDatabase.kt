@@ -1,8 +1,8 @@
 package me.saket.dank.data
 
-import android.arch.persistence.room.Database
-import android.arch.persistence.room.RoomDatabase
-import android.arch.persistence.room.TypeConverters
+import androidx.room.Database
+import androidx.room.RoomDatabase
+import androidx.room.TypeConverters
 import me.saket.dank.ui.submission.CachedSubmission
 import me.saket.dank.ui.submission.CachedSubmissionComments
 import me.saket.dank.ui.submission.CachedSubmissionDao

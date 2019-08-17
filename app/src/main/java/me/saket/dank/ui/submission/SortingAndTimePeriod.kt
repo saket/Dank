@@ -1,7 +1,7 @@
 package me.saket.dank.ui.submission
 
 import android.os.Parcelable
-import android.support.annotation.StringRes
+import androidx.annotation.StringRes
 import com.squareup.moshi.JsonClass
 import kotlinx.android.parcel.Parcelize
 import me.saket.dank.R
