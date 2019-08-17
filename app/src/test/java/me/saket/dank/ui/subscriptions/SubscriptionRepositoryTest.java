@@ -1,6 +1,10 @@
 package me.saket.dank.ui.subscriptions;
 
-import junit.framework.Assert;
+import static org.junit.Assert.assertEquals;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.RETURNS_DEEP_STUBS;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -8,15 +12,21 @@ import org.junit.Test;
 import java.util.ArrayList;
 import java.util.List;
 
+import me.saket.dank.reddit.Reddit;
+
 public class SubscriptionRepositoryTest {
 
   private SubscriptionRepository subscriptionRepository;
 
   @Before
-  public void setUp() throws Exception {
+  public void setUp() {
     //noinspection ConstantConditions
     subscriptionRepository = new SubscriptionRepository(
-        null,
+        () -> {
+          Reddit reddit = mock(Reddit.class, RETURNS_DEEP_STUBS);
+          when(reddit.subscriptions().needsRemoteSubscription(any())).thenReturn(true);
+          return reddit;
+        },
         null,
         null,
         null,
@@ -49,6 +59,6 @@ public class SubscriptionRepositoryTest {
     expectedMergedList.add(SubredditSubscription.create("H", SubredditSubscription.PendingState.NONE, false));
 
     List<SubredditSubscription> mergedList = subscriptionRepository.mergeRemoteSubscriptionsWithLocal(localSubs).apply(remoteSubNames);
-    Assert.assertEquals(expectedMergedList, mergedList);
+    assertEquals(expectedMergedList, mergedList);
   }
 }
