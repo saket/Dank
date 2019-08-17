@@ -1,11 +1,10 @@
 package me.saket.dank.urlparser;
 
-import static junit.framework.Assert.assertEquals;
-
 import android.os.Parcelable;
 
 import com.google.auto.value.AutoValue;
 
+import me.saket.dank.BuildConfig;
 import me.saket.dank.utils.VideoFormat;
 
 /**
@@ -41,7 +40,9 @@ public abstract class RedditHostedVideoLink extends MediaLink implements Parcela
   public static Link create(String unparsedUrl, RedditHostedVideoDashPlaylist playlist) {
     String dashPlaylistUrl = playlist.dashUrl();
     String directVideoUrlWithoutAudio = playlist.directUrlWithoutAudio();
-    assertEquals(true, VideoFormat.parse(dashPlaylistUrl) == VideoFormat.DASH);
+    if (BuildConfig.DEBUG && VideoFormat.parse(dashPlaylistUrl) != VideoFormat.DASH) {
+      throw new AssertionError("Incorrect video format");
+    }
     return new AutoValue_RedditHostedVideoLink(unparsedUrl, dashPlaylistUrl, directVideoUrlWithoutAudio);
   }
 }

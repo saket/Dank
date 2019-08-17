@@ -2,7 +2,7 @@ version: 2.0
 
 config_android: &config_android
   docker:
-    - image: circleci/android:api-26-alpha
+    - image: circleci/android:api-28-alpha
   working_directory: ~/dank
   environment:
     JAVA_TOOL_OPTIONS: "-Xmx1024m"
@@ -16,7 +16,7 @@ update_sdk: &update_sdk
       mkdir "$ANDROID_HOME/licenses" || true
       echo "d56f5187479451eabf01fb78af6dfcb131a6481e" > "$ANDROID_HOME/licenses/android-sdk-license"
       echo "84831b9409646a918e30573bab4c9c91346d8abd" > "$ANDROID_HOME/licenses/android-sdk-preview-license"
-      sdkmanager "platform-tools" "platforms;android-26"
+      sdkmanager "platform-tools" "platforms;android-28"
 
 save_cache: &save_cache
   save_cache:

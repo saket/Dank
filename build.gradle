@@ -1,7 +1,7 @@
 buildscript {
   ext.versions = [
       minSdk          : 21,
-      compileSdk      : 26,
+      compileSdk      : 28,
       supportLib      : '27.1.0',
       glide           : '4.6.1',
       autoValue       : '1.4',
