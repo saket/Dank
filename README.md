@@ -1,6 +1,14 @@
-[![CircleCI](https://circleci.com/gh/Tunous/Dank.svg?style=svg)](https://circleci.com/gh/Tunous/Dank) [![GitHub release](https://img.shields.io/github/release/Tunous/Dank)](https://github.com/Tunous/Dank/releases)
-
-![Dank](https://saket.me/wp-content/uploads/2018/04/dank_cover.jpg)
+<p align='center'>
+    <img alt='Dank' src='https://saket.me/wp-content/uploads/2018/04/dank_cover.jpg'/>
+</p>
+<p align='center'>
+    <a href="https://app.bitrise.io/app/a0f2d377c14a1631">
+        <img alt="Bitrise Build Status" src="https://app.bitrise.io/app/a0f2d377c14a1631/status.svg?token=O3cpfpDkImw61dz-hkBWpw&branch=master"/>
+    </a>
+    <a href="https://github.com/Tunous/Dank/releases">
+        <img alt="GitHub Release" src="https://img.shields.io/github/release/Tunous/Dank?logo=github"/>
+    </a>
+</p>
 
 ### Here lives the greatest open-source Reddit app
 
