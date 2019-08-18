@@ -5,14 +5,18 @@ import android.view.Gravity;
 import android.view.View;
 
 import com.google.auto.value.AutoValue;
-
 import net.dean.jraw.models.Submission;
+
+import java.util.List;
 
 import me.saket.dank.ui.UrlRouter;
 import me.saket.dank.ui.submission.LinkOptionsPopup;
+import me.saket.dank.ui.subreddit.SubmissionOptionsPopup;
 import me.saket.dank.urlparser.Link;
 import me.saket.dank.urlparser.MediaLink;
+import me.saket.dank.urlparser.RedditSubmissionLink;
 import me.saket.dank.urlparser.RedditUserLink;
+import me.saket.dank.utils.NestedOptionsPopupMenu;
 import me.saket.dank.utils.Views;
 
 @AutoValue
@@ -46,9 +50,23 @@ public abstract class SubmissionContentLinkClickEvent {
     }
   }
 
-  public void showOptionsPopup() {
+  public void showOptionsPopup(Submission submission) {
+    NestedOptionsPopupMenu popup;
+    if (link() instanceof RedditSubmissionLink) {
+        List<Submission> crosspostParents = submission.getCrosspostParents();
+        if (crosspostParents != null && !crosspostParents.isEmpty()) {
+          popup = SubmissionOptionsPopup.builder(contentLinkView().getContext(), crosspostParents.get(0))
+              .showVisitSubreddit(true)
+              .build();
+
+        } else {
+          popup = new LinkOptionsPopup(contentLinkView().getContext(), link());
+        }
+
+    } else {
+      popup = new LinkOptionsPopup(contentLinkView().getContext(), link());
+    }
     Point linkViewLocation = Views.locationOnScreen(contentLinkView());
-    LinkOptionsPopup linkOptionsPopup = new LinkOptionsPopup(contentLinkView().getContext(), link());
-    linkOptionsPopup.showAtLocation(contentLinkView(), Gravity.TOP | Gravity.START, linkViewLocation);
+    popup.showAtLocation(contentLinkView(), Gravity.TOP | Gravity.START, linkViewLocation);
   }
 }

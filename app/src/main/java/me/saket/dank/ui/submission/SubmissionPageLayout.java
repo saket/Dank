@@ -41,6 +41,10 @@ import android.view.Window;
 import android.widget.ImageButton;
 import android.widget.Toast;
 
+import butterknife.BindDimen;
+import butterknife.BindDrawable;
+import butterknife.BindView;
+import butterknife.ButterKnife;
 import com.devbrackets.android.exomedia.ui.widget.VideoView;
 import com.f2prateek.rx.preferences2.Preference;
 import com.google.android.exoplayer2.ExoPlaybackException;
@@ -51,21 +55,6 @@ import com.jakewharton.rxrelay2.PublishRelay;
 import com.jakewharton.rxrelay2.Relay;
 import com.squareup.moshi.JsonAdapter;
 import com.squareup.moshi.Moshi;
-
-import net.dean.jraw.models.Identifiable;
-import net.dean.jraw.models.Message;
-import net.dean.jraw.models.Submission;
-import net.dean.jraw.models.SubmissionPreview;
-import net.dean.jraw.tree.RootCommentNode;
-
-import java.util.concurrent.TimeUnit;
-import javax.inject.Inject;
-import javax.inject.Named;
-
-import butterknife.BindDimen;
-import butterknife.BindDrawable;
-import butterknife.BindView;
-import butterknife.ButterKnife;
 import dagger.Lazy;
 import io.reactivex.BackpressureStrategy;
 import io.reactivex.Completable;
@@ -74,6 +63,17 @@ import io.reactivex.Single;
 import io.reactivex.functions.Consumer;
 import io.reactivex.functions.Predicate;
 import io.reactivex.schedulers.Schedulers;
+import net.dean.jraw.models.Identifiable;
+import net.dean.jraw.models.Message;
+import net.dean.jraw.models.Submission;
+import net.dean.jraw.models.SubmissionPreview;
+import net.dean.jraw.tree.RootCommentNode;
+import timber.log.Timber;
+
+import java.util.concurrent.TimeUnit;
+import javax.inject.Inject;
+import javax.inject.Named;
+
 import me.saket.dank.R;
 import me.saket.dank.data.ActivityResult;
 import me.saket.dank.data.ErrorResolver;
@@ -162,7 +162,6 @@ import me.saket.dank.widgets.ScrollingRecyclerViewSheet;
 import me.saket.dank.widgets.SubmissionAnimatedProgressBar;
 import me.saket.dank.widgets.ZoomableImageView;
 import me.saket.dank.widgets.swipe.RecyclerSwipeListener;
-import timber.log.Timber;
 
 @SuppressLint("SetJavaScriptEnabled")
 public class SubmissionPageLayout extends ExpandablePageLayout implements ExpandablePageLayout.OnPullToCollapseIntercepter, SubmissionUi {
@@ -867,8 +866,13 @@ public class SubmissionPageLayout extends ExpandablePageLayout implements Expand
 
     // Content link long clicks.
     commentsAdapter.streamContentLinkLongClicks()
+        .withLatestFrom(submissionStream.filter(Optional::isPresent).map(Optional::get), Pair::create)
         .takeUntil(lifecycle().onDestroy())
-        .subscribe(event -> event.showOptionsPopup());
+        .subscribe(pair -> {
+          SubmissionContentLinkClickEvent event = pair.first();
+          SubmissionAndComments submissionData = pair.second();
+          event.showOptionsPopup(submissionData.getSubmission());
+        });
   }
 
   public void onGifInsert(String title, GiphyGif gif, Parcelable payload) {

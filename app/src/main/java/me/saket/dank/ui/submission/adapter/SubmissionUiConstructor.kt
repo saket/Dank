@@ -24,6 +24,7 @@ import me.saket.dank.ui.submission.SubmissionCommentTreeUiConstructor
 import me.saket.dank.ui.submission.SubmissionContentLoadError
 import me.saket.dank.ui.user.UserSessionRepository
 import me.saket.dank.urlparser.Link
+import me.saket.dank.urlparser.RedditSubmissionLink
 import me.saket.dank.utils.CombineLatestWithLog
 import me.saket.dank.utils.CombineLatestWithLog.O
 import me.saket.dank.utils.CommentSortUtils
@@ -106,14 +107,15 @@ class SubmissionUiConstructor @Inject constructor(
               .withLatestFrom(sharedSubmissionDatum2.map { it.submission })
               .doOnDispose { contentLinkUiModelConstructor.clearGlideTargets(context) }
               .switchMap { (contentLink, submission) ->
-                if (contentLink.isEmpty) {
-                  Observable.just(Optional.empty())
-                } else {
-                  contentLinkUiModelConstructor
-                      .streamLoad(context, contentLink.get(), ImageWithMultipleVariants.of(submission.preview))
-                      .doOnError { e -> Timber.e(e, "Error while creating content link ui model") }
-                      .distinctUntilChanged()
-                      .map { Optional.of(it) }
+                val crosspostLinkUiModel = crosspostLinkUiModel(context, submission)
+                when {
+                  crosspostLinkUiModel.isPresent -> Observable.just(crosspostLinkUiModel)
+                  contentLink.isEmpty -> Observable.just(Optional.empty())
+                  else -> contentLinkUiModelConstructor
+                    .streamLoad(context, contentLink.get(), ImageWithMultipleVariants.of(submission.preview))
+                    .doOnError { e -> Timber.e(e, "Error while creating content link ui model") }
+                    .distinctUntilChanged()
+                    .map { Optional.of(it) }
                 }
               }
 
@@ -283,6 +285,26 @@ class SubmissionUiConstructor @Inject constructor(
         .isSaved(bookmarksRepository.get().isSaved(submission))
         .swipeActions(swipeActions)
         .build()
+  }
+
+  private fun crosspostLinkUiModel(
+    context: Context,
+    submission: Submission
+  ): Optional<SubmissionContentLinkUiModel> {
+    val crosspostParent = submission.crosspostParents?.firstOrNull() ?: return Optional.empty()
+    return Optional.of(SubmissionContentLinkUiModel.builder()
+      .title(crosspostParent.title)
+      .titleMaxLines(2)
+      .titleTextColorRes(R.color.submission_link_title)
+      .byline(context.getString(R.string.submission_crosspost, crosspostParent.subreddit))
+      .bylineTextColorRes(R.color.submission_link_byline)
+      .icon(Optional.ofNullable(context.getDrawable(R.drawable.ic_subreddits_24dp)))
+      .iconBackgroundRes(Optional.empty())
+      .thumbnail(Optional.empty())
+      .backgroundTintColor(Optional.empty())
+      .progressVisible(false)
+      .link(RedditSubmissionLink.create(crosspostParent.url, crosspostParent.id, crosspostParent.subreddit))
+      .build())
   }
 
   private fun commentOptionsUiModel(
