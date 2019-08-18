@@ -4,6 +4,8 @@ import android.net.Uri;
 
 import timber.log.Timber;
 
+import java.util.List;
+
 /**
  * Utility methods for URLs.
  */
@@ -37,8 +39,25 @@ public class Urls {
   }
 
   public static String parseFileNameWithExtension(String url) {
-    String path = Uri.parse(url).getPath();
-    return path.substring(path.lastIndexOf('/') + 1);
+    Uri uri = Uri.parse(url);
+
+    if ("v.redd.it".equals(uri.getHost())) {
+      return createRedditVideoFileNameWithExtension(uri);
+    }
+
+    return uri.getLastPathSegment();
+  }
+
+  private static String createRedditVideoFileNameWithExtension(Uri uri) {
+    String lastPathSegment = uri.getLastPathSegment();
+    if ("DASHPlaylist.mpd".equals(lastPathSegment)) {
+      List<String> pathSegments = uri.getPathSegments();
+      int pathSegmentsCount = pathSegments.size();
+      if (pathSegmentsCount >= 2) {
+        return pathSegments.get(pathSegmentsCount - 2) + ".mp4";
+      }
+    }
+    return lastPathSegment;
   }
 
   public static Optional<String> subdomain(Uri URI) {

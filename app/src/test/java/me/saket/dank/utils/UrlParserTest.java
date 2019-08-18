@@ -27,6 +27,7 @@ import org.powermock.api.mockito.PowerMockito;
 import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.PowerMockRunner;
 
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
@@ -496,10 +497,14 @@ public class UrlParserTest {
         throw new UnsupportedOperationException("Unknown tld");
       }
 
-      when(mockUri.getPath()).thenReturn(url.substring(url.indexOf(domainTld) + domainTld.length()));
-      when(mockUri.getHost()).thenReturn(url.substring(url.indexOf("://") + "://".length(), url.indexOf(domainTld) + domainTld.length()));
+      int pathStartIndex = url.indexOf(domainTld) + domainTld.length();
+      String path = url.substring(pathStartIndex);
+      when(mockUri.getPath()).thenReturn(path);
+      when(mockUri.getHost()).thenReturn(url.substring(url.indexOf("://") + "://".length(), pathStartIndex));
       when(mockUri.getScheme()).thenReturn(url.substring(0, url.indexOf("://")));
       when(mockUri.toString()).thenReturn(url);
+      when(mockUri.getLastPathSegment()).thenReturn(url.substring(url.lastIndexOf('/') + 1));
+      when(mockUri.getPathSegments()).thenReturn(Arrays.asList(path.substring(1).split("/")));
 
       Map<String, String> queryAndArgs = new HashMap<>();
 
