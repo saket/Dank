@@ -19,6 +19,7 @@
     android:icon="@mipmap/ic_launcher"
     android:label="@string/app_launcher_label"
     android:supportsRtl="true"
+    android:networkSecurityConfig="@xml/network_security_config"
     android:theme="@style/DankTheme.TransparentBackground">
 
     <activity-alias
