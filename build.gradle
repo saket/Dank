@@ -1,3 +1,5 @@
+import org.gradle.api.tasks.wrapper.Wrapper.DistributionType
+
 buildscript {
   ext.versions = [
       minSdk          : 21,
@@ -41,6 +43,11 @@ allprojects {
     maven { url 'https://jitpack.io' }
     jcenter()
   }
+}
+
+tasks.wrapper {
+  gradleVersion = "5.6"
+  distributionType = DistributionType.ALL
 }
 
 task clean(type: Delete) {
