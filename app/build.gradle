@@ -206,7 +206,7 @@ dependencies {
   }
   implementation 'com.alexvasilkov:gesture-views:2.2.0'
   implementation 'com.github.saketme:exomedia:530dfac84c'
-  implementation 'com.danikula:videocache:2.6.4'
+  implementation 'com.danikula:videocache:2.7.1'
 
   // Caching.
   implementation "com.nytimes.android:cache3:$versions.nytStore"
