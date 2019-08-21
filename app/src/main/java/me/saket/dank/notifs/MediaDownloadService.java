@@ -16,6 +16,7 @@ import android.graphics.drawable.Drawable;
 import android.media.session.MediaSession;
 import android.net.Uri;
 import android.os.Build;
+import android.os.Handler;
 import android.os.IBinder;
 import android.provider.MediaStore;
 import androidx.annotation.Nullable;
@@ -496,7 +497,7 @@ public class MediaDownloadService extends Service {
       progressTarget.setModel(this, imageUrl);
       Glide.with(this).download(imageUrl).into(progressTarget);
 
-      emitter.setCancellable(() -> Glide.with(this).clear(progressTarget));
+      emitter.setCancellable(() -> new Handler().post(() -> Glide.with(this).clear(progressTarget)));
     });
   }
 
