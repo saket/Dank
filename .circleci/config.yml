@@ -143,11 +143,11 @@ workflows:
               only: /^\d+\.\d+(\.\d+)?$/
             branches:
               ignore: /.*/
-      - publish_github_release:
-          requires:
-            - build_release
-          filters:
-            tags:
-              only: /^\d+\.\d+(\.\d+)?$/
-            branches:
-              ignore: /.*/
+#      - publish_github_release:
+#          requires:
+#            - build_release
+#          filters:
+#            tags:
+#              only: /^\d+\.\d+(\.\d+)?$/
+#            branches:
+#              ignore: /.*/
