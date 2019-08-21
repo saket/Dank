@@ -114,6 +114,11 @@
   <string name="userprefs_about_follow_on_twitter_summary">Follow on Twitter</string>
   <string name="userprefs_about_send_email_summary">Send an email</string>
   <string name="userprefs_about_error_no_email_app_found">No email app found</string>
+  <string name="userprefs_about_feedback_and_source">Feedback &amp; Source</string>
+  <string name="userprefs_about_report_issue">Report an issue</string>
+  <string name="userprefs_about_report_issue_summary">Create a new issue on GitHub</string>
+  <string name="userprefs_about_source_code">Source code</string>
+  <string name="userprefs_about_changelog">Changelog</string>
 
   <!-- STYLES -->
 

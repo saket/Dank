@@ -40,8 +40,32 @@ public class AboutDankPreferencesConstructor implements UserPreferencesConstruct
         c.getString(R.string.userprefs_about_rate_on_play_store),
         "<3",
         (clickHandler, event) -> {
-          Intent playStoreIntent = Intents.createForPlayStoreListing(c, "me.saket.dank");
+          Intent playStoreIntent = Intents.createForPlayStoreListing(c, "me.thanel.dank");
           clickHandler.openIntent(playStoreIntent);
+        }));
+
+    uiModels.add(UserPreferenceSectionHeader.UiModel.create(c.getString(R.string.userprefs_about_feedback_and_source)));
+
+    uiModels.add(UserPreferenceButton.UiModel.create(
+        c.getString(R.string.userprefs_about_report_issue),
+        c.getString(R.string.userprefs_about_report_issue_summary),
+        (clickHandler, event) -> {
+          Intent githubIssuesIntent = Intents.createForOpeningUrl("https://github.com/Tunous/Dank/issues/new");
+          clickHandler.openIntent(githubIssuesIntent);
+        }));
+
+    uiModels.add(UserPreferenceButton.UiModel.create(
+        c.getString(R.string.userprefs_about_source_code),
+        (clickHandler, event) -> {
+          Intent githubSourceIntent = Intents.createForOpeningUrl("https://github.com/Tunous/Dank");
+          clickHandler.openIntent(githubSourceIntent);
+        }));
+
+    uiModels.add(UserPreferenceButton.UiModel.create(
+        c.getString(R.string.userprefs_about_changelog),
+        (clickHandler, event) -> {
+          Intent githubSourceIntent = Intents.createForOpeningUrl("https://github.com/Tunous/Dank/blob/HEAD/CHANGELOG.md");
+          clickHandler.openIntent(githubSourceIntent);
         }));
 
     uiModels.add(UserPreferenceButton.UiModel.create(
