@@ -94,4 +94,26 @@
   <!-- Text -->
   <color name="text_primary">@color/gray_200</color>
   <color name="text_secondary">@color/gray_500</color>
+
+  <!-- Indentation Colors / Comments Depth Level -->
+  <array name="indentation_colors">
+    <item>#FFC40D</item>
+    <item>#2D89EF</item>
+    <item>#B91D47</item>
+    <item>#00ABA9</item>
+    <item>#E3A21A</item>
+    <item>#99B433</item>
+    <item>#7E3878</item>
+    <item>#FFB300</item>
+    <item>#FFFFFF</item>
+    <item>#00A300</item>
+    <item>#2B5797</item>
+    <item>#9F00A7</item>
+    <item>#603CBA</item>
+    <item>#EE1111</item>
+    <item>#EFF4FF</item>
+    <item>#DA532C</item>
+    <item>#FF0097</item>
+    <item>#1E7145</item>
+  </array>
 </resources>

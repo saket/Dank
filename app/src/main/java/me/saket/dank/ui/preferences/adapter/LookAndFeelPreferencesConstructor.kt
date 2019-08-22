@@ -15,6 +15,7 @@ class LookAndFeelPreferencesConstructor @Inject constructor(
   @Named("show_submission_thumbnails") private val showSubmissionThumbnails: Preference<Boolean>,
   @Named("comment_count_in_submission_list_byline") private val showCommentCountInByline: Preference<Boolean>,
   @Named("show_submission_thumbnails_on_left") private val showSubmissionThumbnailsOnLeft: Preference<Boolean>,
+  @Named("show_colored_comments_tree") private val showColoredCommentsTree: Preference<Boolean>,
   @Named("submission_start_swipe_actions") private val submissionStartSwipeActions: Preference<List<SubmissionSwipeAction>>,
   @Named("submission_end_swipe_actions") private val submissionEndSwipeActions: Preference<List<SubmissionSwipeAction>>
 ) : UserPreferencesConstructor.ChildConstructor {
@@ -97,6 +98,18 @@ class LookAndFeelPreferencesConstructor @Inject constructor(
           c.getString(R.string.userprefs_item_byline_comment_count_summary_off),
         showCommentCountInByline.get(),
         showCommentCountInByline
+      )
+    )
+
+    uiModels.add(
+      UserPreferenceSwitch.UiModel(
+        c.getString(R.string.userprefs_show_colored_comments_tree),
+        if (showColoredCommentsTree.get())
+          c.getString(R.string.userprefs_show_colored_comments_tree_on)
+        else
+          c.getString(R.string.userprefs_show_colored_comments_tree_off),
+        showColoredCommentsTree.get(),
+        showColoredCommentsTree
       )
     )
 

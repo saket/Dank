@@ -121,6 +121,12 @@ public class UserPreferencesModule {
     return rxPrefs.getObject("typeface", TypefaceResource.DEFAULT, new TypefaceResource.Converter(moshi));
   }
 
+  @Provides
+  @Named("show_colored_comments_tree")
+  Preference<Boolean> showColoredCommentsTreePref(@Named("user_prefs") RxSharedPreferences rxPrefs) {
+    return rxPrefs.getBoolean("show_colored_comments_tree", false);
+  }
+
 // ======== DATA USAGE ======== //
 
   @Provides

@@ -54,6 +54,7 @@ import me.saket.dank.utils.markdown.MarkdownModule;
 import me.saket.dank.vote.VoteJobService;
 import me.saket.dank.vote.VotingManager;
 import me.saket.dank.walkthrough.WalkthroughModule;
+import me.saket.dank.widgets.IndentedLayout;
 
 @Component(modules = {
     RootModule.class,
@@ -159,4 +160,6 @@ public interface RootComponent {
   void inject(SubmissionGesturesPreferenceScreen target);
 
   void inject(SubmissionSwipeActionPreferenceChoicePopup target);
+
+  void inject(IndentedLayout target);
 }

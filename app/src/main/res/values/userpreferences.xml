@@ -25,6 +25,10 @@
   <string name="userprefs_item_byline_comment_count_summary_on">Always show</string>
   <string name="userprefs_item_byline_comment_count_summary_off">Always hidden</string>
 
+  <string name="userprefs_show_colored_comments_tree">Colored comments depth level</string>
+  <string name="userprefs_show_colored_comments_tree_on">Lines are colored</string>
+  <string name="userprefs_show_colored_comments_tree_off">Same color for all lines</string>
+
   <string name="userprefs_group_gestures">Gestures</string>
   <string name="userprefs_customize_submission_gestures">Submission gesture actions</string>
   <string name="userprefs_customize_comment_gestures">Comment gesture actions</string>
