@@ -33,7 +33,7 @@ android {
     minSdkVersion versions.minSdk
     targetSdkVersion versions.compileSdk
     versionCode 15
-    versionName "0.7.3"
+    versionName "0.8.0"
     multiDexEnabled true
     testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
   }

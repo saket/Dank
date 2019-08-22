@@ -4,6 +4,8 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
+
+## [0.8.0] - 2019-08-22
 ### Added
 - Subscribing to /r/all ([#28](https://github.com/Tunous/Dank/pull/28))
 - View parent submission of crosspost ([#29](https://github.com/Tunous/Dank/pull/29))
@@ -16,11 +18,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Video cache is not working ([#50](https://github.com/Tunous/Dank/pull/50))
 - Trying to download the same picture twice crashes app ([#57](https://github.com/Tunous/Dank/pull/57))
 
-## [0.7.2] - 2019-09-09
+## [0.7.2] - 2019-08-09
 ### Added
 - Configured automatic releases to GitHub.
 
-## [0.7.1] - 2019-09-09
+## [0.7.1] - 2019-08-09
 ### Fixed
 - YouTube links not opening when YouTube application is not installed ([upstream#17](https://github.com/saket/Dank/pull/17))
 - Login not working when user has enabled 2FA ([#32](https://github.com/Tunous/Dank/pull/32))
@@ -61,7 +63,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ## [0.6.2] and earlier
 Changes before the fork has been made.
 
-[Unreleased]: https://github.com/Tunous/Dank/compare/0.7.2...HEAD
+[Unreleased]: https://github.com/Tunous/Dank/compare/0.8.0...HEAD
+[0.8.0]: https://github.com/Tunous/Dank/compare/0.7.2...0.8.0
 [0.7.2]: https://github.com/Tunous/Dank/compare/0.7.1...0.7.2
 [0.7.1]: https://github.com/Tunous/Dank/compare/0.7.0...0.7.1
 [0.7.0]: https://github.com/Tunous/Dank/compare/0.6.3...0.7.0
