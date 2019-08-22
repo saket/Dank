@@ -2,19 +2,18 @@ package me.saket.dank.ui.submission;
 
 import android.content.Context;
 import android.graphics.drawable.AnimatedVectorDrawable;
-import androidx.annotation.Px;
 import android.text.format.DateUtils;
 import android.view.ViewGroup;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
 
+import androidx.annotation.Px;
 import com.devbrackets.android.exomedia.ui.widget.VideoView;
 
 import java.util.Formatter;
 import java.util.Locale;
 
 import me.saket.dank.R;
-import me.saket.dank.utils.ReversibleAnimatedVectorDrawable;
 import me.saket.dank.utils.Views;
 import me.saket.dank.widgets.ExoMediaVideoControlsView;
 
@@ -23,12 +22,16 @@ public class SubmissionVideoControlsView extends ExoMediaVideoControlsView {
   private static final StringBuilder TIME_DURATION_FORMAT_BUILDER = new StringBuilder();
   private static final Formatter TIME_DURATION_FORMATTER = new Formatter(TIME_DURATION_FORMAT_BUILDER, Locale.ENGLISH);
 
-  private ReversibleAnimatedVectorDrawable playPauseIcon;
+  private final AnimatedVectorDrawable playToPauseDrawable;
+  private final AnimatedVectorDrawable pauseToPlayDrawable;
+
   protected ViewGroup buttonsContainer;
   protected TextView remainingDurationView;
 
   public SubmissionVideoControlsView(Context context) {
     super(context);
+    playToPauseDrawable = (AnimatedVectorDrawable) context.getDrawable(R.drawable.avd_play_to_pause_white_24dp);
+    pauseToPlayDrawable = (AnimatedVectorDrawable) context.getDrawable(R.drawable.avd_pause_to_play_white_24dp);
   }
 
   @Px
@@ -46,7 +49,6 @@ public class SubmissionVideoControlsView extends ExoMediaVideoControlsView {
     super.retrieveViews();
     buttonsContainer = findViewById(R.id.videocontrols_buttons_container);
     remainingDurationView = findViewById(R.id.videocontrols_remaining_duration);
-    playPauseIcon = new ReversibleAnimatedVectorDrawable(((AnimatedVectorDrawable) playPauseButton.getDrawable()));
   }
 
   @Override
@@ -66,13 +68,21 @@ public class SubmissionVideoControlsView extends ExoMediaVideoControlsView {
 
   @Override
   protected void updatePlayPauseImage(boolean isPlaying, boolean userInteractingWithSeek) {
+    playPauseButton.setImageResource(R.drawable.avd_play_to_pause_white_24dp);
+
     if (isPlaying) {
-      playPauseIcon.play();
+      playPauseButton.setImageDrawable(playToPauseDrawable);
       playPauseButton.setContentDescription(getResources().getString(R.string.submission_video_controls_cd_pause));
     } else {
-      playPauseIcon.reverse();
+      playPauseButton.setImageDrawable(pauseToPlayDrawable);
       playPauseButton.setContentDescription(getResources().getString(R.string.submission_video_controls_cd_play));
     }
+
+    animatePlayPauseButton();
+  }
+
+  private void animatePlayPauseButton() {
+    ((AnimatedVectorDrawable) playPauseButton.getDrawable()).start();
   }
 
   @Override
