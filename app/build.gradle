@@ -16,10 +16,7 @@ apply plugin: 'kotlin-kapt'
 
 repositories {
   maven { url "https://jitpack.io" }
-  maven { url "http://dl.bintray.com/novoda/maven" }
-  maven { url "http://www.idescout.com/maven/repo/" }
   maven { url "https://oss.sonatype.org/content/repositories/snapshots/" }
-  maven { url "http://maven.onehippo.com/maven2/" }
 }
 
 final def signingPropertiesFile = rootProject.file("signing/keystore.properties")
