@@ -198,7 +198,7 @@ dependencies {
   implementation "com.gabrielittner.threetenbp:lazythreetenbp:0.3.0"
 
   implementation 'com.github.saket:jraw:f8350f6558f'
-  implementation ("net.dean.jraw:JRAW-Android:1.0.0") {
+  implementation("net.dean.jraw:JRAW-Android:1.0.0") {
     exclude group: 'net.dean.jraw'
   }
   implementation 'com.alexvasilkov:gesture-views:2.2.0'
