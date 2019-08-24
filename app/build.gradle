@@ -214,3 +214,15 @@ dependencies {
   implementation "com.facebook.stetho:stetho-okhttp3:$versions.stetho"
   implementation 'androidx.constraintlayout:constraintlayout:1.1.3'
 }
+
+// https://github.com/google/dagger/issues/1449#issuecomment-495404186
+if (project.hasProperty('kapt')) {
+  // Reference for 'kapt' DSL: https://kotlinlang.org/docs/reference/kapt.html#java-compiler-options
+  kapt {
+    // we expect this closure to run over a org.jetbrains.kotlin.gradle.plugin.KaptExtension
+    javacOptions {
+      option("-source", "8")
+      option("-target", "8")
+    }
+  }
+}
