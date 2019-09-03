@@ -1,8 +1,9 @@
 package me.saket.dank.analytics;
 
 import android.app.Application;
-import androidx.annotation.Nullable;
 import android.util.Log;
+
+import androidx.annotation.Nullable;
 
 import com.bugsnag.android.BeforeNotify;
 import com.bugsnag.android.Bugsnag;

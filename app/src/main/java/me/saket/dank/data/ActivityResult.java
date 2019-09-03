@@ -2,6 +2,7 @@ package me.saket.dank.data;
 
 import android.app.Activity;
 import android.content.Intent;
+
 import androidx.annotation.Nullable;
 
 import com.google.auto.value.AutoValue;

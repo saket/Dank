@@ -1,10 +1,9 @@
 package me.saket.dank.data;
 
-import static java.util.Collections.unmodifiableList;
-
 import android.content.ContentValues;
 import android.content.Context;
 import android.database.sqlite.SQLiteDatabase;
+
 import androidx.annotation.CheckResult;
 
 import com.google.auto.value.AutoValue;
@@ -18,6 +17,7 @@ import net.dean.jraw.pagination.Paginator;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+
 import javax.inject.Inject;
 import javax.inject.Singleton;
 
@@ -35,6 +35,8 @@ import me.saket.dank.ui.user.messages.InboxFolder;
 import me.saket.dank.utils.Arrays2;
 import me.saket.dank.utils.JrawUtils2;
 import me.saket.dank.utils.Optional;
+
+import static java.util.Collections.unmodifiableList;
 
 @Singleton
 public class InboxRepository {

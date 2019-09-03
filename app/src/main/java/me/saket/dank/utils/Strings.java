@@ -1,7 +1,6 @@
 package me.saket.dank.utils;
 
 import android.content.res.Resources;
-import androidx.annotation.Nullable;
 
 import java.text.DecimalFormat;
 import java.util.Collection;

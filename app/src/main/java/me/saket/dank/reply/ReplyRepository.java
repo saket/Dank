@@ -2,6 +2,7 @@ package me.saket.dank.reply;
 
 import android.content.SharedPreferences;
 import android.database.sqlite.SQLiteDatabase;
+
 import androidx.annotation.CheckResult;
 import androidx.annotation.VisibleForTesting;
 
@@ -17,6 +18,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.TimeZone;
 import java.util.regex.Matcher;
+
 import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Singleton;

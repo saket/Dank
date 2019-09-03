@@ -2,6 +2,7 @@ package me.saket.dank.cache;
 
 import android.app.Application;
 import android.graphics.drawable.Drawable;
+
 import androidx.annotation.CheckResult;
 import androidx.annotation.Px;
 
@@ -17,6 +18,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+
 import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Singleton;

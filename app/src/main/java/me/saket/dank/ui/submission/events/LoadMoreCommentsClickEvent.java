@@ -5,7 +5,6 @@ import android.view.View;
 
 import com.google.auto.value.AutoValue;
 
-import net.dean.jraw.models.Comment;
 import net.dean.jraw.models.PublicContribution;
 import net.dean.jraw.tree.CommentNode;
 

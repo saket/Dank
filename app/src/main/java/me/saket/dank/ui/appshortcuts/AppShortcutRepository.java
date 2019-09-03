@@ -9,6 +9,7 @@ import android.database.sqlite.SQLiteDatabase;
 import android.graphics.drawable.Icon;
 import android.net.Uri;
 import android.os.Build;
+
 import androidx.annotation.CheckResult;
 
 import com.squareup.sqlbrite2.BriteDatabase;
@@ -16,6 +17,7 @@ import com.squareup.sqlbrite2.BriteDatabase;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+
 import javax.inject.Inject;
 
 import dagger.Lazy;

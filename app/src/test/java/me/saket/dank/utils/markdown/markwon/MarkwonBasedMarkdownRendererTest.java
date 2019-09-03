@@ -1,8 +1,5 @@
 package me.saket.dank.utils.markdown.markwon;
 
-import static junit.framework.Assert.assertEquals;
-import static org.mockito.Mockito.mock;
-
 import com.nytimes.android.external.cache3.Cache;
 
 import org.junit.Before;
@@ -10,6 +7,9 @@ import org.junit.Test;
 
 import me.saket.dank.markdownhints.MarkdownHintOptions;
 import ru.noties.markwon.SpannableConfiguration;
+
+import static junit.framework.Assert.assertEquals;
+import static org.mockito.Mockito.mock;
 
 public class MarkwonBasedMarkdownRendererTest {
 

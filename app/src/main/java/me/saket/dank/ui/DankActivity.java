@@ -7,8 +7,8 @@ import android.view.View;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.ActionBar;
-import io.github.inflationx.viewpump.ViewPumpContextWrapper;
 
+import io.github.inflationx.viewpump.ViewPumpContextWrapper;
 import me.saket.dank.R;
 import me.saket.dank.utils.lifecycle.LifecycleOwnerActivity;
 

@@ -2,6 +2,7 @@ package me.saket.dank.utils.lifecycle;
 
 import android.content.Context;
 import android.content.Intent;
+
 import androidx.fragment.app.Fragment;
 
 public class LifecycleOwnerFragment extends Fragment implements LifecycleOwner<FragmentLifecycleEvent> {

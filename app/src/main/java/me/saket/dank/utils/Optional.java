@@ -31,6 +31,7 @@ import com.google.auto.value.AutoValue;
 
 import java.util.NoSuchElementException;
 import java.util.Objects;
+
 import javax.inject.Provider;
 
 import io.reactivex.Observable;

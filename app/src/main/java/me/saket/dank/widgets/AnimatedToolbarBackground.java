@@ -4,9 +4,10 @@ import android.animation.ValueAnimator;
 import android.content.Context;
 import android.content.res.TypedArray;
 import android.graphics.Canvas;
-import androidx.annotation.FloatRange;
 import android.util.AttributeSet;
 import android.view.View;
+
+import androidx.annotation.FloatRange;
 
 import me.saket.dank.R;
 import me.saket.dank.ui.submission.SubmissionPageLayout;

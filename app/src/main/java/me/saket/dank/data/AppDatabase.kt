@@ -3,14 +3,7 @@ package me.saket.dank.data
 import androidx.room.Database
 import androidx.room.RoomDatabase
 import androidx.room.TypeConverters
-import me.saket.dank.ui.submission.CachedSubmission
-import me.saket.dank.ui.submission.CachedSubmissionComments
-import me.saket.dank.ui.submission.CachedSubmissionDao
-import me.saket.dank.ui.submission.CachedSubmissionId2
-import me.saket.dank.ui.submission.DankSubmissionRequestRoomTypeConverter
-import me.saket.dank.ui.submission.RepliesRoomTypeConverter
-import me.saket.dank.ui.submission.SortingAndTimePeriodRoomTypeConverter
-import me.saket.dank.ui.submission.SubmissionRoomTypeConverter
+import me.saket.dank.ui.submission.*
 
 @Database(
     entities = [

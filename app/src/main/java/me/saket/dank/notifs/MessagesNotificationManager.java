@@ -1,20 +1,19 @@
 package me.saket.dank.notifs;
 
-import static java.util.Collections.unmodifiableSet;
-
 import android.app.Notification;
 import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Build;
+import android.text.Html;
+
 import androidx.annotation.CheckResult;
 import androidx.core.app.NotificationCompat;
 import androidx.core.app.NotificationCompat.Action;
 import androidx.core.app.NotificationManagerCompat;
 import androidx.core.app.RemoteInput;
 import androidx.core.content.ContextCompat;
-import android.text.Html;
 
 import net.dean.jraw.models.Message;
 
@@ -26,6 +25,7 @@ import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
+
 import javax.inject.Inject;
 
 import dagger.Lazy;
@@ -40,6 +40,8 @@ import me.saket.dank.utils.JrawUtils2;
 import me.saket.dank.utils.Strings;
 import me.saket.dank.utils.markdown.Markdown;
 import timber.log.Timber;
+
+import static java.util.Collections.unmodifiableSet;
 
 public class MessagesNotificationManager {
 

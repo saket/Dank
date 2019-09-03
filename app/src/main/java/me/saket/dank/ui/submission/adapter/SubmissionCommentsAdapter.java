@@ -1,15 +1,17 @@
 package me.saket.dank.ui.submission.adapter;
 
+import android.view.LayoutInflater;
+import android.view.ViewGroup;
+
 import androidx.annotation.CheckResult;
 import androidx.recyclerview.widget.DiffUtil;
 import androidx.recyclerview.widget.RecyclerView;
-import android.view.LayoutInflater;
-import android.view.ViewGroup;
 
 import com.jakewharton.rxrelay2.Relay;
 
 import java.util.List;
 import java.util.Map;
+
 import javax.inject.Inject;
 
 import io.reactivex.Observable;

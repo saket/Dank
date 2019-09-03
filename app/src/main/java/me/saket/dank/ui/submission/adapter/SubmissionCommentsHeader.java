@@ -3,27 +3,29 @@ package me.saket.dank.ui.submission.adapter;
 import android.animation.ValueAnimator;
 import android.content.Context;
 import android.graphics.drawable.Drawable;
-import androidx.annotation.CheckResult;
-import androidx.annotation.ColorInt;
-import androidx.core.content.ContextCompat;
-import androidx.recyclerview.widget.RecyclerView;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.TextView;
 
+import androidx.annotation.CheckResult;
+import androidx.annotation.ColorInt;
+import androidx.core.content.ContextCompat;
+import androidx.recyclerview.widget.RecyclerView;
+
 import com.google.auto.value.AutoValue;
 import com.jakewharton.rxrelay2.PublishRelay;
 import com.jakewharton.rxrelay2.Relay;
-import io.reactivex.Observable;
+
 import net.dean.jraw.models.Submission;
 import net.dean.jraw.models.VoteDirection;
-import timber.log.Timber;
 
 import java.util.List;
+
 import javax.inject.Inject;
 
+import io.reactivex.Observable;
 import me.saket.dank.BuildConfig;
 import me.saket.dank.R;
 import me.saket.dank.data.SpannableWithTextEquality;
@@ -40,6 +42,7 @@ import me.saket.dank.widgets.AnimatedProgressBar;
 import me.saket.dank.widgets.swipe.SwipeActions;
 import me.saket.dank.widgets.swipe.SwipeableLayout;
 import me.saket.dank.widgets.swipe.ViewHolderWithSwipeActions;
+import timber.log.Timber;
 
 public interface SubmissionCommentsHeader {
 

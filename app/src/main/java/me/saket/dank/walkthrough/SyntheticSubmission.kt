@@ -3,19 +3,10 @@ package me.saket.dank.walkthrough
 import me.saket.dank.reddit.Reddit
 import me.saket.dank.ui.submission.SubmissionAndComments
 import me.saket.dank.utils.Optional
-import net.dean.jraw.models.Comment
-import net.dean.jraw.models.CommentSort
-import net.dean.jraw.models.DistinguishedStatus
-import net.dean.jraw.models.EmbeddedMedia
-import net.dean.jraw.models.Listing
-import net.dean.jraw.models.NestedIdentifiable
-import net.dean.jraw.models.Submission
-import net.dean.jraw.models.SubmissionPreview
-import net.dean.jraw.models.Subreddit
-import net.dean.jraw.models.VoteDirection
+import net.dean.jraw.models.*
 import net.dean.jraw.tree.CommentTreeSettings
 import net.dean.jraw.tree.RootCommentNode
-import java.util.Date
+import java.util.*
 
 class SyntheticSubmissionAndComments {
 

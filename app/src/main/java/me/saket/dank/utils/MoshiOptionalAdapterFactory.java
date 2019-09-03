@@ -1,7 +1,5 @@
 package me.saket.dank.utils;
 
-import static me.saket.dank.utils.Preconditions.checkNotNull;
-
 import androidx.annotation.Nullable;
 
 import com.squareup.moshi.JsonAdapter;
@@ -14,6 +12,8 @@ import java.lang.annotation.Annotation;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 import java.util.Set;
+
+import static me.saket.dank.utils.Preconditions.checkNotNull;
 
 public class MoshiOptionalAdapterFactory implements JsonAdapter.Factory {
 

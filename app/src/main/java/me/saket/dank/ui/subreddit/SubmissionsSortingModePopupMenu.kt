@@ -1,23 +1,13 @@
 package me.saket.dank.ui.subreddit
 
 import android.content.Context
-import androidx.appcompat.widget.PopupMenu
 import android.view.Gravity
 import android.view.View
+import androidx.appcompat.widget.PopupMenu
 import me.saket.dank.R
 import me.saket.dank.ui.submission.SortingAndTimePeriod
-import net.dean.jraw.models.SubredditSort.BEST
-import net.dean.jraw.models.SubredditSort.CONTROVERSIAL
-import net.dean.jraw.models.SubredditSort.HOT
-import net.dean.jraw.models.SubredditSort.NEW
-import net.dean.jraw.models.SubredditSort.RISING
-import net.dean.jraw.models.SubredditSort.TOP
-import net.dean.jraw.models.TimePeriod.ALL
-import net.dean.jraw.models.TimePeriod.DAY
-import net.dean.jraw.models.TimePeriod.HOUR
-import net.dean.jraw.models.TimePeriod.MONTH
-import net.dean.jraw.models.TimePeriod.WEEK
-import net.dean.jraw.models.TimePeriod.YEAR
+import net.dean.jraw.models.SubredditSort.*
+import net.dean.jraw.models.TimePeriod.*
 
 class SubmissionsSortingModePopupMenu(
     private val context: Context,

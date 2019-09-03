@@ -3,8 +3,9 @@ package me.saket.dank;
 import android.annotation.SuppressLint;
 import android.content.Context;
 import android.graphics.Canvas;
-import androidx.appcompat.widget.AppCompatImageView;
 import android.util.AttributeSet;
+
+import androidx.appcompat.widget.AppCompatImageView;
 
 import timber.log.Timber;
 

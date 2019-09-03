@@ -1,18 +1,17 @@
 package me.saket.dank.ui.preferences.gestures
 
-import androidx.annotation.CheckResult
-import androidx.recyclerview.widget.DiffUtil
-import androidx.recyclerview.widget.RecyclerView
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import androidx.annotation.CheckResult
+import androidx.recyclerview.widget.DiffUtil
+import androidx.recyclerview.widget.RecyclerView
 import io.reactivex.Observable
 import io.reactivex.functions.Consumer
 import me.saket.dank.ui.preferences.gestures.submissions.GesturePreferencesSubmissionPreview
 import me.saket.dank.ui.subreddit.SubmissionSwipeAction
 import me.saket.dank.utils.Pair
 import me.saket.dank.utils.RecyclerViewArrayAdapter
-import java.util.*
 import javax.inject.Inject
 
 class GesturePreferencesAdapter @Inject constructor(

@@ -2,11 +2,6 @@ package me.saket.dank.walkthrough;
 
 import android.content.Context;
 import android.content.res.Resources;
-import androidx.annotation.Nullable;
-import androidx.constraintlayout.widget.ConstraintLayout;
-import androidx.constraintlayout.widget.ConstraintSet;
-import androidx.core.content.ContextCompat;
-import androidx.recyclerview.widget.RecyclerView;
 import android.text.TextUtils;
 import android.util.TypedValue;
 import android.view.LayoutInflater;
@@ -17,19 +12,26 @@ import android.view.animation.AnimationUtils;
 import android.widget.TextSwitcher;
 import android.widget.TextView;
 
+import androidx.annotation.Nullable;
+import androidx.constraintlayout.widget.ConstraintLayout;
+import androidx.constraintlayout.widget.ConstraintSet;
+import androidx.core.content.ContextCompat;
+import androidx.recyclerview.widget.RecyclerView;
+
 import com.f2prateek.rx.preferences2.Preference;
 import com.google.auto.value.AutoValue;
 import com.jakewharton.rxrelay2.PublishRelay;
 import com.jakewharton.rxrelay2.Relay;
-import dagger.Lazy;
-import io.reactivex.Observable;
-
-import java.util.List;
-import javax.inject.Inject;
-import javax.inject.Named;
 
 import net.dean.jraw.models.Submission;
 
+import java.util.List;
+
+import javax.inject.Inject;
+import javax.inject.Named;
+
+import dagger.Lazy;
+import io.reactivex.Observable;
 import me.saket.dank.R;
 import me.saket.dank.ui.preferences.TypefaceInflationInterceptor;
 import me.saket.dank.ui.preferences.gestures.submissions.SubmissionSwipeActionsRepository;

@@ -1,6 +1,7 @@
 package me.saket.dank.ui.submission;
 
 import android.graphics.Bitmap;
+
 import androidx.annotation.CheckResult;
 
 import io.reactivex.Observable;

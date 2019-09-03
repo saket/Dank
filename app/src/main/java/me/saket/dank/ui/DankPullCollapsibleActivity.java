@@ -1,14 +1,15 @@
 package me.saket.dank.ui;
 
-import static me.saket.dank.utils.Views.executeOnMeasure;
-
 import android.content.res.TypedArray;
 import android.graphics.Rect;
 import android.os.Bundle;
-import androidx.annotation.Nullable;
 import android.view.MenuItem;
 
+import androidx.annotation.Nullable;
+
 import me.saket.dank.widgets.InboxUI.IndependentExpandablePageLayout;
+
+import static me.saket.dank.utils.Views.executeOnMeasure;
 
 /**
  * An Activity that can be dismissed by pulling it vertically.

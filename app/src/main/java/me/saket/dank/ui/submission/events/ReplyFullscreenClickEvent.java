@@ -2,6 +2,7 @@ package me.saket.dank.ui.submission.events;
 
 import android.app.Activity;
 import android.os.Bundle;
+
 import androidx.annotation.Nullable;
 
 import com.google.auto.value.AutoValue;

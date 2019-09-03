@@ -1,6 +1,7 @@
 package me.saket.dank.urlparser;
 
 import java.util.regex.Pattern;
+
 import javax.inject.Inject;
 import javax.inject.Singleton;
 

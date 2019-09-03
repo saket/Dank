@@ -3,14 +3,7 @@ package me.saket.dank.utils
 import androidx.annotation.StringRes
 import me.saket.dank.R
 import net.dean.jraw.models.CommentSort
-import net.dean.jraw.models.CommentSort.CONFIDENCE
-import net.dean.jraw.models.CommentSort.CONTROVERSIAL
-import net.dean.jraw.models.CommentSort.LIVE
-import net.dean.jraw.models.CommentSort.NEW
-import net.dean.jraw.models.CommentSort.OLD
-import net.dean.jraw.models.CommentSort.QA
-import net.dean.jraw.models.CommentSort.RANDOM
-import net.dean.jraw.models.CommentSort.TOP
+import net.dean.jraw.models.CommentSort.*
 
 // TODO Kotlin: Convert to extension functions?
 object CommentSortUtils {

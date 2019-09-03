@@ -7,10 +7,11 @@ import android.content.pm.PackageManager;
 import android.graphics.Point;
 import android.graphics.Rect;
 import android.net.Uri;
-import androidx.annotation.Nullable;
 import android.util.Patterns;
 import android.view.View;
 import android.widget.Toast;
+
+import androidx.annotation.Nullable;
 
 import com.f2prateek.rx.preferences2.Preference;
 

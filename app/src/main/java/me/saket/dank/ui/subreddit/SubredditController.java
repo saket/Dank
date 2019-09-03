@@ -1,11 +1,9 @@
 package me.saket.dank.ui.subreddit;
 
-import static io.reactivex.android.schedulers.AndroidSchedulers.mainThread;
-import static io.reactivex.schedulers.Schedulers.io;
-
 import net.dean.jraw.models.Submission;
 
 import java.util.concurrent.TimeUnit;
+
 import javax.inject.Inject;
 
 import dagger.Lazy;
@@ -30,6 +28,9 @@ import me.saket.dank.utils.Optional;
 import me.saket.dank.utils.Pair;
 import me.saket.dank.walkthrough.SubmissionGestureWalkthroughProceedEvent;
 import timber.log.Timber;
+
+import static io.reactivex.android.schedulers.AndroidSchedulers.mainThread;
+import static io.reactivex.schedulers.Schedulers.io;
 
 public class SubredditController implements ObservableTransformer<UiEvent, UiChange<SubredditUi>> {
 

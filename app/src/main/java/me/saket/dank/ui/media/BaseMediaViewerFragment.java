@@ -2,11 +2,12 @@ package me.saket.dank.ui.media;
 
 import android.content.Context;
 import android.os.Bundle;
-import androidx.annotation.Nullable;
 import android.text.util.Linkify;
 import android.view.View;
 import android.view.ViewConfiguration;
 import android.view.ViewGroup;
+
+import androidx.annotation.Nullable;
 
 import javax.inject.Inject;
 

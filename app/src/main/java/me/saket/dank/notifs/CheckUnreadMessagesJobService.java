@@ -1,9 +1,5 @@
 package me.saket.dank.notifs;
 
-import static io.reactivex.android.schedulers.AndroidSchedulers.mainThread;
-import static io.reactivex.schedulers.Schedulers.io;
-import static java.util.Collections.unmodifiableList;
-
 import android.app.job.JobInfo;
 import android.app.job.JobParameters;
 import android.app.job.JobScheduler;
@@ -18,6 +14,7 @@ import net.dean.jraw.models.Message;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
+
 import javax.inject.Inject;
 
 import io.reactivex.Completable;
@@ -32,6 +29,10 @@ import me.saket.dank.utils.Arrays2;
 import me.saket.dank.utils.PersistableBundleUtils;
 import me.saket.dank.utils.TimeInterval;
 import timber.log.Timber;
+
+import static io.reactivex.android.schedulers.AndroidSchedulers.mainThread;
+import static io.reactivex.schedulers.Schedulers.io;
+import static java.util.Collections.unmodifiableList;
 
 /**
  * Fetches unread messages and displays a notification for them.

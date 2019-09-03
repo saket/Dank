@@ -4,7 +4,7 @@ import android.text.Html
 import me.saket.dank.urlparser.UrlParser
 import me.saket.dank.utils.Optional
 import net.dean.jraw.models.SubmissionPreview
-import java.util.NoSuchElementException
+import java.util.*
 
 class ImageWithMultipleVariants private constructor(private val optionalRedditPreviews: Optional<SubmissionPreview>) {
 

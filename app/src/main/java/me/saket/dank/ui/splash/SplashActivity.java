@@ -1,6 +1,7 @@
 package me.saket.dank.ui.splash;
 
 import android.os.Bundle;
+
 import androidx.annotation.Nullable;
 
 import me.saket.dank.ui.DankActivity;

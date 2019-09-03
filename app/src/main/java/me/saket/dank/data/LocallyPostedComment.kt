@@ -1,9 +1,7 @@
 package me.saket.dank.data
 
 import me.saket.dank.reply.PendingSyncReply
-import me.saket.dank.reply.PendingSyncReply.State.FAILED
-import me.saket.dank.reply.PendingSyncReply.State.POSTED
-import me.saket.dank.reply.PendingSyncReply.State.POSTING
+import me.saket.dank.reply.PendingSyncReply.State.*
 import net.dean.jraw.models.Identifiable
 
 data class LocallyPostedComment(val pendingSyncReply: PendingSyncReply) : Identifiable {

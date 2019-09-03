@@ -1,6 +1,7 @@
 package me.saket.dank.utils.lifecycle;
 
 import android.content.Intent;
+
 import androidx.annotation.CheckResult;
 
 import io.reactivex.BackpressureStrategy;

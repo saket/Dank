@@ -7,12 +7,13 @@ import com.f2prateek.rx.preferences2.Preference;
 
 import java.util.ArrayList;
 import java.util.List;
+
 import javax.inject.Inject;
 import javax.inject.Named;
 
 import me.saket.dank.R;
-import me.saket.dank.urlparser.Link;
 import me.saket.dank.di.Dank;
+import me.saket.dank.urlparser.Link;
 import me.saket.dank.utils.Clipboards;
 import me.saket.dank.utils.Intents;
 import me.saket.dank.utils.NestedOptionsPopupMenu;

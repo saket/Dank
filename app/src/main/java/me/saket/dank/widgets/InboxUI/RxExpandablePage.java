@@ -1,6 +1,7 @@
 package me.saket.dank.widgets.InboxUI;
 
 import android.os.Looper;
+
 import androidx.annotation.CheckResult;
 
 import io.reactivex.Observable;

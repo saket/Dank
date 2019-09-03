@@ -1,26 +1,11 @@
 package me.saket.dank.ui.subscriptions;
 
-import static io.reactivex.android.schedulers.AndroidSchedulers.mainThread;
-import static io.reactivex.schedulers.Schedulers.io;
-import static me.saket.dank.utils.RxUtils.applySchedulersCompletable;
-import static me.saket.dank.utils.RxUtils.doNothingCompletable;
-import static me.saket.dank.utils.RxUtils.doOnceAfterNext;
-import static me.saket.dank.utils.RxUtils.logError;
-import static me.saket.dank.utils.RxUtils.onStartAndFirstEvent;
-import static me.saket.dank.utils.Views.setHeight;
-import static me.saket.dank.utils.Views.setMarginBottom;
-import static me.saket.dank.utils.Views.setPaddingBottom;
-import static me.saket.dank.utils.Views.touchLiesOn;
-
 import android.animation.Animator;
 import android.animation.AnimatorListenerAdapter;
 import android.animation.ObjectAnimator;
 import android.animation.ValueAnimator;
 import android.content.Context;
 import android.content.res.ColorStateList;
-import com.google.android.material.floatingactionbutton.FloatingActionButton;
-import androidx.appcompat.widget.PopupMenu;
-import androidx.recyclerview.widget.RecyclerView;
 import android.view.Gravity;
 import android.view.MenuItem;
 import android.view.View;
@@ -31,12 +16,17 @@ import android.view.inputmethod.EditorInfo;
 import android.widget.EditText;
 import android.widget.FrameLayout;
 
+import androidx.appcompat.widget.PopupMenu;
+import androidx.recyclerview.widget.RecyclerView;
+
+import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.jakewharton.rxbinding2.widget.RxTextView;
 import com.jakewharton.rxrelay2.BehaviorRelay;
 
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+
 import javax.inject.Inject;
 
 import butterknife.BindColor;
@@ -62,6 +52,18 @@ import me.saket.dank.utils.Views;
 import me.saket.dank.utils.itemanimators.SlideLeftAlphaAnimator;
 import me.saket.dank.widgets.ToolbarExpandableSheet;
 import timber.log.Timber;
+
+import static io.reactivex.android.schedulers.AndroidSchedulers.mainThread;
+import static io.reactivex.schedulers.Schedulers.io;
+import static me.saket.dank.utils.RxUtils.applySchedulersCompletable;
+import static me.saket.dank.utils.RxUtils.doNothingCompletable;
+import static me.saket.dank.utils.RxUtils.doOnceAfterNext;
+import static me.saket.dank.utils.RxUtils.logError;
+import static me.saket.dank.utils.RxUtils.onStartAndFirstEvent;
+import static me.saket.dank.utils.Views.setHeight;
+import static me.saket.dank.utils.Views.setMarginBottom;
+import static me.saket.dank.utils.Views.setPaddingBottom;
+import static me.saket.dank.utils.Views.touchLiesOn;
 
 /**
  * Lets the user:

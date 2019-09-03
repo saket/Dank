@@ -8,6 +8,7 @@ import android.widget.RelativeLayout;
 import android.widget.TextView;
 
 import androidx.annotation.Px;
+
 import com.devbrackets.android.exomedia.ui.widget.VideoView;
 
 import java.util.Formatter;

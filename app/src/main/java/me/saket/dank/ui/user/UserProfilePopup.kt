@@ -6,16 +6,12 @@ import android.content.Context
 import android.graphics.Point
 import android.graphics.Rect
 import android.graphics.drawable.Drawable
-import androidx.annotation.IdRes
 import android.view.Gravity
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.Button
-import android.widget.ImageView
-import android.widget.TextView
-import android.widget.Toast
-import android.widget.ViewFlipper
+import android.widget.*
+import androidx.annotation.IdRes
 import butterknife.BindView
 import butterknife.ButterKnife
 import butterknife.OnClick
@@ -37,7 +33,7 @@ import org.threeten.bp.Instant
 import org.threeten.bp.LocalDate
 import org.threeten.bp.ZoneId
 import timber.log.Timber
-import java.util.Date
+import java.util.*
 import javax.inject.Inject
 
 @SuppressLint("InflateParams")

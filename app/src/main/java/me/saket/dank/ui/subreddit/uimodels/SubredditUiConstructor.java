@@ -1,16 +1,15 @@
 package me.saket.dank.ui.subreddit.uimodels;
 
 import android.content.Context;
-import androidx.annotation.CheckResult;
-import androidx.core.content.ContextCompat;
 import android.text.Html;
 import android.text.style.ForegroundColorSpan;
 import android.widget.ImageView;
 
+import androidx.annotation.CheckResult;
+import androidx.core.content.ContextCompat;
+
 import com.f2prateek.rx.preferences2.Preference;
-import dagger.Lazy;
-import io.reactivex.Observable;
-import io.reactivex.functions.BiFunction;
+
 import net.dean.jraw.models.Submission;
 import net.dean.jraw.models.SubmissionPreview;
 import net.dean.jraw.models.VoteDirection;
@@ -19,9 +18,13 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Locale;
+
 import javax.inject.Inject;
 import javax.inject.Named;
 
+import dagger.Lazy;
+import io.reactivex.Observable;
+import io.reactivex.functions.BiFunction;
 import me.saket.dank.R;
 import me.saket.dank.data.EmptyState;
 import me.saket.dank.data.ErrorResolver;

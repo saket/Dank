@@ -18,7 +18,7 @@ import net.dean.jraw.oauth.TokenStore
 import okhttp3.OkHttpClient
 import okhttp3.logging.HttpLoggingInterceptor
 import timber.log.Timber
-import java.util.UUID
+import java.util.*
 import javax.inject.Named
 import javax.inject.Singleton
 

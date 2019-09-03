@@ -1,6 +1,7 @@
 package me.saket.dank.ui.submission.adapter;
 
 import android.graphics.drawable.Drawable;
+
 import androidx.annotation.ColorRes;
 
 import com.google.auto.value.AutoValue;

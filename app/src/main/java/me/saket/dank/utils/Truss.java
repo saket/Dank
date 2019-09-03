@@ -1,11 +1,11 @@
 package me.saket.dank.utils;
 
-import static android.text.Spanned.SPAN_INCLUSIVE_EXCLUSIVE;
-
 import android.text.SpannableStringBuilder;
 
 import java.util.ArrayDeque;
 import java.util.Deque;
+
+import static android.text.Spanned.SPAN_INCLUSIVE_EXCLUSIVE;
 
 /** By Jake Wharton: A {@link SpannableStringBuilder} wrapper whose API doesn't make me want to stab my eyes out. */
 public class Truss {

@@ -1,11 +1,12 @@
 package me.saket.dank.ui.compose;
 
 import android.content.Context;
-import androidx.annotation.ArrayRes;
-import androidx.annotation.CheckResult;
 import android.view.Gravity;
 import android.view.View;
 import android.widget.PopupMenu;
+
+import androidx.annotation.ArrayRes;
+import androidx.annotation.CheckResult;
 
 import com.jakewharton.rxbinding2.widget.RxPopupMenu;
 

@@ -2,14 +2,15 @@ package me.saket.dank.markdownhints;
 
 import android.annotation.SuppressLint;
 import android.graphics.Typeface;
-import androidx.annotation.ColorInt;
-import androidx.annotation.Px;
 import android.text.style.ForegroundColorSpan;
 import android.text.style.LeadingMarginSpan;
 import android.text.style.StrikethroughSpan;
 import android.text.style.StyleSpan;
 import android.text.style.SuperscriptSpan;
 import android.text.style.TypefaceSpan;
+
+import androidx.annotation.ColorInt;
+import androidx.annotation.Px;
 
 import java.util.HashMap;
 import java.util.Map;

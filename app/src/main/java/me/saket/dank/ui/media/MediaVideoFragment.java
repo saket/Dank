@@ -3,25 +3,25 @@ package me.saket.dank.ui.media;
 import android.animation.LayoutTransition;
 import android.content.Context;
 import android.os.Bundle;
-import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ViewFlipper;
 
-import butterknife.BindView;
-import butterknife.ButterKnife;
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+
 import com.danikula.videocache.HttpProxyCacheServer;
 import com.devbrackets.android.exomedia.ui.widget.VideoView;
 import com.google.android.exoplayer2.ExoPlaybackException;
 import com.google.android.exoplayer2.upstream.HttpDataSource;
 import com.jakewharton.rxrelay2.BehaviorRelay;
-import dagger.Lazy;
-import timber.log.Timber;
 
 import javax.inject.Inject;
 
+import butterknife.BindView;
+import butterknife.ButterKnife;
+import dagger.Lazy;
 import me.saket.dank.R;
 import me.saket.dank.data.ErrorResolver;
 import me.saket.dank.data.ResolvedError;
@@ -33,6 +33,7 @@ import me.saket.dank.widgets.ErrorStateView;
 import me.saket.dank.widgets.MediaAlbumViewerTitleDescriptionView;
 import me.saket.dank.widgets.binoculars.FlickDismissLayout;
 import me.saket.dank.widgets.binoculars.FlickGestureListener;
+import timber.log.Timber;
 
 public class MediaVideoFragment extends BaseMediaViewerFragment {
 

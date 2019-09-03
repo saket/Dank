@@ -8,6 +8,7 @@ import android.content.Context;
 import android.os.Build;
 
 import java.util.concurrent.TimeUnit;
+
 import javax.inject.Inject;
 
 import io.reactivex.schedulers.Schedulers;

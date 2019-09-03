@@ -4,21 +4,12 @@ import io.reactivex.Completable
 import io.reactivex.Observable
 import io.reactivex.Single
 import io.reactivex.schedulers.Schedulers.io
-import me.saket.dank.data.FullNameType.COMMENT
-import me.saket.dank.data.FullNameType.MESSAGE
-import me.saket.dank.data.FullNameType.SUBMISSION
-import me.saket.dank.data.FullNameType.parse
+import me.saket.dank.data.FullNameType.*
 import me.saket.dank.data.PaginationAnchor
 import me.saket.dank.reddit.Reddit
 import me.saket.dank.ui.user.messages.InboxFolder
 import net.dean.jraw.RedditClient
-import net.dean.jraw.models.Account
-import net.dean.jraw.models.Comment
-import net.dean.jraw.models.Identifiable
-import net.dean.jraw.models.Listing
-import net.dean.jraw.models.Message
-import net.dean.jraw.models.Submission
-import net.dean.jraw.models.VoteDirection
+import net.dean.jraw.models.*
 import net.dean.jraw.oauth.AccountHelper
 
 class JrawLoggedInUser(private val clients: Observable<RedditClient>, private val accountHelper: AccountHelper) : Reddit.LoggedInUser {

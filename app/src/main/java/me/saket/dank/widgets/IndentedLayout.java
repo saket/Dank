@@ -7,14 +7,15 @@ import android.graphics.Color;
 import android.graphics.DashPathEffect;
 import android.graphics.Paint;
 import android.graphics.Path;
-import androidx.annotation.Nullable;
-import androidx.annotation.Px;
-import com.f2prateek.rx.preferences2.Preference;
-import com.jakewharton.rxbinding2.view.RxView;
-
 import android.util.AttributeSet;
 import android.util.TypedValue;
 import android.widget.LinearLayout;
+
+import androidx.annotation.Nullable;
+import androidx.annotation.Px;
+
+import com.f2prateek.rx.preferences2.Preference;
+import com.jakewharton.rxbinding2.view.RxView;
 
 import java.util.ArrayList;
 import java.util.List;

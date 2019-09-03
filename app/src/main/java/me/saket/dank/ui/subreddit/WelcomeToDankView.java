@@ -1,18 +1,17 @@
 package me.saket.dank.ui.subreddit;
 
-import static io.reactivex.android.schedulers.AndroidSchedulers.mainThread;
-
 import android.animation.ObjectAnimator;
 import android.animation.ValueAnimator;
 import android.content.Context;
 import android.graphics.Typeface;
 import android.graphics.drawable.ColorDrawable;
-import androidx.core.content.ContextCompat;
-import androidx.appcompat.widget.AppCompatTextView;
 import android.view.Gravity;
 import android.view.ViewGroup;
 import android.widget.FrameLayout;
 import android.widget.RelativeLayout;
+
+import androidx.appcompat.widget.AppCompatTextView;
+import androidx.core.content.ContextCompat;
 
 import java.util.concurrent.TimeUnit;
 
@@ -22,6 +21,8 @@ import me.saket.dank.R;
 import me.saket.dank.utils.Animations;
 import me.saket.dank.utils.lifecycle.LifecycleOwnerActivity;
 import me.saket.dank.utils.lifecycle.LifecycleOwnerViews;
+
+import static io.reactivex.android.schedulers.AndroidSchedulers.mainThread;
 
 /**
  * Shows welcome text with typewriter animation.

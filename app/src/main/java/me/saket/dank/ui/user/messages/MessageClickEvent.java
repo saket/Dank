@@ -1,7 +1,9 @@
 package me.saket.dank.ui.user.messages;
 
 import android.view.View;
+
 import com.google.auto.value.AutoValue;
+
 import net.dean.jraw.models.Message;
 
 @AutoValue

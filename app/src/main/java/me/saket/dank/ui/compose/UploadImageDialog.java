@@ -1,17 +1,10 @@
 package me.saket.dank.ui.compose;
 
-import static io.reactivex.android.schedulers.AndroidSchedulers.mainThread;
-import static io.reactivex.schedulers.Schedulers.io;
-
 import android.annotation.SuppressLint;
 import android.app.Dialog;
 import android.content.Context;
 import android.net.Uri;
 import android.os.Bundle;
-import androidx.annotation.CheckResult;
-import androidx.annotation.NonNull;
-import androidx.fragment.app.FragmentManager;
-import androidx.appcompat.app.AlertDialog;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.Button;
@@ -20,6 +13,11 @@ import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.ViewFlipper;
 
+import androidx.annotation.CheckResult;
+import androidx.annotation.NonNull;
+import androidx.appcompat.app.AlertDialog;
+import androidx.fragment.app.FragmentManager;
+
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.load.resource.drawable.DrawableTransitionOptions;
 import com.jakewharton.rxbinding2.view.RxView;
@@ -27,6 +25,7 @@ import com.squareup.moshi.Moshi;
 
 import java.io.File;
 import java.io.InputStream;
+
 import javax.inject.Inject;
 
 import butterknife.BindView;
@@ -39,10 +38,10 @@ import io.reactivex.functions.Function;
 import me.saket.dank.R;
 import me.saket.dank.data.ErrorResolver;
 import me.saket.dank.data.FileUploadProgressEvent;
-import me.saket.dank.ui.media.ImgurUploadResponse;
 import me.saket.dank.data.ResolvedError;
 import me.saket.dank.di.Dank;
 import me.saket.dank.ui.DankDialogFragment;
+import me.saket.dank.ui.media.ImgurUploadResponse;
 import me.saket.dank.ui.media.MediaHostRepository;
 import me.saket.dank.utils.FileSizeUnit;
 import me.saket.dank.utils.Keyboards;
@@ -50,6 +49,9 @@ import me.saket.dank.widgets.AnimatedProgressBar;
 import okio.Okio;
 import retrofit2.HttpException;
 import timber.log.Timber;
+
+import static io.reactivex.android.schedulers.AndroidSchedulers.mainThread;
+import static io.reactivex.schedulers.Schedulers.io;
 
 public class UploadImageDialog extends DankDialogFragment {
 

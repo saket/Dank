@@ -1,10 +1,11 @@
 package me.saket.dank.ui.submission;
 
 import android.content.Context;
-import androidx.appcompat.widget.PopupMenu;
 import android.view.Gravity;
 import android.view.MenuItem;
 import android.view.View;
+
+import androidx.appcompat.widget.PopupMenu;
 
 import net.dean.jraw.models.CommentSort;
 

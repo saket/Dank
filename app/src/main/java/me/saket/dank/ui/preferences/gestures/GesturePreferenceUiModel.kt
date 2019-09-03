@@ -1,8 +1,8 @@
 package me.saket.dank.ui.preferences.gestures
 
-import androidx.recyclerview.widget.RecyclerView
 import android.view.LayoutInflater
 import android.view.ViewGroup
+import androidx.recyclerview.widget.RecyclerView
 
 interface GesturePreferenceUiModel {
 

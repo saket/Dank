@@ -15,6 +15,7 @@
 package me.saket.dank.utils;
 
 import android.os.Looper;
+
 import androidx.annotation.Nullable;
 
 import io.reactivex.Observer;

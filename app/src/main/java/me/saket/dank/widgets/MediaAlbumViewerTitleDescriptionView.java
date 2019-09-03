@@ -3,7 +3,6 @@ package me.saket.dank.widgets;
 import android.annotation.SuppressLint;
 import android.content.Context;
 import android.graphics.Rect;
-import androidx.annotation.Nullable;
 import android.text.Layout;
 import android.text.StaticLayout;
 import android.text.TextUtils;
@@ -15,6 +14,8 @@ import android.view.ViewGroup;
 import android.widget.RelativeLayout;
 import android.widget.ScrollView;
 import android.widget.TextView;
+
+import androidx.annotation.Nullable;
 
 import com.jakewharton.rxrelay2.BehaviorRelay;
 

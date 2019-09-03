@@ -3,6 +3,7 @@ package me.saket.dank.utils;
 import android.app.Activity;
 import android.os.Handler;
 import android.os.Looper;
+
 import androidx.annotation.Nullable;
 
 /**

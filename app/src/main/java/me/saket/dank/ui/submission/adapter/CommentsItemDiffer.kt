@@ -1,7 +1,7 @@
 package me.saket.dank.ui.submission.adapter
 
 import me.saket.dank.utils.SimpleDiffUtilsCallbacks
-import java.util.ArrayList
+import java.util.*
 
 class CommentsItemDiffer private constructor(
     oldComments: List<SubmissionScreenUiModel>,

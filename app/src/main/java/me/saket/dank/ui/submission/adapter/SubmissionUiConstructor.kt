@@ -1,12 +1,12 @@
 package me.saket.dank.ui.submission.adapter
 
 import android.content.Context
+import android.text.Html
+import android.text.style.ForegroundColorSpan
 import androidx.annotation.CheckResult
 import androidx.annotation.ColorInt
 import androidx.annotation.ColorRes
 import androidx.core.content.ContextCompat
-import android.text.Html
-import android.text.style.ForegroundColorSpan
 import dagger.Lazy
 import io.reactivex.Observable
 import io.reactivex.rxkotlin.Observables
@@ -17,25 +17,13 @@ import me.saket.dank.R
 import me.saket.dank.data.ResolvedError
 import me.saket.dank.reply.ReplyRepository
 import me.saket.dank.ui.preferences.gestures.submissions.SubmissionSwipeActionsRepository
-import me.saket.dank.ui.submission.BookmarksRepository
-import me.saket.dank.ui.submission.ParentThread
-import me.saket.dank.ui.submission.SubmissionAndComments
-import me.saket.dank.ui.submission.SubmissionCommentTreeUiConstructor
-import me.saket.dank.ui.submission.SubmissionContentLoadError
+import me.saket.dank.ui.submission.*
 import me.saket.dank.ui.user.UserSessionRepository
 import me.saket.dank.urlparser.Link
 import me.saket.dank.urlparser.RedditSubmissionLink
-import me.saket.dank.utils.CombineLatestWithLog
+import me.saket.dank.utils.*
 import me.saket.dank.utils.CombineLatestWithLog.O
-import me.saket.dank.utils.CommentSortUtils
-import me.saket.dank.utils.DankSubmissionRequest
-import me.saket.dank.utils.Dates
-import me.saket.dank.utils.JrawUtils2
 import me.saket.dank.utils.Optional
-import me.saket.dank.utils.Pair
-import me.saket.dank.utils.Strings
-import me.saket.dank.utils.Themes
-import me.saket.dank.utils.Truss
 import me.saket.dank.utils.lifecycle.LifecycleStreams
 import me.saket.dank.utils.markdown.Markdown
 import me.saket.dank.vote.VotingManager
@@ -43,8 +31,7 @@ import me.saket.dank.widgets.span.RoundedBackgroundSpan
 import me.saket.dank.widgets.swipe.SwipeActions
 import net.dean.jraw.models.Submission
 import timber.log.Timber
-import java.util.ArrayList
-import java.util.Collections
+import java.util.*
 import javax.inject.Inject
 
 class SubmissionUiConstructor @Inject constructor(

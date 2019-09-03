@@ -3,6 +3,7 @@ package me.saket.dank.vote;
 import android.app.Application;
 import android.content.SharedPreferences;
 import android.os.Looper;
+
 import androidx.annotation.CheckResult;
 
 import com.squareup.moshi.Moshi;
@@ -16,6 +17,7 @@ import net.dean.jraw.models.Votable;
 import net.dean.jraw.models.VoteDirection;
 
 import java.util.List;
+
 import javax.inject.Inject;
 import javax.inject.Named;
 

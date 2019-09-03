@@ -1,10 +1,11 @@
 package me.saket.dank.data;
 
+import android.view.View;
+
 import androidx.annotation.ColorRes;
 import androidx.annotation.DrawableRes;
 import androidx.annotation.Nullable;
 import androidx.annotation.StringRes;
-import android.view.View;
 
 import com.google.auto.value.AutoValue;
 

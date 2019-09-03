@@ -1,8 +1,7 @@
 package me.saket.dank.utils.markdown;
 
-import static junit.framework.Assert.assertEquals;
-
 import android.app.Application;
+
 import androidx.test.InstrumentationRegistry;
 import androidx.test.runner.AndroidJUnit4;
 
@@ -12,6 +11,8 @@ import org.junit.runner.RunWith;
 
 import me.saket.dank.markdownhints.MarkdownHintOptions;
 import me.saket.dank.utils.markdown.markwon.MarkwonBasedMarkdownSpansRenderer;
+
+import static junit.framework.Assert.assertEquals;
 
 @RunWith(AndroidJUnit4.class)
 public class MarkdownTest {

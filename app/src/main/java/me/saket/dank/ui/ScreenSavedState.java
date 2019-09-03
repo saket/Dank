@@ -2,6 +2,7 @@ package me.saket.dank.ui;
 
 import android.os.Bundle;
 import android.os.Parcelable;
+
 import androidx.annotation.Nullable;
 
 import com.google.auto.value.AutoValue;

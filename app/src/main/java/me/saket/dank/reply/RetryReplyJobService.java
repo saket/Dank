@@ -9,6 +9,7 @@ import android.content.Context;
 import net.dean.jraw.ApiException;
 
 import java.util.concurrent.TimeUnit;
+
 import javax.inject.Inject;
 
 import io.reactivex.Completable;

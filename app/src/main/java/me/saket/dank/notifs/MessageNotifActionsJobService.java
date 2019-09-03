@@ -1,18 +1,18 @@
 package me.saket.dank.notifs;
 
-import static me.saket.dank.utils.RxUtils.applySchedulersCompletable;
-
 import android.app.job.JobInfo;
 import android.app.job.JobParameters;
 import android.app.job.JobScheduler;
 import android.content.ComponentName;
 import android.content.Context;
 import android.os.PersistableBundle;
+
 import androidx.annotation.CheckResult;
 
 import net.dean.jraw.models.Message;
 
 import java.util.Arrays;
+
 import javax.inject.Inject;
 
 import dagger.Lazy;
@@ -27,6 +27,8 @@ import me.saket.dank.di.Dank;
 import me.saket.dank.reddit.Reddit;
 import me.saket.dank.utils.JrawUtils2;
 import timber.log.Timber;
+
+import static me.saket.dank.utils.RxUtils.applySchedulersCompletable;
 
 /**
  * We're using JobScheduler for executing notification actions so that it also handles auto-retrying when

@@ -1,28 +1,25 @@
 package me.saket.dank.ui.user.messages;
 
-import static io.reactivex.android.schedulers.AndroidSchedulers.mainThread;
-import static me.saket.dank.utils.RxUtils.applySchedulersSingle;
-import static me.saket.dank.utils.RxUtils.doNothing;
-import static me.saket.dank.utils.RxUtils.doOnSingleStartAndTerminate;
-
 import android.content.Context;
 import android.os.Bundle;
-import androidx.annotation.Nullable;
-import com.google.android.material.floatingactionbutton.FloatingActionButton;
-import androidx.recyclerview.widget.DefaultItemAnimator;
-import androidx.recyclerview.widget.LinearLayoutManager;
-import androidx.recyclerview.widget.RecyclerView;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.ViewGroup.MarginLayoutParams;
 
+import androidx.annotation.Nullable;
+import androidx.recyclerview.widget.DefaultItemAnimator;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
+
+import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.jakewharton.rxbinding2.support.v7.widget.RxRecyclerView;
 import com.jakewharton.rxbinding2.view.RxView;
 
 import net.dean.jraw.models.Message;
 
 import java.util.List;
+
 import javax.inject.Inject;
 
 import butterknife.BindView;
@@ -49,6 +46,11 @@ import me.saket.dank.utils.markdown.Markdown;
 import me.saket.dank.widgets.EmptyStateView;
 import me.saket.dank.widgets.ErrorStateView;
 import timber.log.Timber;
+
+import static io.reactivex.android.schedulers.AndroidSchedulers.mainThread;
+import static me.saket.dank.utils.RxUtils.applySchedulersSingle;
+import static me.saket.dank.utils.RxUtils.doNothing;
+import static me.saket.dank.utils.RxUtils.doOnSingleStartAndTerminate;
 
 /**
  * Displays messages under one folder. e.g., "Unread", "Messages", "Comment replies", etc.

@@ -4,6 +4,7 @@ import android.content.Context;
 import android.content.res.TypedArray;
 import android.util.AttributeSet;
 import android.widget.ViewFlipper;
+
 import me.saket.dank.R;
 
 public class ViewFlipperWithDebugPreview extends ViewFlipper {

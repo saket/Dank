@@ -2,11 +2,12 @@ package me.saket.dank.widgets;
 
 import android.content.Context;
 import android.content.res.TypedArray;
-import androidx.annotation.StringRes;
 import android.util.AttributeSet;
 import android.view.LayoutInflater;
 import android.widget.FrameLayout;
 import android.widget.TextView;
+
+import androidx.annotation.StringRes;
 
 import butterknife.BindView;
 import butterknife.ButterKnife;

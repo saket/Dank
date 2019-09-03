@@ -18,14 +18,15 @@ package me.saket.dank.utils.itemanimators;
 
 import android.animation.TimeInterpolator;
 import android.animation.ValueAnimator;
+import android.view.View;
+import android.view.animation.Interpolator;
+
 import androidx.core.view.ViewCompat;
 import androidx.core.view.ViewPropertyAnimatorCompat;
 import androidx.core.view.ViewPropertyAnimatorListener;
 import androidx.recyclerview.widget.RecyclerView;
 import androidx.recyclerview.widget.RecyclerView.ViewHolder;
 import androidx.recyclerview.widget.SimpleItemAnimator;
-import android.view.View;
-import android.view.animation.Interpolator;
 
 import java.util.ArrayList;
 import java.util.List;

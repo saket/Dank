@@ -2,9 +2,10 @@ package me.saket.dank.widgets;
 
 import android.content.Context;
 import android.graphics.drawable.Drawable;
+import android.util.AttributeSet;
+
 import androidx.annotation.ColorInt;
 import androidx.appcompat.widget.AppCompatTextView;
-import android.util.AttributeSet;
 
 /**
  * A TextView which tints its compound drawable with the same color as its text.

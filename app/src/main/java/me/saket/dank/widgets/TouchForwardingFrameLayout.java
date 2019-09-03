@@ -2,12 +2,13 @@ package me.saket.dank.widgets;
 
 import android.annotation.SuppressLint;
 import android.content.Context;
-import androidx.annotation.Nullable;
 import android.util.AttributeSet;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.FrameLayout;
+
+import androidx.annotation.Nullable;
 
 /**
  * A ViewGroup that forwards all its touch events to its 0th child View. Used as a replacement for touch-delegate.

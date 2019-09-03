@@ -1,12 +1,5 @@
 package me.saket.dank.ui.media.gfycat;
 
-import static org.mockito.Matchers.anyBoolean;
-import static org.mockito.Matchers.anyString;
-import static org.mockito.Mockito.doAnswer;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
-
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -22,6 +15,13 @@ import me.saket.dank.di.DankApi;
 import me.saket.dank.urlparser.GfycatLink;
 import me.saket.dank.urlparser.UrlParserConfig;
 import retrofit2.HttpException;
+
+import static org.mockito.Matchers.anyBoolean;
+import static org.mockito.Matchers.anyString;
+import static org.mockito.Mockito.doAnswer;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 public class GfycatRepositoryTest {
 

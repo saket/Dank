@@ -1,6 +1,7 @@
 package me.saket.dank.ui.preferences;
 
 import android.content.Intent;
+
 import androidx.annotation.LayoutRes;
 import androidx.recyclerview.widget.RecyclerView;
 

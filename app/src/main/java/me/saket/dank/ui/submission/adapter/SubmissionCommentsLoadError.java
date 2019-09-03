@@ -1,9 +1,10 @@
 package me.saket.dank.ui.submission.adapter;
 
-import androidx.recyclerview.widget.RecyclerView;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+
+import androidx.recyclerview.widget.RecyclerView;
 
 import com.google.auto.value.AutoValue;
 import com.jakewharton.rxrelay2.PublishRelay;

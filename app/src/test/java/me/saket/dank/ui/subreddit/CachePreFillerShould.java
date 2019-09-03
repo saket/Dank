@@ -1,18 +1,10 @@
 package me.saket.dank.ui.subreddit;
 
-import static org.mockito.Matchers.any;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
-
 import android.net.Uri;
 import android.util.Size;
 
 import com.f2prateek.rx.preferences2.Preference;
 
-import io.reactivex.observers.TestObserver;
 import net.dean.jraw.models.Submission;
 
 import org.junit.Before;
@@ -32,21 +24,29 @@ import java.util.List;
 
 import io.reactivex.Observable;
 import io.reactivex.Single;
+import io.reactivex.observers.TestObserver;
 import io.reactivex.schedulers.Schedulers;
 import me.saket.dank.cache.CachePreFiller;
 import me.saket.dank.data.CachePreFillThing;
 import me.saket.dank.data.LinkMetadataRepository;
+import me.saket.dank.ui.media.MediaHostRepository;
 import me.saket.dank.ui.preferences.NetworkStrategy;
 import me.saket.dank.ui.submission.SubmissionImageLoader;
+import me.saket.dank.ui.submission.SubmissionRepository;
 import me.saket.dank.urlparser.ExternalLink;
 import me.saket.dank.urlparser.LinkMetadata;
-import me.saket.dank.ui.media.MediaHostRepository;
-import me.saket.dank.ui.submission.SubmissionRepository;
 import me.saket.dank.urlparser.UrlParser;
 import me.saket.dank.utils.NetworkStateListener;
 import me.saket.dank.utils.Optional;
 import me.saket.dank.utils.RxUtils;
 import me.saket.dank.utils.UrlParserTest;
+
+import static org.mockito.Matchers.any;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 @RunWith(PowerMockRunner.class)
 @PrepareForTest({ Submission.class, Uri.class, RxUtils.class })

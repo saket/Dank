@@ -1,6 +1,7 @@
 package me.saket.dank.ui.preferences.events;
 
 import com.google.auto.value.AutoValue;
+
 import me.saket.dank.ui.preferences.adapter.UserPreferenceButton.ViewHolder;
 
 @AutoValue

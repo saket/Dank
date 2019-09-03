@@ -1,9 +1,5 @@
 package me.saket.dank.notifs;
 
-import static org.junit.Assert.assertEquals;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
-
 import net.dean.jraw.models.Message;
 
 import org.junit.Before;
@@ -17,6 +13,10 @@ import java.util.Set;
 import io.reactivex.Completable;
 import io.reactivex.Single;
 import me.saket.dank.notifs.MessagesNotificationManager.SeenUnreadMessagesIdStore;
+
+import static org.junit.Assert.assertEquals;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 public class MessagesNotificationManagerTest {
 

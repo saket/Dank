@@ -2,10 +2,11 @@ package me.saket.dank.widgets;
 
 import android.content.Context;
 import android.graphics.drawable.Drawable;
+import android.util.AttributeSet;
+
 import androidx.annotation.ColorInt;
 import androidx.annotation.Nullable;
 import androidx.appcompat.widget.AppCompatButton;
-import android.util.AttributeSet;
 
 /**
  * A Button which tints its compound drawable with the same color as its text.

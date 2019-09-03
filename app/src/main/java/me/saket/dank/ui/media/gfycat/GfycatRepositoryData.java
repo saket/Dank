@@ -1,7 +1,5 @@
 package me.saket.dank.ui.media.gfycat;
 
-import static java.lang.System.currentTimeMillis;
-
 import androidx.annotation.CheckResult;
 
 import com.f2prateek.rx.preferences2.Preference;
@@ -12,6 +10,8 @@ import javax.inject.Named;
 
 import io.reactivex.Completable;
 import io.reactivex.Single;
+
+import static java.lang.System.currentTimeMillis;
 
 public class GfycatRepositoryData {
 

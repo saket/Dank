@@ -1,11 +1,12 @@
 package me.saket.dank.widgets;
 
 import android.content.Context;
-import androidx.annotation.IntRange;
 import android.widget.ImageButton;
 import android.widget.LinearLayout;
 import android.widget.SeekBar;
 import android.widget.TextView;
+
+import androidx.annotation.IntRange;
 
 import com.devbrackets.android.exomedia.ui.widget.VideoControls;
 

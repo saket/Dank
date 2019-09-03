@@ -1,8 +1,9 @@
 package me.saket.dank.urlparser;
 
 import android.net.Uri;
-import androidx.annotation.Nullable;
 import android.text.TextUtils;
+
+import androidx.annotation.Nullable;
 
 import com.nytimes.android.external.cache3.Cache;
 
@@ -10,6 +11,7 @@ import net.dean.jraw.models.Submission;
 
 import java.util.concurrent.ExecutionException;
 import java.util.regex.Matcher;
+
 import javax.inject.Inject;
 import javax.inject.Named;
 

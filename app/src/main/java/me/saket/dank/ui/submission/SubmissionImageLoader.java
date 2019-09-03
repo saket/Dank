@@ -4,9 +4,10 @@ import android.app.Application;
 import android.content.Context;
 import android.content.res.Resources;
 import android.graphics.drawable.Drawable;
+import android.util.Size;
+
 import androidx.annotation.Nullable;
 import androidx.core.content.ContextCompat;
-import android.util.Size;
 
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.load.resource.bitmap.DownsampleStrategy;

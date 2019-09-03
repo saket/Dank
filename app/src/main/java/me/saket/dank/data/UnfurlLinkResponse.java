@@ -1,13 +1,14 @@
 package me.saket.dank.data;
 
 import androidx.annotation.Nullable;
+
 import com.google.auto.value.AutoValue;
 import com.squareup.moshi.Json;
 import com.squareup.moshi.JsonAdapter;
 import com.squareup.moshi.Moshi;
 
-import me.saket.dank.urlparser.LinkMetadata;
 import me.saket.dank.di.DankApi;
+import me.saket.dank.urlparser.LinkMetadata;
 
 /**
  * Api response for {@link DankApi#unfurlUrl(String, boolean)}.

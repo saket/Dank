@@ -1,7 +1,5 @@
 package me.saket.dank.ui.submission;
 
-import static io.reactivex.schedulers.Schedulers.io;
-
 import androidx.annotation.CheckResult;
 
 import com.google.auto.value.AutoValue;
@@ -26,6 +24,7 @@ import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
+
 import javax.inject.Inject;
 import javax.inject.Singleton;
 
@@ -53,6 +52,8 @@ import me.saket.dank.vote.VotingManager;
 import me.saket.dank.walkthrough.SyntheticData;
 import me.saket.dank.walkthrough.SyntheticSubmissionAndComments;
 import timber.log.Timber;
+
+import static io.reactivex.schedulers.Schedulers.io;
 
 @Singleton
 public class SubmissionRepository {

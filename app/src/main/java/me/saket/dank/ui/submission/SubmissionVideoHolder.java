@@ -1,10 +1,9 @@
 package me.saket.dank.ui.submission;
 
-import static io.reactivex.android.schedulers.AndroidSchedulers.mainThread;
-
 import android.graphics.Bitmap;
-import androidx.annotation.CheckResult;
 import android.util.Size;
+
+import androidx.annotation.CheckResult;
 
 import com.danikula.videocache.HttpProxyCacheServer;
 import com.devbrackets.android.exomedia.ui.widget.VideoControls;
@@ -16,6 +15,7 @@ import com.jakewharton.rxrelay2.PublishRelay;
 import com.jakewharton.rxrelay2.Relay;
 
 import java.util.concurrent.TimeUnit;
+
 import javax.inject.Inject;
 import javax.inject.Named;
 
@@ -37,6 +37,8 @@ import me.saket.dank.utils.VideoFormat;
 import me.saket.dank.utils.Views;
 import me.saket.dank.utils.lifecycle.ViewLifecycleEvent;
 import me.saket.dank.widgets.ScrollingRecyclerViewSheet;
+
+import static io.reactivex.android.schedulers.AndroidSchedulers.mainThread;
 
 /**
  * Manages loading of video in {@link SubmissionPageLayout}.

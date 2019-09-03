@@ -1,13 +1,13 @@
 package me.saket.dank.utils;
 
-import static junit.framework.Assert.assertEquals;
-import static junit.framework.Assert.assertTrue;
-import static org.mockito.Mockito.mock;
-
 import org.junit.Test;
 
 import me.saket.dank.cache.DiskLruCachePathResolver;
 import me.saket.dank.urlparser.Link;
+
+import static junit.framework.Assert.assertEquals;
+import static junit.framework.Assert.assertTrue;
+import static org.mockito.Mockito.mock;
 
 public class DiskLruCachePathResolverTest {
 

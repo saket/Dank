@@ -1,9 +1,5 @@
 package me.saket.dank.ui.submission.adapter;
 
-import static io.reactivex.schedulers.Schedulers.io;
-import static io.reactivex.schedulers.Schedulers.single;
-import static java.util.Arrays.asList;
-
 import android.app.Activity;
 import android.content.Context;
 import android.graphics.Bitmap;
@@ -12,6 +8,7 @@ import android.graphics.Color;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
 import android.net.Uri;
+
 import androidx.annotation.ColorRes;
 import androidx.core.content.ContextCompat;
 import androidx.palette.graphics.Palette;
@@ -26,6 +23,7 @@ import com.google.auto.value.AutoValue;
 
 import java.util.HashMap;
 import java.util.Map;
+
 import javax.inject.Inject;
 
 import dagger.Lazy;
@@ -51,6 +49,10 @@ import me.saket.dank.utils.Pair;
 import me.saket.dank.utils.Urls;
 import me.saket.dank.utils.glide.GlideCircularTransformation;
 import timber.log.Timber;
+
+import static io.reactivex.schedulers.Schedulers.io;
+import static io.reactivex.schedulers.Schedulers.single;
+import static java.util.Arrays.asList;
 
 /**
  * Loads thumbnail, favicon and generates tint for a {@link Link}.

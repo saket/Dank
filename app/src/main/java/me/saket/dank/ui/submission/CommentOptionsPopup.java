@@ -7,6 +7,7 @@ import net.dean.jraw.models.Comment;
 
 import java.util.ArrayList;
 import java.util.List;
+
 import javax.inject.Inject;
 
 import dagger.Lazy;

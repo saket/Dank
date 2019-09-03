@@ -1,10 +1,5 @@
 package me.saket.dank.ui.submission.adapter;
 
-import static io.reactivex.android.schedulers.AndroidSchedulers.mainThread;
-import static io.reactivex.schedulers.Schedulers.io;
-
-import androidx.annotation.CheckResult;
-import androidx.recyclerview.widget.RecyclerView;
 import android.text.Editable;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -13,6 +8,9 @@ import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.TextView;
 
+import androidx.annotation.CheckResult;
+import androidx.recyclerview.widget.RecyclerView;
+
 import com.google.auto.value.AutoValue;
 import com.jakewharton.rxrelay2.PublishRelay;
 import com.jakewharton.rxrelay2.Relay;
@@ -20,6 +18,7 @@ import com.jakewharton.rxrelay2.Relay;
 import net.dean.jraw.models.Identifiable;
 
 import java.util.List;
+
 import javax.inject.Inject;
 
 import io.reactivex.disposables.CompositeDisposable;
@@ -41,6 +40,9 @@ import me.saket.dank.ui.submission.events.ReplySendClickEvent;
 import me.saket.dank.utils.Keyboards;
 import me.saket.dank.utils.SimpleTextWatcher;
 import me.saket.dank.widgets.IndentedLayout;
+
+import static io.reactivex.android.schedulers.AndroidSchedulers.mainThread;
+import static io.reactivex.schedulers.Schedulers.io;
 
 /**
  * Inline reply for comments.

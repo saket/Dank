@@ -9,6 +9,7 @@ import net.dean.jraw.models.Identifiable;
 import java.lang.reflect.GenericArrayType;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
+
 import javax.inject.Inject;
 import javax.inject.Singleton;
 

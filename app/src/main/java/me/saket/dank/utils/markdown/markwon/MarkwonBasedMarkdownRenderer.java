@@ -1,7 +1,8 @@
 package me.saket.dank.utils.markdown.markwon;
 
-import androidx.annotation.VisibleForTesting;
 import android.text.SpannableStringBuilder;
+
+import androidx.annotation.VisibleForTesting;
 
 import com.nytimes.android.external.cache3.Cache;
 
@@ -21,6 +22,7 @@ import java.util.Stack;
 import java.util.concurrent.Callable;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+
 import javax.inject.Inject;
 import javax.inject.Named;
 

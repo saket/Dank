@@ -2,9 +2,10 @@ package me.saket.dank.ui.subreddit;
 
 import android.content.Context;
 import android.net.Uri;
-import androidx.core.content.ContextCompat;
 import android.text.style.ForegroundColorSpan;
 import android.widget.Toast;
+
+import androidx.core.content.ContextCompat;
 
 import com.google.auto.value.AutoValue;
 
@@ -13,13 +14,14 @@ import net.dean.jraw.models.Submission;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+
 import javax.inject.Inject;
 
 import dagger.Lazy;
 import me.saket.dank.R;
-import me.saket.dank.urlparser.RedditSubredditLink;
 import me.saket.dank.di.Dank;
 import me.saket.dank.ui.UrlRouter;
+import me.saket.dank.urlparser.RedditSubredditLink;
 import me.saket.dank.utils.Clipboards;
 import me.saket.dank.utils.Intents;
 import me.saket.dank.utils.NestedOptionsPopupMenu;

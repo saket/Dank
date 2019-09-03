@@ -13,6 +13,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.regex.Matcher;
+
 import javax.inject.Inject;
 
 import me.saket.dank.urlparser.UrlParserConfig;

@@ -1,23 +1,18 @@
 package me.saket.dank.ui.user.messages;
 
-import static io.reactivex.schedulers.Schedulers.io;
-import static me.saket.dank.utils.RxUtils.doNothing;
-import static me.saket.dank.utils.RxUtils.logError;
-import static me.saket.dank.utils.Units.dpToPx;
-import static me.saket.dank.utils.Views.touchLiesOn;
-
 import android.content.Context;
 import android.content.Intent;
 import android.graphics.Rect;
 import android.os.Bundle;
 import android.os.Parcelable;
-import androidx.annotation.IdRes;
-import androidx.annotation.Nullable;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
 import android.widget.Spinner;
 import android.widget.ViewFlipper;
+
+import androidx.annotation.IdRes;
+import androidx.annotation.Nullable;
 
 import com.jakewharton.rxbinding2.widget.RxAdapterView;
 import com.jakewharton.rxrelay2.BehaviorRelay;
@@ -31,6 +26,7 @@ import java.io.IOException;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+
 import javax.inject.Inject;
 
 import butterknife.BindView;
@@ -53,6 +49,12 @@ import me.saket.dank.utils.JrawUtils2;
 import me.saket.dank.utils.Views;
 import me.saket.dank.widgets.InboxUI.IndependentExpandablePageLayout;
 import timber.log.Timber;
+
+import static io.reactivex.schedulers.Schedulers.io;
+import static me.saket.dank.utils.RxUtils.doNothing;
+import static me.saket.dank.utils.RxUtils.logError;
+import static me.saket.dank.utils.Units.dpToPx;
+import static me.saket.dank.utils.Views.touchLiesOn;
 
 public class InboxActivity extends DankPullCollapsibleActivity implements InboxFolderFragment.Callbacks {
 

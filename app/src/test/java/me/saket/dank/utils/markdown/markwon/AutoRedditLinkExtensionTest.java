@@ -1,8 +1,5 @@
 package me.saket.dank.utils.markdown.markwon;
 
-import static junit.framework.Assert.assertEquals;
-import static junit.framework.Assert.assertTrue;
-
 import org.junit.Test;
 
 import java.util.List;
@@ -10,6 +7,9 @@ import java.util.List;
 import me.saket.dank.urlparser.UrlParserConfig;
 import me.saket.dank.utils.markdown.markwon.AutoRedditLinkExtension.AutoRedditLinkPostProcessor;
 import me.saket.dank.utils.markdown.markwon.AutoRedditLinkExtension.RedditLinkSpan;
+
+import static junit.framework.Assert.assertEquals;
+import static junit.framework.Assert.assertTrue;
 
 public class AutoRedditLinkExtensionTest {
 

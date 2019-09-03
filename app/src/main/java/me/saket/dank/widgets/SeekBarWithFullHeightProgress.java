@@ -1,9 +1,10 @@
 package me.saket.dank.widgets;
 
 import android.content.Context;
-import androidx.appcompat.widget.AppCompatSeekBar;
 import android.util.AttributeSet;
 import android.widget.SeekBar;
+
+import androidx.appcompat.widget.AppCompatSeekBar;
 
 /**
  * {@link SeekBar} strangely has a maximum height for progress drawable.

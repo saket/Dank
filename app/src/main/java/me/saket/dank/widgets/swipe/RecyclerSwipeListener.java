@@ -1,15 +1,16 @@
 package me.saket.dank.widgets.swipe;
 
-import static java.lang.Math.abs;
-import static me.saket.dank.utils.Math2.clamp;
-
-import androidx.recyclerview.widget.RecyclerView;
-import androidx.recyclerview.widget.ItemTouchHelper;
 import android.view.GestureDetector;
 import android.view.MotionEvent;
 import android.view.View;
 
+import androidx.recyclerview.widget.ItemTouchHelper;
+import androidx.recyclerview.widget.RecyclerView;
+
 import me.saket.dank.utils.SimpleRecyclerViewOnChildAttachStateChangeListener;
+
+import static java.lang.Math.abs;
+import static me.saket.dank.utils.Math2.clamp;
 
 /**
  * Not using {@link ItemTouchHelper}, because it only supports "dismissing" items with swipe.

@@ -19,10 +19,11 @@ package me.saket.dank.utils.markdown;
 
 import android.graphics.Canvas;
 import android.graphics.Paint;
-import androidx.annotation.Px;
 import android.text.Layout;
 import android.text.Spanned;
 import android.text.style.LeadingMarginSpan;
+
+import androidx.annotation.Px;
 
 /**
  * Class to use Numbered Lists in TextViews.

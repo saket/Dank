@@ -1,6 +1,5 @@
 package me.saket.dank.vote
 
-import com.squareup.moshi.JsonClass
 import net.dean.jraw.models.Identifiable
 import net.dean.jraw.models.PublicContribution
 import net.dean.jraw.models.Votable

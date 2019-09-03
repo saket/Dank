@@ -3,6 +3,7 @@ package me.saket.dank.ui.preferences;
 import android.content.Context;
 import android.content.Intent;
 import android.graphics.Rect;
+
 import androidx.annotation.StringRes;
 
 import me.saket.dank.R;

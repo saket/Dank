@@ -1,8 +1,5 @@
 package me.saket.dank.ui.subscriptions;
 
-import static me.saket.dank.utils.RxUtils.applySchedulersCompletable;
-import static me.saket.dank.utils.RxUtils.doOnCompletableStartAndTerminate;
-
 import android.app.job.JobInfo;
 import android.app.job.JobParameters;
 import android.app.job.JobScheduler;
@@ -19,6 +16,9 @@ import me.saket.dank.DankJobService;
 import me.saket.dank.data.ResolvedError;
 import me.saket.dank.di.Dank;
 import timber.log.Timber;
+
+import static me.saket.dank.utils.RxUtils.applySchedulersCompletable;
+import static me.saket.dank.utils.RxUtils.doOnCompletableStartAndTerminate;
 
 /**
  * Syncs user's subreddit subscriptions in background. This brings in user's new subscriptions + executes

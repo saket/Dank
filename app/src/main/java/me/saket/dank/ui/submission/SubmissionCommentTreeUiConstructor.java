@@ -1,15 +1,12 @@
 package me.saket.dank.ui.submission;
 
-import static io.reactivex.schedulers.Schedulers.io;
-import static me.saket.dank.utils.Arrays2.immutable;
-import static me.saket.dank.utils.Preconditions.checkNotNull;
-
 import android.content.Context;
+import android.text.style.ForegroundColorSpan;
+
 import androidx.annotation.CheckResult;
 import androidx.annotation.ColorInt;
 import androidx.annotation.ColorRes;
 import androidx.core.content.ContextCompat;
-import android.text.style.ForegroundColorSpan;
 
 import net.dean.jraw.models.Comment;
 import net.dean.jraw.models.Identifiable;
@@ -23,6 +20,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
+
 import javax.inject.Inject;
 
 import dagger.Lazy;
@@ -54,6 +52,10 @@ import me.saket.dank.utils.Truss;
 import me.saket.dank.utils.markdown.Markdown;
 import me.saket.dank.vote.VotingManager;
 import timber.log.Timber;
+
+import static io.reactivex.schedulers.Schedulers.io;
+import static me.saket.dank.utils.Arrays2.immutable;
+import static me.saket.dank.utils.Preconditions.checkNotNull;
 
 /**
  * Constructs comments to show in a submission. Ignores collapsed comments + adds reply fields + adds "load more"

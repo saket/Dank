@@ -2,12 +2,13 @@ package me.saket.dank.widgets;
 
 import android.content.Context;
 import android.graphics.Outline;
-import androidx.recyclerview.widget.RecyclerView;
 import android.util.AttributeSet;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewOutlineProvider;
 import android.view.animation.DecelerateInterpolator;
+
+import androidx.recyclerview.widget.RecyclerView;
 
 import butterknife.ButterKnife;
 import me.saket.dank.R;

@@ -4,6 +4,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.graphics.Rect;
 import android.os.Bundle;
+
 import androidx.annotation.Nullable;
 
 import me.saket.dank.R;

@@ -2,8 +2,6 @@ package me.saket.dank.ui.submission.events;
 
 import com.google.auto.value.AutoValue;
 
-import net.dean.jraw.models.Submission;
-
 import me.saket.dank.ui.UiEvent;
 import me.saket.dank.ui.submission.SubmissionAndComments;
 import me.saket.dank.utils.Optional;

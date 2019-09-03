@@ -1,12 +1,11 @@
 package me.saket.dank.ui.submission;
 
-import static io.reactivex.android.schedulers.AndroidSchedulers.mainThread;
-
 import android.content.Context;
 import android.content.Intent;
 import android.graphics.Rect;
 import android.os.Bundle;
 import android.os.Parcelable;
+
 import androidx.annotation.Nullable;
 
 import net.dean.jraw.models.Message;
@@ -28,6 +27,8 @@ import me.saket.dank.urlparser.RedditSubmissionLink;
 import me.saket.dank.utils.DankSubmissionRequest;
 import me.saket.dank.utils.Optional;
 import me.saket.dank.widgets.InboxUI.IndependentExpandablePageLayout;
+
+import static io.reactivex.android.schedulers.AndroidSchedulers.mainThread;
 
 /**
  * An Activity that can only show a submission, unlike {@link SubredditActivity} which can shows

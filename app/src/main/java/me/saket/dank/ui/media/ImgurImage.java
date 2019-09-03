@@ -1,6 +1,7 @@
 package me.saket.dank.ui.media;
 
 import android.os.Parcelable;
+
 import androidx.annotation.Nullable;
 
 import com.google.auto.value.AutoValue;

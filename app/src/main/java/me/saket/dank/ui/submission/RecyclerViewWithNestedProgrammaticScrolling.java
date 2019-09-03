@@ -1,13 +1,14 @@
 package me.saket.dank.ui.submission;
 
 import android.content.Context;
+import android.util.AttributeSet;
+import android.view.View;
+import android.view.animation.Interpolator;
+
 import androidx.annotation.Nullable;
 import androidx.core.view.NestedScrollingChild2;
 import androidx.core.view.ViewCompat;
 import androidx.recyclerview.widget.RecyclerView;
-import android.util.AttributeSet;
-import android.view.View;
-import android.view.animation.Interpolator;
 
 /**
  * When a programmatic scroll happens in RecyclerView, its {@link RecyclerView.ViewFlinger} does not

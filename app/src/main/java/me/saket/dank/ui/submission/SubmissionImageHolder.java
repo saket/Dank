@@ -1,18 +1,15 @@
 package me.saket.dank.ui.submission;
 
-import static io.reactivex.android.schedulers.AndroidSchedulers.mainThread;
-import static io.reactivex.schedulers.Schedulers.io;
-import static me.saket.dank.utils.Views.executeOnMeasure;
-
 import android.graphics.Bitmap;
 import android.graphics.drawable.Animatable;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
-import androidx.annotation.CheckResult;
-import androidx.annotation.Nullable;
 import android.util.Size;
 import android.view.Gravity;
 import android.view.View;
+
+import androidx.annotation.CheckResult;
+import androidx.annotation.Nullable;
 
 import com.bumptech.glide.Priority;
 import com.bumptech.glide.load.resource.gif.GifDrawable;
@@ -41,6 +38,10 @@ import me.saket.dank.utils.Views;
 import me.saket.dank.widgets.InboxUI.SimpleExpandablePageStateChangeCallbacks;
 import me.saket.dank.widgets.ScrollingRecyclerViewSheet;
 import me.saket.dank.widgets.ZoomableImageView;
+
+import static io.reactivex.android.schedulers.AndroidSchedulers.mainThread;
+import static io.reactivex.schedulers.Schedulers.io;
+import static me.saket.dank.utils.Views.executeOnMeasure;
 
 /**
  * Manages showing of content image in {@link SubmissionPageLayout}. Only supports showing a single image right now.

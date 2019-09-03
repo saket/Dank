@@ -1,31 +1,22 @@
 package me.saket.dank.ui.subreddit;
 
-import static io.reactivex.android.schedulers.AndroidSchedulers.mainThread;
-import static io.reactivex.schedulers.Schedulers.io;
-import static io.reactivex.schedulers.Schedulers.single;
-import static me.saket.dank.utils.RxUtils.doNothingCompletable;
-import static me.saket.dank.utils.RxUtils.logError;
-import static me.saket.dank.utils.Views.executeOnMeasure;
-import static me.saket.dank.utils.Views.setMarginTop;
-import static me.saket.dank.utils.Views.setPaddingTop;
-import static me.saket.dank.utils.Views.touchLiesOn;
-
 import android.animation.LayoutTransition;
 import android.content.Context;
 import android.content.Intent;
 import android.graphics.Rect;
 import android.os.Bundle;
 import android.os.Parcelable;
-import androidx.annotation.Nullable;
-import androidx.transition.TransitionManager;
-import androidx.transition.TransitionSet;
-import androidx.recyclerview.widget.DiffUtil;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.TextView;
+
+import androidx.annotation.Nullable;
+import androidx.recyclerview.widget.DiffUtil;
+import androidx.transition.TransitionManager;
+import androidx.transition.TransitionSet;
 
 import com.f2prateek.rx.preferences2.Preference;
 import com.github.zagum.expandicon.ExpandIconView;
@@ -39,6 +30,7 @@ import net.dean.jraw.models.Submission;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
+
 import javax.inject.Inject;
 import javax.inject.Named;
 
@@ -104,6 +96,16 @@ import me.saket.dank.widgets.InboxUI.RxExpandablePage;
 import me.saket.dank.widgets.ToolbarExpandableSheet;
 import me.saket.dank.widgets.swipe.RecyclerSwipeListener;
 import timber.log.Timber;
+
+import static io.reactivex.android.schedulers.AndroidSchedulers.mainThread;
+import static io.reactivex.schedulers.Schedulers.io;
+import static io.reactivex.schedulers.Schedulers.single;
+import static me.saket.dank.utils.RxUtils.doNothingCompletable;
+import static me.saket.dank.utils.RxUtils.logError;
+import static me.saket.dank.utils.Views.executeOnMeasure;
+import static me.saket.dank.utils.Views.setMarginTop;
+import static me.saket.dank.utils.Views.setPaddingTop;
+import static me.saket.dank.utils.Views.touchLiesOn;
 
 public class SubredditActivity extends DankPullCollapsibleActivity
     implements SubredditUi, SubmissionPageLayout.Callbacks, NewSubredditSubscriptionDialog.Callback, InsertGifDialog.OnGifInsertListener

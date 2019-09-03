@@ -1,6 +1,7 @@
 package me.saket.dank.ui.media;
 
 import android.os.Parcelable;
+
 import androidx.annotation.IntRange;
 import androidx.annotation.Nullable;
 

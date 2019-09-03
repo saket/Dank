@@ -2,10 +2,11 @@ package me.saket.dank.widgets;
 
 import android.annotation.SuppressLint;
 import android.content.Context;
-import androidx.viewpager.widget.ViewPager;
 import android.util.AttributeSet;
 import android.view.MotionEvent;
 import android.view.View;
+
+import androidx.viewpager.widget.ViewPager;
 
 /**
  * Intercepts scrolling if the current image can be panned further.

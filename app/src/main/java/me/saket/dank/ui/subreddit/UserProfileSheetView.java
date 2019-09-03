@@ -1,9 +1,5 @@
 package me.saket.dank.ui.subreddit;
 
-import static io.reactivex.android.schedulers.AndroidSchedulers.mainThread;
-import static io.reactivex.schedulers.Schedulers.io;
-import static me.saket.dank.utils.RxUtils.applySchedulers;
-
 import android.content.Context;
 import android.view.View;
 import android.view.ViewGroup;
@@ -16,6 +12,7 @@ import net.dean.jraw.pagination.Paginator;
 
 import java.util.NoSuchElementException;
 import java.util.concurrent.TimeUnit;
+
 import javax.inject.Inject;
 
 import butterknife.BindColor;
@@ -41,6 +38,10 @@ import me.saket.dank.utils.lifecycle.LifecycleOwnerViews;
 import me.saket.dank.widgets.InboxUI.IndependentExpandablePageLayout;
 import me.saket.dank.widgets.ToolbarExpandableSheet;
 import timber.log.Timber;
+
+import static io.reactivex.android.schedulers.AndroidSchedulers.mainThread;
+import static io.reactivex.schedulers.Schedulers.io;
+import static me.saket.dank.utils.RxUtils.applySchedulers;
 
 public class UserProfileSheetView extends FrameLayout {
 

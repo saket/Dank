@@ -1,15 +1,10 @@
 package me.saket.dank.ui.authentication;
 
-import static me.saket.dank.utils.RxUtils.applySchedulersCompletable;
-
 import android.annotation.SuppressLint;
 import android.content.Context;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.os.Bundle;
-import androidx.annotation.CheckResult;
-import androidx.annotation.Nullable;
-import androidx.appcompat.widget.Toolbar;
 import android.view.View;
 import android.view.ViewGroup;
 import android.webkit.CookieManager;
@@ -18,20 +13,25 @@ import android.webkit.WebView;
 import android.webkit.WebViewClient;
 import android.widget.Toast;
 
+import androidx.annotation.CheckResult;
+import androidx.annotation.Nullable;
+import androidx.appcompat.widget.Toolbar;
+
+import javax.inject.Inject;
+
 import butterknife.BindView;
 import butterknife.ButterKnife;
 import dagger.Lazy;
 import io.reactivex.Completable;
-import timber.log.Timber;
-
-import javax.inject.Inject;
-
 import me.saket.dank.R;
 import me.saket.dank.di.Dank;
 import me.saket.dank.reddit.Reddit;
 import me.saket.dank.reddit.jraw.UserLoginHelper;
 import me.saket.dank.ui.DankActivity;
 import me.saket.dank.ui.user.UserSessionRepository;
+import timber.log.Timber;
+
+import static me.saket.dank.utils.RxUtils.applySchedulersCompletable;
 
 public class LoginActivity extends DankActivity {
 

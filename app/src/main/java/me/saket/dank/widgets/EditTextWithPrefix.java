@@ -2,8 +2,9 @@ package me.saket.dank.widgets;
 
 import android.content.Context;
 import android.content.res.TypedArray;
-import androidx.appcompat.widget.AppCompatEditText;
 import android.util.AttributeSet;
+
+import androidx.appcompat.widget.AppCompatEditText;
 
 import me.saket.dank.R;
 

@@ -2,7 +2,6 @@ package me.saket.dank.widgets;
 
 import android.content.Context;
 import android.content.res.TypedArray;
-import androidx.annotation.CheckResult;
 import android.util.AttributeSet;
 import android.view.Gravity;
 import android.view.LayoutInflater;
@@ -11,6 +10,8 @@ import android.widget.Button;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 
+import androidx.annotation.CheckResult;
+
 import com.jakewharton.rxbinding2.view.RxView;
 
 import butterknife.BindView;
@@ -18,8 +19,8 @@ import butterknife.ButterKnife;
 import io.reactivex.Observable;
 import me.saket.dank.R;
 import me.saket.dank.data.EmptyState;
-import me.saket.dank.data.ResolvedError;
 import me.saket.dank.data.ErrorState;
+import me.saket.dank.data.ResolvedError;
 
 public class ErrorStateView extends LinearLayout {
 

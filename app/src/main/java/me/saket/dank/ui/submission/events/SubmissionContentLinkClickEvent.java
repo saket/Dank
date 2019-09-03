@@ -5,6 +5,7 @@ import android.view.Gravity;
 import android.view.View;
 
 import com.google.auto.value.AutoValue;
+
 import net.dean.jraw.models.Submission;
 
 import java.util.List;

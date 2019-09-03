@@ -1,7 +1,5 @@
 package me.saket.dank.ui.media;
 
-import static junit.framework.TestCase.assertEquals;
-
 import com.squareup.moshi.Moshi;
 
 import org.junit.Test;
@@ -16,6 +14,8 @@ import me.saket.dank.urlparser.Link;
 import me.saket.dank.urlparser.MediaLink;
 import me.saket.dank.utils.AutoValueMoshiAdapterFactory;
 import okio.Okio;
+
+import static junit.framework.TestCase.assertEquals;
 
 public class MediaLinkStoreJsonParserTest {
 

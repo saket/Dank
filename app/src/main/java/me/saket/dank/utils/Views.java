@@ -3,18 +3,18 @@ package me.saket.dank.utils;
 import android.content.res.Resources;
 import android.graphics.Point;
 import android.graphics.Rect;
-import androidx.annotation.CheckResult;
-import androidx.annotation.DrawableRes;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.ViewTreeObserver;
 import android.widget.EditText;
 import android.widget.TextView;
 
-import io.reactivex.Completable;
-import timber.log.Timber;
+import androidx.annotation.CheckResult;
+import androidx.annotation.DrawableRes;
 
+import io.reactivex.Completable;
 import me.saket.dank.widgets.InboxUI.ExpandablePageLayout;
+import timber.log.Timber;
 
 /**
  * Utility methods for Views.

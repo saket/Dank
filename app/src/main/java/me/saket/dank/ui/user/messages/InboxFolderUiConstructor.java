@@ -6,6 +6,7 @@ import net.dean.jraw.models.Message;
 
 import java.util.ArrayList;
 import java.util.List;
+
 import javax.inject.Inject;
 
 import dagger.Lazy;

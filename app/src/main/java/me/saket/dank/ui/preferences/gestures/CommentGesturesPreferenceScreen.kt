@@ -1,12 +1,11 @@
 package me.saket.dank.ui.preferences.gestures
 
 import android.content.Context
-import androidx.appcompat.widget.Toolbar
 import android.util.AttributeSet
 import android.view.MotionEvent
 import android.view.View
 import android.widget.RelativeLayout
-
+import androidx.appcompat.widget.Toolbar
 import me.saket.dank.R
 import me.saket.dank.ui.preferences.UserPreferenceNestedScreen
 

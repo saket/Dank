@@ -5,8 +5,9 @@ import android.graphics.ColorFilter;
 import android.graphics.Paint;
 import android.graphics.PixelFormat;
 import android.graphics.drawable.Drawable;
-import androidx.annotation.Nullable;
 import android.widget.TextView;
+
+import androidx.annotation.Nullable;
 
 public class TextDrawable extends Drawable {
 

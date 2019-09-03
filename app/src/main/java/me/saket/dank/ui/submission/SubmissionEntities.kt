@@ -1,13 +1,6 @@
 package me.saket.dank.ui.submission
 
-import androidx.room.Dao
-import androidx.room.Entity
-import androidx.room.Insert
-import androidx.room.OnConflictStrategy
-import androidx.room.PrimaryKey
-import androidx.room.Query
-import androidx.room.Transaction
-import androidx.room.TypeConverter
+import androidx.room.*
 import com.squareup.moshi.JsonAdapter
 import com.squareup.moshi.Types
 import io.reactivex.Flowable

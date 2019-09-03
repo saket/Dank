@@ -1,10 +1,11 @@
 package me.saket.dank.widgets;
 
 import android.app.Activity;
-import androidx.annotation.CheckResult;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.ViewTreeObserver;
+
+import androidx.annotation.CheckResult;
 
 import com.google.auto.value.AutoValue;
 

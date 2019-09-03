@@ -1,12 +1,14 @@
 package me.saket.dank.utils.markdown;
 
 import android.app.Application;
+
 import androidx.core.content.ContextCompat;
 
 import com.nytimes.android.external.cache3.Cache;
 import com.nytimes.android.external.cache3.CacheBuilder;
 
 import java.util.concurrent.TimeUnit;
+
 import javax.inject.Named;
 import javax.inject.Singleton;
 

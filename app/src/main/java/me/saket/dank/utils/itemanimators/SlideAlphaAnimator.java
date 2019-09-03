@@ -1,12 +1,13 @@
 package me.saket.dank.utils.itemanimators;
 
 import android.content.Context;
+import android.util.TypedValue;
+import android.view.View;
+
 import androidx.annotation.Px;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.ViewPropertyAnimatorCompat;
 import androidx.recyclerview.widget.RecyclerView;
-import android.util.TypedValue;
-import android.view.View;
 
 /**
  * Copied from https://github.com/mikepenz/ItemAnimators. Modified for our use.

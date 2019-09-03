@@ -1,8 +1,5 @@
 package me.saket.dank.notifs;
 
-import static me.saket.dank.ui.media.MediaDownloadJob.ProgressState.DOWNLOADED;
-import static me.saket.dank.ui.media.MediaDownloadJob.ProgressState.FAILED;
-
 import android.Manifest;
 import android.app.Notification;
 import android.app.PendingIntent;
@@ -19,12 +16,13 @@ import android.os.Build;
 import android.os.Handler;
 import android.os.IBinder;
 import android.provider.MediaStore;
+import android.support.v4.media.session.MediaSessionCompat;
+
 import androidx.annotation.Nullable;
 import androidx.core.app.NotificationCompat;
 import androidx.core.app.NotificationManagerCompat;
 import androidx.core.content.ContextCompat;
 import androidx.core.content.FileProvider;
-import android.support.v4.media.session.MediaSessionCompat;
 
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.request.target.SimpleTarget;
@@ -42,6 +40,7 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
+
 import javax.inject.Inject;
 
 import io.reactivex.Observable;
@@ -72,6 +71,9 @@ import okio.BufferedSink;
 import okio.BufferedSource;
 import okio.Okio;
 import timber.log.Timber;
+
+import static me.saket.dank.ui.media.MediaDownloadJob.ProgressState.DOWNLOADED;
+import static me.saket.dank.ui.media.MediaDownloadJob.ProgressState.FAILED;
 
 /**
  * Downloads images and videos to disk.

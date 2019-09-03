@@ -2,9 +2,9 @@ package me.saket.dank.utils;
 
 import android.net.Uri;
 
-import timber.log.Timber;
-
 import java.util.List;
+
+import timber.log.Timber;
 
 /**
  * Utility methods for URLs.

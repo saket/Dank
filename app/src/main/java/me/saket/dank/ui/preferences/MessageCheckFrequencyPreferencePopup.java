@@ -7,6 +7,7 @@ import com.f2prateek.rx.preferences2.Preference;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
+
 import javax.inject.Inject;
 import javax.inject.Named;
 

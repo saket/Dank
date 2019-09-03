@@ -1,8 +1,9 @@
 package me.saket.dank.utils.markdown.markwon;
 
-import androidx.annotation.ColorInt;
 import android.text.TextPaint;
 import android.text.style.CharacterStyle;
+
+import androidx.annotation.ColorInt;
 
 public class SpoilerLabelSpan extends CharacterStyle {
 

@@ -1,24 +1,15 @@
 package me.saket.dank.ui.subscriptions;
 
-import static me.saket.dank.utils.Arrays2.immutable;
-import static me.saket.dank.utils.Arrays2.toImmutable;
-import static me.saket.dank.utils.RxUtils.applySchedulersSingle;
-
 import android.app.Application;
 import android.content.ContentValues;
 import android.database.sqlite.SQLiteDatabase;
+
 import androidx.annotation.CheckResult;
 import androidx.annotation.VisibleForTesting;
 
 import com.squareup.sqlbrite2.BriteDatabase;
-import dagger.Lazy;
-import io.reactivex.Completable;
-import io.reactivex.Observable;
-import io.reactivex.Single;
-import io.reactivex.functions.Consumer;
-import io.reactivex.functions.Function;
+
 import net.dean.jraw.models.Subreddit;
-import timber.log.Timber;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -29,9 +20,16 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
+
 import javax.inject.Inject;
 import javax.inject.Singleton;
 
+import dagger.Lazy;
+import io.reactivex.Completable;
+import io.reactivex.Observable;
+import io.reactivex.Single;
+import io.reactivex.functions.Consumer;
+import io.reactivex.functions.Function;
 import me.saket.dank.R;
 import me.saket.dank.data.UserPreferences;
 import me.saket.dank.reddit.Reddit;
@@ -39,6 +37,11 @@ import me.saket.dank.ui.subreddit.SubredditSearchResult;
 import me.saket.dank.ui.subreddit.SubredditSearchResult.Success;
 import me.saket.dank.ui.subreddit.Subscribeable;
 import me.saket.dank.ui.user.UserSessionRepository;
+import timber.log.Timber;
+
+import static me.saket.dank.utils.Arrays2.immutable;
+import static me.saket.dank.utils.Arrays2.toImmutable;
+import static me.saket.dank.utils.RxUtils.applySchedulersSingle;
 
 /**
  * Manages:

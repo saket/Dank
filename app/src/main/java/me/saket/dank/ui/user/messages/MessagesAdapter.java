@@ -1,14 +1,16 @@
 package me.saket.dank.ui.user.messages;
 
+import android.view.LayoutInflater;
+import android.view.ViewGroup;
+
 import androidx.annotation.CheckResult;
 import androidx.recyclerview.widget.DiffUtil;
 import androidx.recyclerview.widget.RecyclerView;
-import android.view.LayoutInflater;
-import android.view.ViewGroup;
 
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+
 import javax.inject.Inject;
 
 import io.reactivex.Observable;

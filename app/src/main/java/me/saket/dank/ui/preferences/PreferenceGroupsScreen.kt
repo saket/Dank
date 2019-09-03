@@ -5,12 +5,12 @@ import android.content.Intent
 import android.graphics.Point
 import android.os.Bundle
 import android.os.Parcelable
-import androidx.annotation.LayoutRes
-import androidx.recyclerview.widget.RecyclerView
-import androidx.appcompat.widget.Toolbar
 import android.util.AttributeSet
 import android.view.Gravity
 import android.view.LayoutInflater
+import androidx.annotation.LayoutRes
+import androidx.appcompat.widget.Toolbar
+import androidx.recyclerview.widget.RecyclerView
 import butterknife.ButterKnife
 import com.jakewharton.rxrelay2.BehaviorRelay
 import dagger.Lazy

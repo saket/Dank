@@ -6,11 +6,12 @@ import android.animation.ValueAnimator;
 import android.content.Context;
 import android.graphics.Outline;
 import android.graphics.Rect;
-import androidx.interpolator.view.animation.FastOutSlowInInterpolator;
 import android.util.AttributeSet;
 import android.view.View;
 import android.view.ViewOutlineProvider;
 import android.widget.RelativeLayout;
+
+import androidx.interpolator.view.animation.FastOutSlowInInterpolator;
 
 /**
  * Handles change in dimensions. This class exists because animating the dimensions (using an

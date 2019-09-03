@@ -1,10 +1,9 @@
 package me.saket.dank.ui.media;
 
-import static java.lang.Integer.parseInt;
-
 import android.app.Application;
 import android.content.Context;
 import android.content.SharedPreferences;
+
 import androidx.annotation.CheckResult;
 
 import com.jakewharton.rxrelay2.BehaviorRelay;
@@ -12,6 +11,7 @@ import com.jakewharton.rxrelay2.Relay;
 
 import java.io.File;
 import java.util.TimeZone;
+
 import javax.inject.Inject;
 import javax.inject.Singleton;
 
@@ -24,8 +24,8 @@ import me.saket.dank.data.FileUploadProgressEvent;
 import me.saket.dank.data.exceptions.ImgurApiRequestRateLimitReachedException;
 import me.saket.dank.data.exceptions.ImgurApiUploadRateLimitReachedException;
 import me.saket.dank.data.exceptions.InvalidImgurAlbumException;
-import me.saket.dank.urlparser.ImgurAlbumUnresolvedLink;
 import me.saket.dank.di.DankApi;
+import me.saket.dank.urlparser.ImgurAlbumUnresolvedLink;
 import me.saket.dank.utils.okhttp.OkHttpRequestBodyWithProgress;
 import me.saket.dank.utils.okhttp.OkHttpRequestWriteProgressListener;
 import okhttp3.Headers;
@@ -35,6 +35,8 @@ import okhttp3.RequestBody;
 import retrofit2.HttpException;
 import retrofit2.Response;
 import timber.log.Timber;
+
+import static java.lang.Integer.parseInt;
 
 /**
  * TODO: Tests.

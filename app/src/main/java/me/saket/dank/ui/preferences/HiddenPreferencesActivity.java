@@ -1,36 +1,34 @@
 package me.saket.dank.ui.preferences;
 
-import static io.reactivex.android.schedulers.AndroidSchedulers.mainThread;
-import static io.reactivex.schedulers.Schedulers.io;
-
 import android.annotation.SuppressLint;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Bundle;
-import androidx.annotation.Nullable;
-import com.google.android.material.snackbar.Snackbar;
-import androidx.appcompat.widget.Toolbar;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.ScrollView;
 
-import butterknife.BindView;
-import butterknife.ButterKnife;
+import androidx.annotation.Nullable;
+import androidx.appcompat.widget.Toolbar;
+
 import com.bumptech.glide.Glide;
 import com.f2prateek.rx.preferences2.Preference;
+import com.google.android.material.snackbar.Snackbar;
 import com.squareup.sqlbrite2.BriteDatabase;
-import dagger.Lazy;
-import io.reactivex.Completable;
-import io.reactivex.schedulers.Schedulers;
-import timber.log.Timber;
 
 import java.util.List;
 import java.util.concurrent.TimeUnit;
+
 import javax.inject.Inject;
 import javax.inject.Named;
 
+import butterknife.BindView;
+import butterknife.ButterKnife;
+import dagger.Lazy;
+import io.reactivex.Completable;
+import io.reactivex.schedulers.Schedulers;
 import me.saket.dank.R;
 import me.saket.dank.data.LinkMetadataRepository;
 import me.saket.dank.di.Dank;
@@ -50,6 +48,10 @@ import me.saket.dank.utils.Views;
 import me.saket.dank.utils.markdown.Markdown;
 import me.saket.dank.vote.VotingManager;
 import me.saket.dank.widgets.InboxUI.IndependentExpandablePageLayout;
+import timber.log.Timber;
+
+import static io.reactivex.android.schedulers.AndroidSchedulers.mainThread;
+import static io.reactivex.schedulers.Schedulers.io;
 
 @SuppressLint("SetTextI18n")
 public class HiddenPreferencesActivity extends DankPullCollapsibleActivity {

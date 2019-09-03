@@ -1,7 +1,5 @@
 package me.saket.dank.ui.preferences.adapter;
 
-import static me.saket.dank.ui.preferences.DefaultWebBrowser.*;
-
 import android.content.Context;
 import android.widget.Toast;
 
@@ -9,6 +7,7 @@ import com.f2prateek.rx.preferences2.Preference;
 
 import java.util.ArrayList;
 import java.util.List;
+
 import javax.inject.Inject;
 
 import me.saket.dank.R;
@@ -16,6 +15,8 @@ import me.saket.dank.ui.appshortcuts.ConfigureAppShortcutsActivity;
 import me.saket.dank.ui.preferences.DefaultWebBrowser;
 import me.saket.dank.ui.preferences.MultiOptionPreferencePopup;
 import me.saket.dank.utils.DeviceInfo;
+
+import static me.saket.dank.ui.preferences.DefaultWebBrowser.DANK_INTERNAL_BROWSER;
 
 public class MiscellaneousPreferencesConstructor implements UserPreferencesConstructor.ChildConstructor {
 

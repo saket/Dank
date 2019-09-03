@@ -3,12 +3,13 @@ package me.saket.dank.widgets;
 import android.animation.LayoutTransition;
 import android.content.Context;
 import android.content.res.TypedArray;
-import androidx.annotation.FloatRange;
-import androidx.annotation.Nullable;
 import android.util.AttributeSet;
 import android.view.LayoutInflater;
 import android.widget.LinearLayout;
 import android.widget.TextView;
+
+import androidx.annotation.FloatRange;
+import androidx.annotation.Nullable;
 
 import com.github.rahatarmanahmed.cpv.CircularProgressView;
 import com.github.rahatarmanahmed.cpv.CircularProgressViewListener;

@@ -1,8 +1,9 @@
 package me.saket.dank.utils.markdown.markwon;
 
 import android.content.Context;
-import androidx.appcompat.widget.AppCompatTextView;
 import android.util.AttributeSet;
+
+import androidx.appcompat.widget.AppCompatTextView;
 
 import ru.noties.markwon.Markwon;
 

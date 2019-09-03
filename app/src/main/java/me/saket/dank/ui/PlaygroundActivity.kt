@@ -3,8 +3,8 @@ package me.saket.dank.ui
 import android.content.Context
 import android.content.Intent
 import android.os.Bundle
-import androidx.appcompat.widget.PopupMenu
 import android.widget.Button
+import androidx.appcompat.widget.PopupMenu
 import butterknife.ButterKnife
 import butterknife.OnClick
 import me.saket.dank.R

@@ -1,11 +1,12 @@
 package me.saket.dank.ui.compose;
 
 import android.content.Context;
-import androidx.annotation.Nullable;
 import android.util.AttributeSet;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.HorizontalScrollView;
+
+import androidx.annotation.Nullable;
 
 import butterknife.ButterKnife;
 import butterknife.OnClick;

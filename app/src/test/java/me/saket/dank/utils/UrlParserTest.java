@@ -1,14 +1,5 @@
 package me.saket.dank.utils;
 
-import static com.google.common.truth.Truth.assertThat;
-import static junit.framework.Assert.assertEquals;
-import static org.mockito.AdditionalMatchers.or;
-import static org.mockito.ArgumentMatchers.isNull;
-import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.anyString;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
-
 import android.net.Uri;
 import android.text.Html;
 import android.text.Spannable;
@@ -51,6 +42,15 @@ import me.saket.dank.urlparser.StreamableUnresolvedLink;
 import me.saket.dank.urlparser.UnresolvedMediaLink;
 import me.saket.dank.urlparser.UrlParser;
 import me.saket.dank.urlparser.UrlParserConfig;
+
+import static com.google.common.truth.Truth.assertThat;
+import static junit.framework.Assert.assertEquals;
+import static org.mockito.AdditionalMatchers.or;
+import static org.mockito.ArgumentMatchers.isNull;
+import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.anyString;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 @RunWith(PowerMockRunner.class)
 @PrepareForTest({ Uri.class, TextUtils.class, Html.class })

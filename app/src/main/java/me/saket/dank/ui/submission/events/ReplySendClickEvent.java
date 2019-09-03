@@ -3,7 +3,6 @@ package me.saket.dank.ui.submission.events;
 import com.google.auto.value.AutoValue;
 
 import net.dean.jraw.models.Identifiable;
-import net.dean.jraw.models.PublicContribution;
 
 /**
  * Emitted when the send button is pressed in an inline comment reply.

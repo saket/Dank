@@ -2,6 +2,7 @@ package me.saket.dank.reply;
 
 import android.content.ContentValues;
 import android.database.Cursor;
+
 import androidx.annotation.Nullable;
 
 import com.google.auto.value.AutoValue;

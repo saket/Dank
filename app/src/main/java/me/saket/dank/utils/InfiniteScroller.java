@@ -2,6 +2,7 @@ package me.saket.dank.utils;
 
 
 import android.os.Looper;
+
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 

@@ -1,8 +1,7 @@
 package me.saket.dank.ui.media.gfycat;
 
-import static java.lang.System.currentTimeMillis;
-
 import java.util.concurrent.TimeUnit;
+
 import javax.inject.Inject;
 
 import dagger.Lazy;
@@ -12,6 +11,8 @@ import me.saket.dank.di.DankApi;
 import me.saket.dank.urlparser.GfycatLink;
 import me.saket.dank.urlparser.UrlParserConfig;
 import retrofit2.HttpException;
+
+import static java.lang.System.currentTimeMillis;
 
 public class GfycatRepository {
 

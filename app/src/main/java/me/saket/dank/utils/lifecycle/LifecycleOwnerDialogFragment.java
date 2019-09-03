@@ -1,6 +1,7 @@
 package me.saket.dank.utils.lifecycle;
 
 import android.os.Bundle;
+
 import androidx.annotation.Nullable;
 import androidx.fragment.app.DialogFragment;
 

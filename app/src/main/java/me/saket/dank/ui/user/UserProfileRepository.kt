@@ -19,7 +19,7 @@ import me.saket.dank.utils.Preconditions
 import net.dean.jraw.models.Account
 import net.dean.jraw.models.AccountStatus
 import timber.log.Timber
-import java.util.Locale
+import java.util.*
 import java.util.concurrent.TimeUnit
 import javax.inject.Inject
 import javax.inject.Singleton

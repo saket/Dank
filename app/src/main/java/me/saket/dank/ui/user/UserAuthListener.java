@@ -1,14 +1,14 @@
 package me.saket.dank.ui.user;
 
-import static io.reactivex.schedulers.Schedulers.io;
-
 import android.content.Context;
+
 import androidx.annotation.CheckResult;
 import androidx.annotation.VisibleForTesting;
 
 import com.f2prateek.rx.preferences2.Preference;
 
 import java.util.concurrent.TimeUnit;
+
 import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Singleton;
@@ -24,6 +24,8 @@ import me.saket.dank.ui.subscriptions.SubscriptionRepository;
 import me.saket.dank.utils.Optional;
 import me.saket.dank.utils.TimeInterval;
 import timber.log.Timber;
+
+import static io.reactivex.schedulers.Schedulers.io;
 
 @Singleton
 public class UserAuthListener {

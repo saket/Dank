@@ -1,14 +1,5 @@
 package me.saket.dank.reply;
 
-import static org.junit.Assert.assertEquals;
-import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.anyString;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.spy;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
-
 import android.annotation.SuppressLint;
 import android.content.SharedPreferences;
 
@@ -34,6 +25,15 @@ import java.util.TimeZone;
 import hirondelle.date4j.DateTime;
 import me.saket.dank.data.ErrorResolver;
 import me.saket.dank.utils.AutoValueMoshiAdapterFactory;
+
+import static org.junit.Assert.assertEquals;
+import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.anyString;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 public class ReplyRepositoryShould {
 

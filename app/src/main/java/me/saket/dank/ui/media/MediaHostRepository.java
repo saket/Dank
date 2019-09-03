@@ -1,7 +1,5 @@
 package me.saket.dank.ui.media;
 
-import static java.util.Collections.unmodifiableList;
-
 import androidx.annotation.CheckResult;
 
 import com.nytimes.android.external.fs3.filesystem.FileSystem;
@@ -16,6 +14,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
+
 import javax.inject.Inject;
 import javax.inject.Singleton;
 
@@ -46,6 +45,8 @@ import me.saket.dank.urlparser.UnresolvedMediaLink;
 import me.saket.dank.urlparser.UrlParser;
 import okio.BufferedSource;
 import timber.log.Timber;
+
+import static java.util.Collections.unmodifiableList;
 
 /**
  * Entry point for accessing all media services.

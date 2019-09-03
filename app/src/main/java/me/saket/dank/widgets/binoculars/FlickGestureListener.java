@@ -1,13 +1,14 @@
 package me.saket.dank.widgets.binoculars;
 
 import android.annotation.SuppressLint;
-import androidx.annotation.FloatRange;
-import androidx.interpolator.view.animation.FastOutSlowInInterpolator;
 import android.view.MotionEvent;
 import android.view.VelocityTracker;
 import android.view.View;
 import android.view.ViewConfiguration;
 import android.view.animation.Interpolator;
+
+import androidx.annotation.FloatRange;
+import androidx.interpolator.view.animation.FastOutSlowInInterpolator;
 
 /**
  * Listeners for a flick gesture and also moves around the View with user's finger.

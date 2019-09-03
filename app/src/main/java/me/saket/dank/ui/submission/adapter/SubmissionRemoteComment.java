@@ -1,15 +1,16 @@
 package me.saket.dank.ui.submission.adapter;
 
 import android.annotation.SuppressLint;
-import androidx.annotation.CheckResult;
-import androidx.annotation.ColorInt;
-import androidx.annotation.ColorRes;
-import androidx.recyclerview.widget.RecyclerView;
 import android.text.Spannable;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
+
+import androidx.annotation.CheckResult;
+import androidx.annotation.ColorInt;
+import androidx.annotation.ColorRes;
+import androidx.recyclerview.widget.RecyclerView;
 
 import com.google.auto.value.AutoValue;
 import com.jakewharton.rxrelay2.PublishRelay;
@@ -18,6 +19,7 @@ import com.jakewharton.rxrelay2.Relay;
 import net.dean.jraw.models.Comment;
 
 import java.util.List;
+
 import javax.inject.Inject;
 
 import io.reactivex.Observable;

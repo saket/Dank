@@ -2,8 +2,9 @@ package me.saket.dank.widgets;
 
 import android.content.Context;
 import android.graphics.Color;
-import androidx.appcompat.widget.AppCompatImageButton;
 import android.util.AttributeSet;
+
+import androidx.appcompat.widget.AppCompatImageButton;
 
 /**
  * Applies a color tint when disabled.
