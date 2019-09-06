@@ -2,6 +2,11 @@
     <img alt='Dank' src='https://saket.me/wp-content/uploads/2018/04/dank_cover.jpg'/>
 </p>
 <p align='center'>
+    <a href='https://play.google.com/store/apps/details?id=me.thanel.dank&pcampaignid=MKT-Other-global-all-co-prtnr-py-PartBadge-Mar2515-1'>
+        <img alt='Get it on Google Play' src='https://play.google.com/intl/en_us/badges/images/generic/en_badge_web_generic.png' height="75"/>
+    </a>
+</p>
+<p align='center'>
     <a href="https://app.bitrise.io/app/a0f2d377c14a1631">
         <img alt="Bitrise Build Status" src="https://app.bitrise.io/app/a0f2d377c14a1631/status.svg?token=O3cpfpDkImw61dz-hkBWpw&branch=master"/>
     </a>
