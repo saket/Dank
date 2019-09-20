@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources xmlns:tools="http://schemas.android.com/tools">
-  <string name="app_name">Dank</string>
+  <string name="app_name">Dawn</string>
   <string name="app_launcher_label">@string/app_name</string>
 
   <string name="reddit_app_owner_username">Saketme</string>
@@ -9,7 +9,7 @@
 
   <integer name="recycle_drafts_older_than_num_days">14</integer>
   <string name="file_provider_authority">me.thanel.dank.fileprovider</string>
-  <string name="image_download_directory_name">@string/app_name</string>  <!-- /external/Pictures/Dank -->
+  <string name="image_download_directory_name">@string/app_name</string>  <!-- /external/Pictures/Dawn -->
 
   <string-array name="inbox_folder_names">
     <item>Unread</item>

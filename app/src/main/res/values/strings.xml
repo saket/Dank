@@ -33,8 +33,8 @@
   <string name="common_reddit_is_down_error_message">You broke Reddit! It\'s under heavy load right now.</string>
 
   <string name="common_imgur_rate_limit_error_emoji">ಥ_ಥ</string>
-  <string name="common_imgur_request_rate_limit_error_message">Dank has reached its monthly limit of downloading images from Imgur.</string>
-  <string name="common_imgur_upload_rate_limit_error_message">Dank has reached its monthly limit of uploading images to Imgur.</string>
+  <string name="common_imgur_request_rate_limit_error_message">Dawn has reached its monthly limit of downloading images from Imgur.</string>
+  <string name="common_imgur_upload_rate_limit_error_message">Dawn has reached its monthly limit of uploading images to Imgur.</string>
 
   <string name="common_error_cancelation_emoji">( ͡° ͜ʖ ͡°)</string>
   <string name="common_error_cancelation_message">Something was intentionally canceled. The user should never see this.</string>
@@ -45,7 +45,7 @@
   <string name="common_error_no_app_found_to_handle_this_action">No app found to handle this action</string>
 
   <string name="common_error_known_jraw_emoji" translatable="false">(╯°□°）╯︵ ┻━┻</string>
-  <string name="common_error_known_jraw_message">Please force-kill and restart Dank.\nThis is a known issue and will be fixed soon.</string>
+  <string name="common_error_known_jraw_message">Please force-kill and restart Dawn.\nThis is a known issue and will be fixed soon.</string>
 
   <string name="add_launcher_app_shortcuts_label">Add shortcuts</string>
 
@@ -138,7 +138,7 @@
 
   <string name="subreddit_gestureswalkthrough_title">Hey there</string>
   <string name="subreddit_gestureswalkthrough_message">
-    Dank is driven by gestures. Let\'s learn how to navigate around. Swipe here horizontally to reveal actions.</string>
+    Dawn is driven by gestures. Let\'s learn how to navigate around. Swipe here horizontally to reveal actions.</string>
   <string name="subreddit_gestureswalkthrough_message_after_first_swipe_action">
     You can make longer swipes to access more actions on both left and right sides. Go ahead, try them.</string>
   <string name="subreddit_gestureswalkthrough_message_after_second_swipe_action">

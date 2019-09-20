@@ -1,5 +1,5 @@
 <p align='center'>
-    <img alt='Dank' src='https://saket.me/wp-content/uploads/2018/04/dank_cover.jpg'/>
+    <img alt='Dawn' src='https://saket.me/wp-content/uploads/2018/04/dank_cover.jpg'/>
 </p>
 <p align='center'>
     <a href='https://play.google.com/store/apps/details?id=me.thanel.dank&pcampaignid=MKT-Other-global-all-co-prtnr-py-PartBadge-Mar2515-1'>
@@ -10,8 +10,8 @@
     <a href="https://app.bitrise.io/app/a0f2d377c14a1631">
         <img alt="Bitrise Build Status" src="https://app.bitrise.io/app/a0f2d377c14a1631/status.svg?token=O3cpfpDkImw61dz-hkBWpw&branch=master"/>
     </a>
-    <a href="https://github.com/Tunous/Dank/releases">
-        <img alt="GitHub Release" src="https://img.shields.io/github/release/Tunous/Dank?logo=github"/>
+    <a href="https://github.com/Tunous/Dawn/releases">
+        <img alt="GitHub Release" src="https://img.shields.io/github/release/Tunous/Dawn?logo=github"/>
     </a>
 </p>
 
@@ -21,7 +21,7 @@ This is a fork of a Reddit application named **Dank** created by [@saket](https:
 
 ### Download the APK
 
-You can download an APK of the latest release [here](https://github.com/Tunous/Dank/releases). The app is currently not availabe for download from the Google Play Store.
+You can download an APK of the latest release [here](https://github.com/Tunous/Dawn/releases). The app is currently not availabe for download from the Google Play Store.
 
 ### Read about what's new
 

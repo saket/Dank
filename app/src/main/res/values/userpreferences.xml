@@ -9,7 +9,7 @@
   <string name="userpreferences_filters_description">NSFW and other content filters</string>
   <string name="userpreferences_misc">Miscellaneous</string>
   <string name="userpreferences_misc_description">Options that don\'t fit elsewhere</string>
-  <string name="userpreferences_about">About Dank</string>
+  <string name="userpreferences_about">About Dawn</string>
   <string name="userpreferences_about_description">Learn about OP, send feedback, etc.</string>
 
   <string name="userprefs_group_subreddit">Subreddit</string>
@@ -76,7 +76,7 @@
   <string name="userprefs_mediaquality_autoplay_videos">Auto-play videos</string>
 
   <string name="userprefs_group_caching">Caching</string>
-  <string name="userprefs_group_caching_summary">Dank can pre-fetch content for subscribed subreddits when you visit them.
+  <string name="userprefs_group_caching_summary">Dawn can pre-fetch content for subscribed subreddits when you visit them.
     This way they\'re immediately available for consumption.</string>
   <string name="userprefs_prefetch_images">Pre-fetch images</string>
   <string name="userprefs_prefetch_link_descriptions">Pre-fetch link descriptions</string>
@@ -99,18 +99,18 @@
 
   <string name="userprefs_group_external_links">External links</string>
   <string name="userprefs_externallinks_default_web_browser">Default browser</string>
-  <string name="userprefs_externallinks_internal_browser">Dank\'s internal browser</string>
+  <string name="userprefs_externallinks_internal_browser">Dawn\'s internal browser</string>
   <string name="userprefs_externallinks_chrome_custom_tabs">Chrome custom tabs</string>
 
   <string name="userprefs_group_launcher">Launcher</string>
   <string name="userprefs_launcher_app_shortcuts">Customize launcher app shortcuts</string>
-  <string name="userprefs_launcher_app_shortcuts_summary">Jump to your favorite subreddits by long-pressing Dank\'s launcher icon. This will only work with launchers that support app shortcuts.</string>
+  <string name="userprefs_launcher_app_shortcuts_summary">Jump to your favorite subreddits by long-pressing Dawn\'s launcher icon. This will only work with launchers that support app shortcuts.</string>
 
   <string name="userprefs_externallinks_open_links_in_apps">Open known links in apps</string>
   <string name="userprefs_externallinks_open_links_in_apps_summary">Bypass the browser and open these links in their own apps</string>
 
   <string name="userprefs_about_join_subreddit">Join r/GetDank</string>
-  <string name="userprefs_about_join_subreddit_summary">Request features or discuss Dank with fellow users</string>
+  <string name="userprefs_about_join_subreddit_summary">Request features or discuss Dawn with fellow users</string>
 
   <string name="userprefs_about_rate_on_play_store">Rate on Play Store</string>
   <string name="userprefs_about_attributions">Attributions &amp; licenses</string>

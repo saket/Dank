@@ -27,7 +27,7 @@ public class AboutDankPreferencesConstructor implements UserPreferencesConstruct
   public List<UserPreferencesScreenUiModel> construct(Context c) {
     List<UserPreferencesScreenUiModel> uiModels = new ArrayList<>();
 
-    uiModels.add(UserPreferenceSectionHeader.UiModel.create(String.format("Dank v%s", appInfo.appVersionName())));
+    uiModels.add(UserPreferenceSectionHeader.UiModel.create(String.format("Dawn v%s", appInfo.appVersionName())));
 
     uiModels.add(UserPreferenceButton.UiModel.create(
         c.getString(R.string.userprefs_about_join_subreddit),
@@ -51,21 +51,21 @@ public class AboutDankPreferencesConstructor implements UserPreferencesConstruct
         c.getString(R.string.userprefs_about_report_issue),
         c.getString(R.string.userprefs_about_report_issue_summary),
         (clickHandler, event) -> {
-          Intent githubIssuesIntent = Intents.createForOpeningUrl("https://github.com/Tunous/Dank/issues/new");
+          Intent githubIssuesIntent = Intents.createForOpeningUrl("https://github.com/Tunous/Dawn/issues/new");
           clickHandler.openIntent(githubIssuesIntent);
         }));
 
     uiModels.add(UserPreferenceButton.UiModel.create(
         c.getString(R.string.userprefs_about_source_code),
         (clickHandler, event) -> {
-          Intent githubSourceIntent = Intents.createForOpeningUrl("https://github.com/Tunous/Dank");
+          Intent githubSourceIntent = Intents.createForOpeningUrl("https://github.com/Tunous/Dawn");
           clickHandler.openIntent(githubSourceIntent);
         }));
 
     uiModels.add(UserPreferenceButton.UiModel.create(
         c.getString(R.string.userprefs_about_changelog),
         (clickHandler, event) -> {
-          Intent githubSourceIntent = Intents.createForOpeningUrl("https://github.com/Tunous/Dank/blob/HEAD/CHANGELOG.md");
+          Intent githubSourceIntent = Intents.createForOpeningUrl("https://github.com/Tunous/Dawn/blob/HEAD/CHANGELOG.md");
           clickHandler.openIntent(githubSourceIntent);
         }));
 

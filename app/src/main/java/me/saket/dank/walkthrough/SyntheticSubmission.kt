@@ -148,7 +148,7 @@ class SyntheticComment(
 
   override fun getSubmissionFullName(): String = parent.fullName
 
-  override val author: String = "Dank"
+  override val author: String = "Dawn"
 
   override val edited: Date? = null
 
