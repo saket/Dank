@@ -6,7 +6,7 @@ buildscript {
       compileSdk      : 28,
       supportLib      : '28.0.0',
       glide           : '4.8.0',
-      autoValue       : '1.4',
+      autoValue       : '1.5',
       autoValueMoshi  : '0.4.3',
       moshi           : '1.6.0',
       stetho          : '1.5.0',
