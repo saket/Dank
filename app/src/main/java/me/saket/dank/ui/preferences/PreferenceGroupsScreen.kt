@@ -85,7 +85,7 @@ class PreferenceGroupsScreen(context: Context, attrs: AttributeSet) :
   override fun onSaveInstanceState(): Parcelable? {
     val values = Bundle()
 
-    groupChanges.value.ifPresent { group ->
+    groupChanges.value?.ifPresent { group ->
       values.putSerializable(KEY_ACTIVE_PREFERENCE_GROUP, group)
     }
 
