@@ -9,7 +9,7 @@ buildscript {
       autoValue       : '1.5',
       autoValueMoshi  : '0.4.3',
       moshi           : '1.8.0',
-      stetho          : '1.5.0',
+      stetho          : '1.5.1',
       nytStore        : '3.0.0-beta',
       okHttp          : '4.2.2',
       retrofit        : '2.6.2',
