@@ -175,7 +175,7 @@ dependencies {
   implementation 'org.sufficientlysecure:html-textview:3.7'
   implementation 'org.jsoup:jsoup:1.12.1'
   implementation 'com.github.rahatarmanahmed:circularprogressview:2.5.0'
-  implementation 'com.tbruyelle.rxpermissions2:rxpermissions:0.9.4@aar'
+  implementation 'com.tbruyelle.rxpermissions2:rxpermissions:0.9.5@aar'
   implementation 'it.gilvegliach.android:transparent-text-textview:1.0.3'
   implementation 'com.f2prateek.rx.preferences2:rx-preferences:2.0.1-SNAPSHOT'
 
