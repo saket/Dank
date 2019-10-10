@@ -8,7 +8,7 @@ buildscript {
       glide           : '4.10.0',
       autoValue       : '1.5',
       autoValueMoshi  : '0.4.3',
-      moshi           : '1.6.0',
+      moshi           : '1.8.0',
       stetho          : '1.5.0',
       nytStore        : '3.0.0-beta',
       okHttp          : '4.2.2',
