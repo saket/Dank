@@ -11,7 +11,7 @@ buildscript {
       moshi           : '1.6.0',
       stetho          : '1.5.0',
       nytStore        : '3.0.0-beta',
-      okHttp          : '3.6.0',
+      okHttp          : '4.2.2',
       retrofit        : '2.6.2',
       rxBindings      : '2.0.0',
       dagger          : '2.15',
