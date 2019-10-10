@@ -168,7 +168,7 @@ dependencies {
   implementation 'com.squareup.sqlbrite2:sqlbrite:2.0.0'
   implementation 'androidx.room:room-runtime:2.1.0'
   kapt 'androidx.room:room-compiler:2.1.0'
-  implementation 'androidx.room:room-rxjava2:2.1.0'
+  implementation 'androidx.room:room-rxjava2:2.2.0'
   implementation 'com.google.android:flexbox:1.1.1'
   implementation 'com.github.zagum:Android-ExpandIcon:1.1.1'
   implementation 'me.saket:better-link-movement-method:2.2.0'
