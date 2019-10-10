@@ -10,7 +10,7 @@ buildscript {
       autoValueMoshi  : '0.4.3',
       moshi           : '1.8.0',
       stetho          : '1.5.1',
-      nytStore        : '3.0.0-beta',
+      nytStore        : '3.1.1',
       okHttp          : '4.2.2',
       retrofit        : '2.6.2',
       rxBindings      : '2.2.0',
