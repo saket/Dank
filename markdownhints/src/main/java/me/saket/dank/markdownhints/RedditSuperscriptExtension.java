@@ -1,12 +1,12 @@
 package me.saket.dank.markdownhints;
 
 import com.vladsch.flexmark.ast.DelimitedNode;
-import com.vladsch.flexmark.internal.Delimiter;
-import com.vladsch.flexmark.internal.inline.AsteriskDelimiterProcessor;
 import com.vladsch.flexmark.parser.Parser;
+import com.vladsch.flexmark.parser.core.delimiter.AsteriskDelimiterProcessor;
+import com.vladsch.flexmark.parser.core.delimiter.Delimiter;
 import com.vladsch.flexmark.superscript.Superscript;
 import com.vladsch.flexmark.superscript.internal.SuperscriptDelimiterProcessor;
-import com.vladsch.flexmark.util.options.MutableDataHolder;
+import com.vladsch.flexmark.util.data.MutableDataHolder;
 import com.vladsch.flexmark.util.sequence.BasedSequence;
 
 /**
@@ -59,15 +59,15 @@ public class RedditSuperscriptExtension implements Parser.ParserExtension {
     }
 
     @Override
-    public boolean canBeOpener(boolean leftFlanking, boolean rightFlanking, boolean beforeIsPunctuation, boolean afterIsPunctuation,
+    public boolean canBeOpener(String before, String after, boolean leftFlanking, boolean rightFlanking, boolean beforeIsPunctuation, boolean afterIsPunctuation,
         boolean beforeIsWhitespace, boolean afterIsWhiteSpace)
     {
       // No idea what this does.
-      return leftFlanking;
+      return super.canBeOpener(before, after, leftFlanking, rightFlanking, beforeIsPunctuation, afterIsPunctuation, beforeIsWhitespace, afterIsWhiteSpace);
     }
 
     @Override
-    public boolean canBeCloser(boolean leftFlanking, boolean rightFlanking, boolean beforeIsPunctuation, boolean afterIsPunctuation,
+    public boolean canBeCloser(String before, String after, boolean leftFlanking, boolean rightFlanking, boolean beforeIsPunctuation, boolean afterIsPunctuation,
         boolean beforeIsWhitespace, boolean afterIsWhiteSpace)
     {
       //Timber.i(
@@ -75,7 +75,7 @@ public class RedditSuperscriptExtension implements Parser.ParserExtension {
       //    leftFlanking, rightFlanking, beforeIsPunctuation, afterIsPunctuation, beforeIsWhitespace, afterIsWhiteSpace
       //);
       // No idea what this does.
-      return rightFlanking;
+      return super.canBeCloser(before, after, leftFlanking, rightFlanking, beforeIsPunctuation, afterIsPunctuation, beforeIsWhitespace, afterIsWhiteSpace);
     }
   }
 }
