@@ -18,7 +18,7 @@ buildscript {
       butterKnife     : '10.2.0',
       commonmark      : '0.10.0',
       flexmark        : '0.27.0',
-      timber          : '4.6.0',
+      timber          : '4.7.1',
       junit           : '4.12',
       deeplinkDispatch: '4.1.0',
       androidTest     : '1.0.2',
