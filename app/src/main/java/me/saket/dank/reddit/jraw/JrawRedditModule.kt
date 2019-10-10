@@ -84,7 +84,13 @@ class JrawRedditModule {
         .addNetworkInterceptor(tokenRefresher)
         .apply {
           if (BuildConfig.DEBUG) {
-            val logging = HttpLoggingInterceptor { message -> Timber.tag("OkHttp").d(message) }
+            val logging = HttpLoggingInterceptor(
+              object : HttpLoggingInterceptor.Logger {
+                override fun log(message: String) {
+                  Timber.tag("OkHttp").d(message)
+                }
+              }
+            )
             logging.level = HttpLoggingInterceptor.Level.BASIC
             addInterceptor(logging)
           }

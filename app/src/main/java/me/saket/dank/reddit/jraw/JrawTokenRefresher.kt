@@ -35,7 +35,7 @@ class JrawTokenRefresher @Inject constructor(private val clients: BehaviorSubjec
   }
 
   override fun intercept(chain: Interceptor.Chain): Response {
-    if (chain.request().url().toString().startsWith("https://www.reddit.com/api/v1/access_token")) {
+    if (chain.request().url.toString().startsWith("https://www.reddit.com/api/v1/access_token")) {
       return chain.proceed(chain.request())
     }
 
