@@ -13,7 +13,7 @@ buildscript {
       nytStore        : '3.0.0-beta',
       okHttp          : '4.2.2',
       retrofit        : '2.6.2',
-      rxBindings      : '2.0.0',
+      rxBindings      : '2.2.0',
       dagger          : '2.15',
       butterKnife     : '10.1.0',
       commonmark      : '0.10.0',
