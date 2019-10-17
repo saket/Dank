@@ -187,7 +187,7 @@ dependencies {
   implementation "com.airbnb:deeplinkdispatch:$versions.deeplinkDispatch"
   kapt "com.airbnb:deeplinkdispatch-processor:$versions.deeplinkDispatch"
   implementation 'io.github.inflationx:viewpump:2.0.3'
-  implementation 'com.bugsnag:bugsnag-android:4.21.0'
+  implementation 'com.bugsnag:bugsnag-android:4.21.1'
 
   implementation 'com.github.saketme:markwon:b68d3058ca'
   implementation 'com.atlassian.commonmark:commonmark-ext-autolink:0.13.0'
