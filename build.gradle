@@ -17,7 +17,7 @@ buildscript {
       dagger          : '2.24',
       butterKnife     : '10.2.0',
       commonmark      : '0.10.0',
-      flexmark        : '0.50.40',
+      flexmark        : '0.50.42',
       timber          : '4.7.1',
       junit           : '4.12',
       deeplinkDispatch: '4.1.0',
