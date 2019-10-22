@@ -11,13 +11,13 @@ import android.view.LayoutInflater
 import androidx.annotation.LayoutRes
 import androidx.appcompat.widget.Toolbar
 import androidx.recyclerview.widget.RecyclerView
+import butterknife.BindView
 import butterknife.ButterKnife
 import com.jakewharton.rxrelay2.BehaviorRelay
 import dagger.Lazy
 import io.reactivex.BackpressureStrategy
 import io.reactivex.android.schedulers.AndroidSchedulers.mainThread
 import io.reactivex.schedulers.Schedulers.io
-import kotterknife.bindView
 import me.saket.dank.R
 import me.saket.dank.di.Dank
 import me.saket.dank.ui.ScreenSavedState
@@ -58,9 +58,9 @@ class PreferenceGroupsScreen(context: Context, attrs: AttributeSet) :
   @LayoutRes
   private var expandedPageLayoutRes: Int? = null
 
-  private val toolbar by bindView<Toolbar>(R.id.toolbar)
-  private val preferenceRecyclerView by bindView<InboxRecyclerView>(R.id.userpreferences_preferences_recyclerview)
-  private val nestedPage by bindView<ExpandablePageLayout>(R.id.userpreferences_nested_page)
+  @BindView(R.id.toolbar) lateinit var toolbar: Toolbar
+  @BindView(R.id.userpreferences_preferences_recyclerview) lateinit var preferenceRecyclerView: InboxRecyclerView
+  @BindView(R.id.userpreferences_nested_page) lateinit var nestedPage: ExpandablePageLayout
 
   private val groupChanges = BehaviorRelay.createDefault(Optional.empty<UserPreferenceGroup>())
   private lateinit var lifecycle: LifecycleOwnerViews.Streams
