@@ -163,7 +163,7 @@ dependencies {
   kapt "com.github.bumptech.glide:compiler:$versions.glide"
   implementation "com.github.bumptech.glide:okhttp3-integration:$versions.glide"
   implementation 'com.squareup.sqlbrite2:sqlbrite:2.0.0'
-  implementation 'androidx.room:room-runtime:2.2.0'
+  implementation 'androidx.room:room-runtime:2.2.1'
   kapt 'androidx.room:room-compiler:2.2.0'
   implementation 'androidx.room:room-rxjava2:2.2.0'
   implementation 'com.google.android:flexbox:1.1.1'
