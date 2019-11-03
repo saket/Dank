@@ -174,7 +174,7 @@ dependencies {
   implementation 'com.github.rahatarmanahmed:circularprogressview:2.5.0'
   implementation 'com.tbruyelle.rxpermissions2:rxpermissions:0.9.5@aar'
   implementation 'it.gilvegliach.android:transparent-text-textview:1.0.3'
-  implementation 'com.f2prateek.rx.preferences2:rx-preferences:2.0.1-SNAPSHOT'
+  implementation 'com.f2prateek.rx.preferences2:rx-preferences:2.0.0'
 
   // TODO minSdkVersion 23: TextView supports undo on API 23+.
   // Update: Someone on ASG from the platform team said otherwise.
