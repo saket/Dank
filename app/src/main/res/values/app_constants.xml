@@ -3,9 +3,9 @@
   <string name="app_name">Dawn</string>
   <string name="app_launcher_label">@string/app_name</string>
 
-  <string name="reddit_app_owner_username">Saketme</string>
-  <string name="reddit_app_client_id">E-TcdjXmZ4tVXg</string>
-  <string name="reddit_app_redirect_url">http://saket.me</string>
+  <string name="reddit_app_owner_username">Thanel</string>
+  <string name="reddit_app_client_id">yLI_jita9uUdpQ</string>
+  <string name="reddit_app_redirect_url">http://dawn.thanel.me</string>
 
   <integer name="recycle_drafts_older_than_num_days">14</integer>
   <string name="file_provider_authority">me.thanel.dank.fileprovider</string>
