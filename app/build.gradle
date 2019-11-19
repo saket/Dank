@@ -151,7 +151,7 @@ dependencies {
   implementation "com.jakewharton.rxbinding2:rxbinding-recyclerview-v7:$versions.rxBindings"
   implementation "com.jakewharton.rxbinding2:rxbinding-support-v4:$versions.rxBindings"
   implementation "com.jakewharton.rxrelay2:rxrelay:2.1.1"
-  implementation 'com.tspoon.traceur:traceur:1.0.1'
+  implementation 'com.github.qoqa:traceur:2.2.12'
   implementation "com.google.dagger:dagger:$versions.dagger"
   kapt "com.google.dagger:dagger-compiler:$versions.dagger"
   implementation "com.squareup.okhttp3:okhttp:$versions.okHttp"
