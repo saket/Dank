@@ -7,6 +7,7 @@ import android.content.pm.ShortcutManager;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
+import android.widget.Toast;
 
 import com.airbnb.deeplinkdispatch.DeepLinkHandler;
 import com.airbnb.deeplinkdispatch.DeepLinkResult;
@@ -18,9 +19,11 @@ import me.saket.dank.di.Dank;
 import me.saket.dank.ui.DankActivity;
 import me.saket.dank.ui.UrlRouter;
 import me.saket.dank.ui.appshortcuts.AppShortcut;
+import me.saket.dank.ui.preferences.DefaultWebBrowser;
 import me.saket.dank.ui.subreddit.SubredditActivity;
 import me.saket.dank.urlparser.Link;
 import me.saket.dank.urlparser.RedditSubredditLink;
+import me.saket.dank.urlparser.RedditUserLink;
 import me.saket.dank.urlparser.UrlParser;
 
 @DeepLinkHandler(AppDeepLinkModule.class)
@@ -58,9 +61,14 @@ public class DeepLinkHandlingActivity extends DankActivity {
         Uri uri = getIntent().getData();
         if (uri != null) {
           Link parsedLink = urlParser.get().parse(uri.toString());
-          urlRouter.get().forLink(parsedLink)
-              .expandFromBelowToolbar()
-              .open(this);
+          if (parsedLink instanceof RedditUserLink) {
+            Toast.makeText(this, "Viewing user profiles is currently unsupported", Toast.LENGTH_LONG).show();
+            startActivity(DefaultWebBrowser.DANK_INTERNAL_BROWSER.intentForUrl(this, parsedLink.unparsedUrl(), null));
+          } else {
+            urlRouter.get().forLink(parsedLink)
+                .expandFromBelowToolbar()
+                .open(this);
+          }
         }
       }
     }

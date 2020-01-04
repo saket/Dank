@@ -36,7 +36,7 @@ public class WebViewActivity extends DankPullCollapsibleActivity {
   @BindView(R.id.webviewfallback_webview) WebView webView;
   @BindView(R.id.webviewfallback_progress) ProgressBar progressView;
 
-  public static Intent intent(Context context, String url, Rect expandFromShape) {
+  public static Intent intent(Context context, String url, @Nullable Rect expandFromShape) {
     Intent intent = new Intent(context, WebViewActivity.class);
     intent.putExtra(KEY_URL, url);
     intent.putExtra(KEY_EXPAND_FROM_SHAPE, expandFromShape);
