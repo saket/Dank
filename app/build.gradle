@@ -120,7 +120,7 @@ dependencies {
   implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk7:$versions.kotlin"
 
   testImplementation "junit:junit:$versions.junit"
-  testImplementation 'org.powermock:powermock-module-junit4:2.0.2'
+  testImplementation 'org.powermock:powermock-module-junit4:2.0.4'
   testImplementation 'org.powermock:powermock-api-mockito2:2.0.2'
   testImplementation "com.google.truth:truth:1.0"
 
