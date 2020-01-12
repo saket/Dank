@@ -29,7 +29,7 @@ object SubmissionItemDiffer : DiffUtil.ItemCallback<SubmissionRowUiModel>() {
         if (oldSubmission.byline() != newSubmission.byline()) {
           partialChanges.add(SubredditSubmission.PartialChange.BYLINE)
         }
-        if (oldSubmission.thumbnail() != newSubmission.thumbnail()) {
+        if (oldSubmission.thumbnail() != newSubmission.thumbnail() || oldSubmission.imageStyle() != newSubmission.imageStyle()) {
           partialChanges.add(SubredditSubmission.PartialChange.THUMBNAIL)
         }
         if (oldSubmission.isSaved != newSubmission.isSaved) {

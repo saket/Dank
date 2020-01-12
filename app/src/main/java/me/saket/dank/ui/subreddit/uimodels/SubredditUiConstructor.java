@@ -56,8 +56,8 @@ public class SubredditUiConstructor {
   private final Lazy<SubmissionGesturesWalkthrough> gesturesWalkthrough;
   private final Preference<Boolean> showCommentCountInByline;
   private final Preference<Boolean> showNsfwContent;
-  private final Preference<Boolean> showThumbnailsPref;
   private final Preference<Boolean> showSubmissionThumbnailsOnLeft;
+  private final Preference<SubredditSubmissionImageStyle> subredditSubmissionImageStyle;
   private final ErrorResolver errorResolver;
   private final Lazy<BookmarksRepository> bookmarksRepository;
   private final Lazy<SubmissionSwipeActionsRepository> swipeActionsRepository;
@@ -70,8 +70,8 @@ public class SubredditUiConstructor {
       Lazy<SubmissionGesturesWalkthrough> gesturesWalkthrough,
       @Named("comment_count_in_submission_list_byline") Preference<Boolean> showCommentCountInByline,
       @Named("show_nsfw_content") Preference<Boolean> showNsfwContent,
-      @Named("show_submission_thumbnails") Preference<Boolean> showThumbnailsPref,
       @Named("show_submission_thumbnails_on_left") Preference<Boolean> showSubmissionThumbnailsOnLeft,
+      @Named("subreddit_submission_image_style") Preference<SubredditSubmissionImageStyle> subredditSubmissionImageStyle,
       Lazy<SubmissionSwipeActionsRepository> swipeActionsRepository
   ) {
     this.votingManager = votingManager;
@@ -80,8 +80,8 @@ public class SubredditUiConstructor {
     this.gesturesWalkthrough = gesturesWalkthrough;
     this.showCommentCountInByline = showCommentCountInByline;
     this.showNsfwContent = showNsfwContent;
-    this.showThumbnailsPref = showThumbnailsPref;
     this.showSubmissionThumbnailsOnLeft = showSubmissionThumbnailsOnLeft;
+    this.subredditSubmissionImageStyle = subredditSubmissionImageStyle;
     this.swipeActionsRepository = swipeActionsRepository;
   }
 
@@ -93,11 +93,11 @@ public class SubredditUiConstructor {
       Observable<CachedSubmissionFolder> submissionFolderStream)
   {
     Observable<?> userPrefChanges = Observable
-        .merge(
+        .merge(Arrays.asList(
             showCommentCountInByline.asObservable(),
             showNsfwContent.asObservable(),
-            showThumbnailsPref.asObservable(),
-            showSubmissionThumbnailsOnLeft.asObservable()
+            showSubmissionThumbnailsOnLeft.asObservable(),
+            subredditSubmissionImageStyle.asObservable())
         )
         .skip(1); // Skip initial values.
 
@@ -300,7 +300,7 @@ public class SubredditUiConstructor {
     SubmissionThumbnailTypeMinusNsfw thumbnailType = SubmissionThumbnailTypeMinusNsfw.Companion.parse(submission);
     Optional<SubredditSubmission.UiModel.Thumbnail> thumbnail;
 
-    if (!showThumbnailsPref.get()) {
+    if (subredditSubmissionImageStyle.get().equals(SubredditSubmissionImageStyle.NONE)) {
       thumbnail = Optional.empty();
 
     } else if (thumbnailType == SubmissionThumbnailTypeMinusNsfw.NONE) {
@@ -387,6 +387,7 @@ public class SubredditUiConstructor {
         .thumbnail(thumbnail)
         .isThumbnailClickable(isThumbnailClickable)
         .displayThumbnailOnLeftSide(showSubmissionThumbnailsOnLeft.get())
+        .imageStyle(subredditSubmissionImageStyle.get())
         .title(titleBuilder.build(), Pair.create(submissionScore, voteDirection))
         .byline(bylineBuilder.build(), postedAndPendingCommentCount)
         .backgroundDrawableRes(rowBackgroundResource)
@@ -406,7 +407,8 @@ public class SubredditUiConstructor {
 
   private SubredditSubmission.UiModel.Thumbnail thumbnailForRemoteImage(Context c, SubmissionPreview preview) {
     ImageWithMultipleVariants redditThumbnails = ImageWithMultipleVariants.Companion.of(preview);
-    String optimizedThumbnailUrl = redditThumbnails.findNearestFor(c.getResources().getDimensionPixelSize(R.dimen.subreddit_submission_thumbnail));
+    int preferredWidth = getPreferredWidthForThumbnail(c);
+    String optimizedThumbnailUrl = redditThumbnails.findNearestFor(preferredWidth);
 
     return SubredditSubmission.UiModel.Thumbnail.builder()
         .staticRes(Optional.empty())
@@ -416,5 +418,12 @@ public class SubredditUiConstructor {
         .tintColor(Optional.empty())
         .backgroundRes(Optional.empty())
         .build();
+  }
+
+  private int getPreferredWidthForThumbnail(Context c) {
+    if (subredditSubmissionImageStyle.get().equals(SubredditSubmissionImageStyle.LARGE)) {
+      return c.getResources().getDisplayMetrics().widthPixels;
+    }
+    return c.getResources().getDimensionPixelSize(R.dimen.subreddit_submission_thumbnail);
   }
 }

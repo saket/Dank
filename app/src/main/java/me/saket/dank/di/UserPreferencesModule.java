@@ -26,6 +26,7 @@ import me.saket.dank.ui.preferences.DefaultWebBrowser;
 import me.saket.dank.ui.preferences.NetworkStrategy;
 import me.saket.dank.ui.preferences.TypefaceResource;
 import me.saket.dank.ui.subreddit.SubmissionSwipeAction;
+import me.saket.dank.ui.subreddit.uimodels.SubredditSubmissionImageStyle;
 import me.saket.dank.utils.DeviceInfo;
 import me.saket.dank.utils.RxPreferencesEnumListTypeAdapter;
 import me.saket.dank.utils.RxPreferencesEnumTypeAdapter;
@@ -106,12 +107,6 @@ public class UserPreferencesModule {
 // ======== LOOK & FEEL ======== //
 
   @Provides
-  @Named("show_submission_thumbnails")
-  Preference<Boolean> showSubmissionThumbnailsPref(@Named("user_prefs") RxSharedPreferences rxPrefs) {
-    return rxPrefs.getBoolean("show_submission_thumbnails", true);
-  }
-
-  @Provides
   @Named("show_submission_thumbnails_on_left")
   Preference<Boolean> showSubmissionThumbnailsOnLeftPref(@Named("user_prefs") RxSharedPreferences rxPrefs) {
     return rxPrefs.getBoolean("show_submission_thumbnails_on_left", false);
@@ -126,6 +121,22 @@ public class UserPreferencesModule {
   @Named("show_colored_comments_tree")
   Preference<Boolean> showColoredCommentsTreePref(@Named("user_prefs") RxSharedPreferences rxPrefs) {
     return rxPrefs.getBoolean("show_colored_comments_tree", false);
+  }
+
+  @Provides
+  RxPreferencesEnumTypeAdapter<SubredditSubmissionImageStyle> subredditSubmissionImageStyleEnumTypeAdapter() {
+    return new RxPreferencesEnumTypeAdapter<>(SubredditSubmissionImageStyle.class);
+  }
+
+  @Provides
+  @Named("subreddit_submission_image_style")
+  Preference<SubredditSubmissionImageStyle> subredditSubmissionImageStylePref(
+      @Named("user_prefs") RxSharedPreferences rxPrefs,
+      RxPreferencesEnumTypeAdapter<SubredditSubmissionImageStyle> enumAdapter
+  ) {
+    Boolean thumbnailsEnabledUsingOldPreference = rxPrefs.getBoolean("show_submission_thumbnails", true).get();
+    SubredditSubmissionImageStyle defaultStyle = thumbnailsEnabledUsingOldPreference ? SubredditSubmissionImageStyle.THUMBNAIL : SubredditSubmissionImageStyle.NONE;
+    return rxPrefs.getObject("subreddit_submission_image_style", defaultStyle, enumAdapter);
   }
 
 // ======== DATA USAGE ======== //

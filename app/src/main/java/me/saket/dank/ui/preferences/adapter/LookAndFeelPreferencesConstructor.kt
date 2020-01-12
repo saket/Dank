@@ -7,17 +7,18 @@ import me.saket.dank.R
 import me.saket.dank.ui.preferences.MultiOptionPreferencePopup
 import me.saket.dank.ui.preferences.TypefaceResource
 import me.saket.dank.ui.subreddit.SubmissionSwipeAction
+import me.saket.dank.ui.subreddit.uimodels.SubredditSubmissionImageStyle
 import javax.inject.Inject
 import javax.inject.Named
 
 class LookAndFeelPreferencesConstructor @Inject constructor(
   private val typefacePref: Preference<TypefaceResource>,
-  @Named("show_submission_thumbnails") private val showSubmissionThumbnails: Preference<Boolean>,
   @Named("comment_count_in_submission_list_byline") private val showCommentCountInByline: Preference<Boolean>,
   @Named("show_submission_thumbnails_on_left") private val showSubmissionThumbnailsOnLeft: Preference<Boolean>,
   @Named("show_colored_comments_tree") private val showColoredCommentsTree: Preference<Boolean>,
   @Named("submission_start_swipe_actions") private val submissionStartSwipeActions: Preference<List<SubmissionSwipeAction>>,
-  @Named("submission_end_swipe_actions") private val submissionEndSwipeActions: Preference<List<SubmissionSwipeAction>>
+  @Named("submission_end_swipe_actions") private val submissionEndSwipeActions: Preference<List<SubmissionSwipeAction>>,
+  @Named("subreddit_submission_image_style") private val subredditSubmissionImageStyle: Preference<SubredditSubmissionImageStyle>
 ) : UserPreferencesConstructor.ChildConstructor {
 
   override fun construct(c: Context): List<UserPreferencesScreenUiModel> {
@@ -64,28 +65,30 @@ class LookAndFeelPreferencesConstructor @Inject constructor(
 
     uiModels.add(UserPreferenceSectionHeader.UiModel.create(c.getString(R.string.userprefs_group_subreddit)))
 
-    uiModels.add(
-      UserPreferenceSwitch.UiModel(
-        c.getString(R.string.userprefs_submission_thumbnails),
-        if (showSubmissionThumbnails.get())
-          c.getString(R.string.userprefs_submission_thumbnail_summary_on)
-        else
-          c.getString(R.string.userprefs_submission_thumbnail_summary_off),
-        showSubmissionThumbnails.get(),
-        showSubmissionThumbnails
-      )
-    )
+    uiModels.add(UserPreferenceButton.UiModel.create(
+      c.getString(R.string.userprefs_submission_image_style),
+      c.getString(subredditSubmissionImageStyle.get().userVisibleName)
+    ) { clickHandler, event ->
+      val builder = MultiOptionPreferencePopup.builder(subredditSubmissionImageStyle)
+      builder.addOption(SubredditSubmissionImageStyle.NONE, R.string.image_style_disabled, R.drawable.ic_block_20dp)
+      builder.addOption(SubredditSubmissionImageStyle.THUMBNAIL, R.string.image_style_thumbnail, R.drawable.ic_image_style_thumbnail_20dp)
+      builder.addOption(SubredditSubmissionImageStyle.LARGE, R.string.image_style_large, R.drawable.ic_image_style_large_20dp)
+      clickHandler.show(builder, event.itemViewHolder())
+    })
 
     uiModels.add(
       UserPreferenceSwitch.UiModel(
-        c.getString(R.string.userprefs_show_submission_thumbnails_on_left),
+        if (subredditSubmissionImageStyle.get() == SubredditSubmissionImageStyle.THUMBNAIL)
+          c.getString(R.string.userprefs_show_submission_thumbnails_on_left)
+        else
+          c.getString(R.string.userprefs_show_submission_type_indicator_on_left),
         if (showSubmissionThumbnailsOnLeft.get())
           c.getString(R.string.userprefs_show_submission_thumbnails_on_left_summary_on)
         else
           c.getString(R.string.userprefs_show_submission_thumbnails_on_left_summary_off),
         showSubmissionThumbnailsOnLeft.get(),
         showSubmissionThumbnailsOnLeft,
-        showSubmissionThumbnails.get()
+        subredditSubmissionImageStyle.get() != SubredditSubmissionImageStyle.NONE
       )
     )
 

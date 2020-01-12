@@ -28,6 +28,8 @@
   <color name="dialog_background">#393a3c</color>
   <color name="dialog_like_activity_window_background">@color/black_opacity_40</color>
 
+  <color name="color_accent_opacity_20">#331DE9B6</color>
+
   <color name="toolbar">@color/gray_900</color>
   <color name="navigation_bar">@color/gray_950</color>
 

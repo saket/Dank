@@ -4,6 +4,9 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
+### Added
+- Large image previews ([#87](https://github.com/Tunous/Dawn/pull/87))
+
 ### Changed
 - Renamed application to "Dawn" ([#74](https://github.com/Tunous/Dawn/pull/74))
 

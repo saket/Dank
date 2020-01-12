@@ -34,7 +34,6 @@ import me.saket.dank.ui.subreddit.events.SubredditSubmissionClickEvent;
 import me.saket.dank.ui.subreddit.events.SubredditSubmissionThumbnailClickEvent;
 import me.saket.dank.utils.Optional;
 import me.saket.dank.utils.Pair;
-import me.saket.dank.utils.glide.GlideCircularTransformation;
 import me.saket.dank.widgets.swipe.SwipeActions;
 import me.saket.dank.widgets.swipe.SwipeableLayout;
 import me.saket.dank.widgets.swipe.ViewHolderWithSwipeActions;
@@ -76,6 +75,8 @@ public interface SubredditSubmission {
 
     public abstract boolean displayThumbnailOnLeftSide();
 
+    public abstract SubredditSubmissionImageStyle imageStyle();
+
     public abstract SwipeActions swipeActions();
 
     public static Builder builder() {
@@ -109,6 +110,8 @@ public interface SubredditSubmission {
       public abstract Builder isSaved(boolean isSaved);
 
       public abstract Builder displayThumbnailOnLeftSide(boolean displayThumbnailOnLeftSide);
+
+      public abstract Builder imageStyle(SubredditSubmissionImageStyle imageStyle);
 
       public abstract Builder swipeActions(SwipeActions swipeActions);
 
@@ -154,6 +157,7 @@ public interface SubredditSubmission {
 
   class ViewHolder extends RecyclerView.ViewHolder implements ViewHolderWithSwipeActions {
     private final ImageView thumbnailView;
+    private final ImageView imageView;
     private final TextView titleView;
     private final TextView bylineView;
     private final ConstraintLayout contentContainerConstraintLayout;
@@ -164,6 +168,7 @@ public interface SubredditSubmission {
     protected ViewHolder(View itemView) {
       super(itemView);
       thumbnailView = itemView.findViewById(R.id.submission_item_icon);
+      imageView = itemView.findViewById(R.id.submission_item_image);
       titleView = itemView.findViewById(R.id.submission_item_title);
       bylineView = itemView.findViewById(R.id.submission_item_byline);
 
@@ -188,6 +193,7 @@ public interface SubredditSubmission {
       bylineView.setText(uiModel.byline());
 
       Glide.with(thumbnailView).clear(thumbnailView);
+      Glide.with(imageView).clear(imageView);
       setThumbnail(uiModel.thumbnail());
 
       if (uiModel.backgroundDrawableRes().isPresent()) {
@@ -240,7 +246,9 @@ public interface SubredditSubmission {
     }
 
     private void setThumbnail(Optional<UiModel.Thumbnail> optionalThumbnail) {
-      thumbnailView.setVisibility(uiModel.thumbnail().isPresent() ? View.VISIBLE : View.GONE);
+      int visibility = uiModel.thumbnail().isPresent() ? View.VISIBLE : View.GONE;
+      thumbnailView.setVisibility(visibility);
+      imageView.setVisibility(visibility);
 
       optionalThumbnail.ifPresent(thumb -> {
         thumbnailView.setBackgroundResource(thumb.backgroundRes().orElse(0));
@@ -254,13 +262,32 @@ public interface SubredditSubmission {
         }
 
         if (thumb.staticRes().isPresent()) {
+          imageView.setVisibility(View.GONE);
           thumbnailView.setImageResource(thumb.staticRes().get());
+
         } else {
-          Glide.with(itemView)
-              .load(thumb.remoteUrl().get())
-              .apply(RequestOptions.bitmapTransform(GlideCircularTransformation.INSTANCE))
-              .transition(DrawableTransitionOptions.withCrossFade())
-              .into(thumbnailView);
+          switch (uiModel.imageStyle()) {
+            case NONE:
+              imageView.setVisibility(View.GONE);
+              thumbnailView.setVisibility(View.GONE);
+              break;
+            case THUMBNAIL:
+              imageView.setVisibility(View.GONE);
+              Glide.with(itemView)
+                  .load(thumb.remoteUrl().get())
+                  .apply(RequestOptions.circleCropTransform())
+                  .transition(DrawableTransitionOptions.withCrossFade())
+                  .into(thumbnailView);
+              break;
+            case LARGE:
+              thumbnailView.setVisibility(View.GONE);
+              Glide.with(itemView)
+                  .load(thumb.remoteUrl().get())
+                  .apply(RequestOptions.centerCropTransform())
+                  .transition(DrawableTransitionOptions.withCrossFade())
+                  .into(imageView);
+              break;
+          }
         }
       });
     }
@@ -287,13 +314,15 @@ public interface SubredditSubmission {
       holder.itemView.setOnClickListener(o ->
           submissionClicks.accept(SubredditSubmissionClickEvent.create(holder.uiModel.submission(), holder.itemView, holder.getItemId()))
       );
-      holder.thumbnailView.setOnClickListener(o -> {
+      View.OnClickListener imageClickListener = o -> {
         if (holder.uiModel.isThumbnailClickable()) {
           thumbnailClicks.accept(SubredditSubmissionThumbnailClickEvent.create(holder.uiModel.submission(), holder.itemView, holder.thumbnailView));
         } else {
           holder.itemView.performClick();
         }
-      });
+      };
+      holder.imageView.setOnClickListener(imageClickListener);
+      holder.thumbnailView.setOnClickListener(imageClickListener);
 
       SwipeableLayout swipeableLayout = holder.getSwipeableLayout();
       swipeableLayout.setSwipeActionIconProvider((imageView, oldAction, newAction) ->
