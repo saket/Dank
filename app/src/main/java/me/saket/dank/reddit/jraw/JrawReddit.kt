@@ -1,5 +1,7 @@
 package me.saket.dank.reddit.jraw
 
+import io.reactivex.Completable
+import io.reactivex.schedulers.Schedulers.io
 import io.reactivex.subjects.BehaviorSubject
 import me.saket.dank.reddit.Reddit
 import me.saket.dank.ui.user.UserSessionRepository
@@ -35,7 +37,10 @@ class JrawReddit @Inject constructor(
       }
       else -> {
         Timber.i("Switching to userless")
-        accountHelper.switchToUserless()
+        Completable.fromAction {
+          accountHelper.switchToUserless()
+        }.subscribeOn(io())
+          .subscribe()
       }
     }
 

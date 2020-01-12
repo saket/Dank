@@ -7,6 +7,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Changed
 - Renamed application to "Dawn" ([#74](https://github.com/Tunous/Dawn/pull/74))
 
+### Fixed
+- Occasional crash when entering login screen ([#103](https://github.com/Tunous/Dawn/pull/103))
+
 ## [0.8.0] - 2019-08-22
 ### Added
 - Subscribing to /r/all ([#28](https://github.com/Tunous/Dank/pull/28))
