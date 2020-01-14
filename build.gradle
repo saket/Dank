@@ -12,7 +12,7 @@ buildscript {
       stetho          : '1.5.1',
       nytStore        : '3.1.1',
       okHttp          : '4.2.2',
-      retrofit        : '2.6.2',
+      retrofit        : '2.7.1',
       rxBindings      : '2.2.0',
       dagger          : '2.25.4',
       butterKnife     : '10.2.0',
