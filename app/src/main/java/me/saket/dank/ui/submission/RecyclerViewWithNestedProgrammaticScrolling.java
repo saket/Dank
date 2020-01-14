@@ -25,37 +25,37 @@ public class RecyclerViewWithNestedProgrammaticScrolling extends RecyclerView im
 
   @Override
   public void smoothScrollBy(int dx, int dy) {
-    startNestedScroll(View.SCROLL_AXIS_VERTICAL, ViewCompat.TYPE_NON_TOUCH);
+    startNestedScroll(ViewCompat.SCROLL_AXIS_VERTICAL, ViewCompat.TYPE_NON_TOUCH);
     super.smoothScrollBy(dx, dy);
   }
 
   @Override
   public void smoothScrollBy(int dx, int dy, Interpolator interpolator) {
-    startNestedScroll(View.SCROLL_AXIS_VERTICAL, ViewCompat.TYPE_NON_TOUCH);
+    startNestedScroll(ViewCompat.SCROLL_AXIS_VERTICAL, ViewCompat.TYPE_NON_TOUCH);
     super.smoothScrollBy(dx, dy, interpolator);
   }
 
   @Override
   public void smoothScrollToPosition(int position) {
-    startNestedScroll(View.SCROLL_AXIS_VERTICAL, ViewCompat.TYPE_NON_TOUCH);
+    startNestedScroll(ViewCompat.SCROLL_AXIS_VERTICAL, ViewCompat.TYPE_NON_TOUCH);
     super.smoothScrollToPosition(position);
   }
 
   @Override
   public void scrollBy(int x, int y) {
-    startNestedScroll(View.SCROLL_AXIS_VERTICAL, ViewCompat.TYPE_NON_TOUCH);
+    startNestedScroll(ViewCompat.SCROLL_AXIS_VERTICAL, ViewCompat.TYPE_NON_TOUCH);
     super.scrollBy(x, y);
   }
 
   @Override
   public void scrollTo(int x, int y) {
-    startNestedScroll(View.SCROLL_AXIS_VERTICAL, ViewCompat.TYPE_NON_TOUCH);
+    startNestedScroll(ViewCompat.SCROLL_AXIS_VERTICAL, ViewCompat.TYPE_NON_TOUCH);
     super.scrollTo(x, y);
   }
 
   @Override
   public void scrollToPosition(int position) {
-    startNestedScroll(View.SCROLL_AXIS_VERTICAL, ViewCompat.TYPE_NON_TOUCH);
+    startNestedScroll(ViewCompat.SCROLL_AXIS_VERTICAL, ViewCompat.TYPE_NON_TOUCH);
     super.scrollToPosition(position);
   }
 }

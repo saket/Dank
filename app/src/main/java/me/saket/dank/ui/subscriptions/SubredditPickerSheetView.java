@@ -135,7 +135,7 @@ public class SubredditPickerSheetView extends FrameLayout implements SubredditAd
     ButterKnife.bind(this, this);
     Dank.dependencyInjector().inject(this);
 
-    saveButton.setVisibility(INVISIBLE);
+    saveButton.hide();
     sheetState = SheetState.BROWSE_SUBS;
     subscriptions = new CompositeDisposable();
     showHiddenSubredditsSubject = BehaviorRelay.createDefault(false);
