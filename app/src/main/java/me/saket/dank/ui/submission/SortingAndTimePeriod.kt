@@ -22,7 +22,7 @@ data class SortingAndTimePeriod(
 
   constructor(sortOrder: SubredditSort) : this(sortOrder, DAY) {
     if (sortOrder.requiresTimePeriod) {
-      throw AssertionError(sortOrder.toString() + " requires a time-period")
+      throw AssertionError("$sortOrder requires a time-period")
     }
   }
 

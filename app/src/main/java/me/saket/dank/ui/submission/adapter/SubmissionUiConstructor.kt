@@ -220,7 +220,7 @@ class SubmissionUiConstructor @Inject constructor(
 
 
     val selfTextOptional = when {
-      submission.isSelfPost && !submission.selfText!!.isEmpty() -> Optional.of(markdown.parseSelfText(submission))
+      submission.isSelfPost && submission.selfText!!.isNotEmpty() -> Optional.of(markdown.parseSelfText(submission))
       else -> Optional.empty()
     }
 
@@ -260,7 +260,7 @@ class SubmissionUiConstructor @Inject constructor(
         R.string.submission_byline,
         submission.subreddit,
         submission.author,
-        Dates.createTimestamp(context.resources, submission.created.getTime()))
+        Dates.createTimestamp(context.resources, submission.created.time))
 
     return SubmissionCommentsHeader.UiModel.builder()
         .adapterId(adapterId)

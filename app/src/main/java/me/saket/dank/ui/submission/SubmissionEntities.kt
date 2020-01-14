@@ -28,7 +28,7 @@ data class CachedSubmission(
 data class CachedSubmissionComments(
     val submissionId: String,
 
-    @field:[Enveloped()]
+    @field:[Enveloped]
     val replies: Listing<NestedIdentifiable>,
 
     @PrimaryKey

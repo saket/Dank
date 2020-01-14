@@ -9,6 +9,7 @@ import me.saket.dank.ui.submission.CommentOptionsPopup
 import me.saket.dank.utils.Views
 import me.saket.dank.widgets.swipe.SwipeableLayout
 import net.dean.jraw.models.Comment
+import kotlin.math.max
 
 data class CommentOptionSwipeEvent(private val comment: Comment, private val itemView: SwipeableLayout) : SwipeEvent {
 
@@ -25,7 +26,7 @@ data class CommentOptionSwipeEvent(private val comment: Comment, private val ite
 
     // Keep below toolbar.
     val toolbarBottom = Views.locationOnScreen(toolbar).y + toolbar.bottom + resources.getDimensionPixelSize(R.dimen.spacing16)
-    popupLocation.y = Math.max(popupLocation.y, toolbarBottom)
+    popupLocation.y = max(popupLocation.y, toolbarBottom)
 
     val optionsPopup = CommentOptionsPopup(commentLayout.context, comment)
     optionsPopup.showAtLocation(commentLayout, Gravity.TOP or Gravity.START, popupLocation)

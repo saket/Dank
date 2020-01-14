@@ -41,9 +41,7 @@ class SubmissionsSortingModePopupMenu(
     )
 
     setOnMenuItemClickListener { menuItem ->
-      val itemItemId = menuItem.itemId
-
-      when (itemItemId) {
+      when (val itemItemId = menuItem.itemId) {
         R.id.action_subreddit_sorting_controversial,
         R.id.action_subreddit_sorting_top -> {
           // Submenu.

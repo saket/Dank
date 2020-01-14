@@ -102,7 +102,7 @@ constructor() {
       // AFAIK, thrown by Glide in situations like socket-timeout.
       actualError = findActualCause(actualError.cause!!)
     }
-    if (actualError is GlideException && !actualError.rootCauses.isEmpty()) {
+    if (actualError is GlideException && actualError.rootCauses.isNotEmpty()) {
       actualError = actualError.rootCauses.last()
     }
     if (actualError is CompositeException) {

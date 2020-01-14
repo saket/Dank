@@ -128,8 +128,8 @@ interface SubmissionLocalComment {
   }
 
   class Adapter @Inject constructor(
-      val linkMovementMethod: DankLinkMovementMethod,
-      val swipeActionsProvider: CommentSwipeActionsProvider
+    private val linkMovementMethod: DankLinkMovementMethod,
+    private val swipeActionsProvider: CommentSwipeActionsProvider
   ) : SubmissionScreenUiModel.Adapter<UiModel, ViewHolder> {
 
     private val uiEvents = PublishRelay.create<UiEvent>()

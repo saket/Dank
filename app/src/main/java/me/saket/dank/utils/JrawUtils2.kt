@@ -40,10 +40,11 @@ object JrawUtils2 {
     val destination = message.dest
 
     return when {
-      destination.startsWith("#") -> resources.getString(R.string.subreddit_name_r_prefix, message.subreddit)
-      destination.equals(loggedInUserName, ignoreCase = true) -> when {
-        message.author == null -> resources.getString(R.string.subreddit_name_r_prefix, message.subreddit)!!
-        else -> message.author
+      destination.startsWith("#") -> {
+        resources.getString(R.string.subreddit_name_r_prefix, message.subreddit)
+      }
+      destination.equals(loggedInUserName, ignoreCase = true) -> {
+        message.author ?: resources.getString(R.string.subreddit_name_r_prefix, message.subreddit)
       }
       else -> destination
     }

@@ -21,19 +21,19 @@ class SubmissionSwipeActionPreferenceChoicePopup(
     createMenuLayout(context, menuStructure(context))
   }
 
-  private fun menuStructure(context: Context): NestedOptionsPopupMenu.MenuStructure {
+  private fun menuStructure(context: Context): MenuStructure {
     val menuItems = ArrayList<MenuStructure.SingleLineItem>()
     val swipeActions = swipeActionsRepository.unusedSwipeActions(forStartAction).blockingFirst()
     for (swipeAction in swipeActions) {
       menuItems.add(
-        NestedOptionsPopupMenu.MenuStructure.SingleLineItem.create(
+        MenuStructure.SingleLineItem.create(
           swipeAction.displayNameRes,
           context.getString(swipeAction.displayNameRes),
           SubmissionSwipeActions.getSwipeActionIconRes(swipeAction)
         )
       )
     }
-    return NestedOptionsPopupMenu.MenuStructure.create(Optional.empty(), menuItems)
+    return MenuStructure.create(Optional.empty(), menuItems)
   }
 
   override fun handleAction(c: Context, actionId: Int) {

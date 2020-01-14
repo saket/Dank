@@ -124,7 +124,7 @@ public class SubmissionImageLoader {
   }
 
   public Single<Drawable> loadImage(Context context, String imageUrl, RequestOptions options) {
-    if (SyntheticData.Companion.getSUBMISSION_IMAGE_URL_FOR_GESTURE_WALKTHROUGH().equalsIgnoreCase(imageUrl)) {
+    if (SyntheticData.SUBMISSION_IMAGE_URL_FOR_GESTURE_WALKTHROUGH.equalsIgnoreCase(imageUrl)) {
       //noinspection ConstantConditions
       return Single.just(context.getDrawable(R.drawable.dank_cat));
     }

@@ -5,6 +5,7 @@ import me.saket.dank.urlparser.UrlParser
 import me.saket.dank.utils.Optional
 import net.dean.jraw.models.SubmissionPreview
 import java.util.*
+import kotlin.math.abs
 
 class ImageWithMultipleVariants private constructor(private val optionalRedditPreviews: Optional<SubmissionPreview>) {
 
@@ -26,8 +27,8 @@ class ImageWithMultipleVariants private constructor(private val optionalRedditPr
     var closestDifference = preferredWidth - redditPreviews.source.width
 
     for (variation in redditPreviews.resolutions) {
-      val differenceAbs = Math.abs(preferredWidth - variation.width)
-      if (differenceAbs < Math.abs(closestDifference)
+      val differenceAbs = abs(preferredWidth - variation.width)
+      if (differenceAbs < abs(closestDifference)
           // If another image is found with the same difference, choose the higher-res image.
           || differenceAbs == closestDifference && variation.width > closestImage.width) {
         closestDifference = preferredWidth - variation.width

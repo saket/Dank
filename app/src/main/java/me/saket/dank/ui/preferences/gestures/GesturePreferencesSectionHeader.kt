@@ -21,7 +21,7 @@ interface GesturePreferencesSectionHeader {
 
     override fun onBindViewHolder(
       holder: UserPreferenceSectionHeader.ViewHolder,
-      uiModel: GesturePreferencesSectionHeader.UiModel
+      uiModel: UiModel
     ) {
       super.onBindViewHolder(holder, uiModel.headerUiModel)
     }

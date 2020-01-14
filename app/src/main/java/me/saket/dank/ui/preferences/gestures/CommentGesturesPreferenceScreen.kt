@@ -3,7 +3,6 @@ package me.saket.dank.ui.preferences.gestures
 import android.content.Context
 import android.util.AttributeSet
 import android.view.MotionEvent
-import android.view.View
 import android.widget.RelativeLayout
 import androidx.appcompat.widget.Toolbar
 import me.saket.dank.R
@@ -30,7 +29,7 @@ class CommentGesturesPreferenceScreen(context: Context, attrs: AttributeSet?) : 
     return false
   }
 
-  override fun setNavigationOnClickListener(listener: View.OnClickListener) {
+  override fun setNavigationOnClickListener(listener: OnClickListener) {
     toolbar.setNavigationOnClickListener(listener)
   }
 }

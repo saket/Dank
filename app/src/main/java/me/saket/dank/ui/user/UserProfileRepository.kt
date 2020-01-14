@@ -69,8 +69,8 @@ class UserProfileRepository @Inject constructor(
         .map { query ->
           when (query.status) {
             AccountStatus.EXISTS -> UserProfile(query.account!!, userSubreddit = null)  // TODO JRAW: Get user's subreddit
-            AccountStatus.NON_EXISTENT -> UserNotFound()
-            AccountStatus.SUSPENDED -> UserSuspended()
+            AccountStatus.NON_EXISTENT -> UserNotFound
+            AccountStatus.SUSPENDED -> UserSuspended
             null -> throw AssertionError("Null status received when querying $username's profile")
           }
         }

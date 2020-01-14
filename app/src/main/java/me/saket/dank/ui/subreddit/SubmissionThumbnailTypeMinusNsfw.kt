@@ -30,8 +30,8 @@ enum class SubmissionThumbnailTypeMinusNsfw {
         }
         ThumbnailType.DEFAULT -> NONE
         ThumbnailType.SELF -> SELF_POST
-        ThumbnailType.URL -> when {
-          submission.preview == null -> URL_STATIC_ICON
+        ThumbnailType.URL -> when (submission.preview) {
+          null -> URL_STATIC_ICON
           else -> URL_REMOTE_THUMBNAIL
         }
         ThumbnailType.NONE -> NONE

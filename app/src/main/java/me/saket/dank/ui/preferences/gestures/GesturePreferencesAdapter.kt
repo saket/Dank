@@ -57,7 +57,7 @@ class GesturePreferencesAdapter @Inject constructor(
   }
 
   override fun onCreateViewHolder(inflater: LayoutInflater, parent: ViewGroup, viewType: Int): RecyclerView.ViewHolder {
-    return childAdapters[VIEW_TYPES[viewType]]!!.onCreateViewHolder(inflater, parent)
+    return childAdapters.getValue(VIEW_TYPES[viewType]).onCreateViewHolder(inflater, parent)
   }
 
   override fun onBindViewHolder(holder: RecyclerView.ViewHolder, position: Int) {

@@ -39,8 +39,7 @@ class JrawLoggedInUser(private val clients: Observable<RedditClient>, private va
     return clients
         .firstOrError()
         .map<Identifiable> {
-          val fullNameType = parse(parent.fullName)
-          when (fullNameType) {
+          when (parse(parent.fullName)) {
             COMMENT -> it.comment(parent.id).reply(body)
             SUBMISSION -> it.submission(parent.id).reply(body)
             MESSAGE -> it.me().inbox().replyTo(parent.fullName, body)

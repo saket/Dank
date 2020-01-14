@@ -11,8 +11,8 @@ data class UserProfile(
     val userSubreddit: UserSubreddit?
 ) : UserProfileSearchResult()
 
-class UserNotFound : UserProfileSearchResult()
+object UserNotFound : UserProfileSearchResult()
 
-class UserSuspended : UserProfileSearchResult()
+object UserSuspended : UserProfileSearchResult()
 
 data class UnexpectedError(val error: Throwable) : UserProfileSearchResult()
