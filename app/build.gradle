@@ -197,7 +197,7 @@ dependencies {
   implementation("net.dean.jraw:JRAW-Android:1.1.0") {
     exclude group: 'net.dean.jraw'
   }
-  implementation 'com.alexvasilkov:gesture-views:2.5.2'
+  implementation 'com.alexvasilkov:gesture-views:2.3.1'
   implementation 'com.github.saketme:exomedia:530dfac84c'
   implementation 'com.danikula:videocache:2.7.1'
 
