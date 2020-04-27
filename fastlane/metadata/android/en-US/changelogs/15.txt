@@ -1,0 +1,6 @@
+Added
+
+• Subscribing to /r/all
+• View parent submission of crosspost
+• Links to repository and changelog in about screen
+• Colored comments depth level

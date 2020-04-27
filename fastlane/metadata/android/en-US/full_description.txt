@@ -1,0 +1,1 @@
+This is an open-source fork of "Dank for Reddit" originally created by Saket Narayanm, you can find the original repository here: https://github.com/saket/Dank. You can find the source code of this fork here: https://github.com/Tunous/Dawn
