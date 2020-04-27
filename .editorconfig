@@ -1,0 +1,24 @@
+# https://editorconfig.org
+
+root = true
+
+[*]
+charset = utf-8
+end_of_line = lf
+insert_final_newline = true
+indent_style = space
+
+[*.xml]
+indent_size = 2
+ij_continuation_indent_size = 2
+
+[*.{java,kt}]
+indent_size = 2
+ij_continuation_indent_size = 4
+
+[*.java]
+ij_java_do_not_wrap_after_single_annotation = true
+
+[*.kt]
+ij_kotlin_code_style_defaults = KOTLIN_OFFICIAL
+ij_kotlin_field_annotation_wrap = normal
