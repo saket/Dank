@@ -1,0 +1,120 @@
+name: Debug
+on: [push]
+jobs:
+  build:
+    name: Build
+    runs-on: ubuntu-latest
+    steps:
+      # Preparation
+
+      - name: Checkout
+        uses: actions/checkout@v1
+
+      - name: Copy CI gradle.properties
+        run: mkdir -p ~/.gradle ; cp .github/ci-gradle.properties ~/.gradle/gradle.properties
+
+      # Cache
+
+      - name: Generate cache key
+        run: ./checksum.sh checksum.txt
+
+      - name: Cache gradle modules
+        uses: actions/cache@v1
+        with:
+          path: ~/.gradle/caches/modules-2
+          key: ${{ runner.os }}-gradlemodules-${{ hashFiles('checksum.txt') }}
+          restore-keys: |
+            ${{ runner.os }}-gradlemodules-
+
+      - name: Cache gradle jars
+        uses: actions/cache@v1
+        with:
+          path: ~/.gradle/caches/jars-3
+          key: ${{ runner.os }}-gradlejars-${{ hashFiles('checksum.txt') }}
+          restore-keys: |
+            ${{ runner.os }}-gradlejars-
+
+      - name: Cache gradle build
+        uses: actions/cache@v1
+        with:
+          path: ~/.gradle/caches/build-cache-1
+          key: ${{ runner.os }}-gradlebuildcache-${{ hashFiles('checksum.txt') }}
+          restore-keys: |
+            ${{ runner.os }}-gradlebuildcache-
+
+      # Debug APK
+
+      - name: Assemble debug APK
+        run: ./gradlew :app:assembleDebug
+
+      - name: Upload debug APK
+        uses: actions/upload-artifact@master
+        with:
+          name: Dawn Debug APK
+          path: app/build/outputs/apk/debug/app-debug.apk
+
+  test:
+    name: Unit Tests
+    runs-on: ubuntu-latest
+    steps:
+      # Preparation
+
+      - name: Checkout
+        uses: actions/checkout@v1
+
+      - name: Copy CI gradle.properties
+        run: mkdir -p ~/.gradle ; cp .github/ci-gradle.properties ~/.gradle/gradle.properties
+
+      # Cache
+
+      - name: Generate cache key
+        run: ./checksum.sh checksum.txt
+
+      - name: Cache gradle modules
+        uses: actions/cache@v1
+        with:
+          path: ~/.gradle/caches/modules-2
+          key: ${{ runner.os }}-gradlemodules-${{ hashFiles('checksum.txt') }}
+          restore-keys: |
+            ${{ runner.os }}-gradlemodules-
+
+      - name: Cache gradle jars
+        uses: actions/cache@v1
+        with:
+          path: ~/.gradle/caches/jars-3
+          key: ${{ runner.os }}-gradlejars-${{ hashFiles('checksum.txt') }}
+          restore-keys: |
+            ${{ runner.os }}-gradlejars-
+
+      - name: Cache gradle build
+        uses: actions/cache@v1
+        with:
+          path: ~/.gradle/caches/build-cache-1
+          key: ${{ runner.os }}-gradlebuildcache-${{ hashFiles('checksum.txt') }}
+          restore-keys: |
+            ${{ runner.os }}-gradlebuildcache-
+
+      # Tests
+
+      - name: Run tests
+        run: ./gradlew testDebug
+
+      - name: Upload test report
+        if: always()
+        uses: actions/upload-artifact@v1
+        with:
+          name: Test report
+          path: app/build/reports
+
+      - name: Copy test results
+        if: always()
+        run: |
+          mkdir -p junit
+          find . -type f -regex ".*/build/test-results/.*xml" -exec cp {} junit/ \;
+
+      - name: Upload raw JUnit results
+        if: always()
+        uses: actions/upload-artifact@v1
+        with:
+          name: Raw JUnit results
+          path: junit
