@@ -1,7 +1,6 @@
 package me.saket.dank.ui.subreddit;
 
 import android.net.Uri;
-import android.util.Size;
 
 import com.f2prateek.rx.preferences2.Preference;
 
@@ -34,12 +33,12 @@ import me.saket.dank.ui.preferences.NetworkStrategy;
 import me.saket.dank.ui.submission.SubmissionImageLoader;
 import me.saket.dank.ui.submission.SubmissionRepository;
 import me.saket.dank.urlparser.ExternalLink;
-import me.saket.dank.urlparser.LinkMetadata;
 import me.saket.dank.urlparser.UrlParser;
 import me.saket.dank.utils.NetworkStateListener;
 import me.saket.dank.utils.Optional;
 import me.saket.dank.utils.RxUtils;
 import me.saket.dank.utils.UrlParserTest;
+import me.thanel.dawn.linkunfurler.LinkMetadata;
 
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.mock;
@@ -63,10 +62,9 @@ public class CachePreFillerShould {
   @Mock SubmissionImageLoader imageLoader;
 
   private CachePreFiller cachePreFiller;
-  private static final Size DISPLAY_SIZE = new Size(1280, 1920);
 
   @Before
-  public void setUp() throws Exception {
+  public void setUp() {
     PowerMockito.mockStatic(Uri.class);
     //noinspection ConstantConditions
     cachePreFiller = new CachePreFiller(
@@ -77,7 +75,7 @@ public class CachePreFillerShould {
         linkMetadataRepo,
         () -> urlParser,
         () -> imageLoader,
-        () -> Schedulers.computation(),
+        Schedulers::computation,
         () -> networkStrategies);
 
     PowerMockito.mockStatic(RxUtils.class);
@@ -99,7 +97,6 @@ public class CachePreFillerShould {
     submissions.add(PowerMockito.mock(Submission.class));
     submissions.add(PowerMockito.mock(Submission.class));
 
-    //noinspection ConstantConditions
     cachePreFiller.preFillInParallelThreads(submissions, 160)
         .test()
         .assertSubscribed()

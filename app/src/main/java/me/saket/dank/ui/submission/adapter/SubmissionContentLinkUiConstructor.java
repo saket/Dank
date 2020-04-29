@@ -37,7 +37,6 @@ import me.saket.dank.data.ResolvedError;
 import me.saket.dank.urlparser.ExternalLink;
 import me.saket.dank.urlparser.ImgurAlbumLink;
 import me.saket.dank.urlparser.Link;
-import me.saket.dank.urlparser.LinkMetadata;
 import me.saket.dank.urlparser.RedditLink;
 import me.saket.dank.urlparser.RedditSubmissionLink;
 import me.saket.dank.urlparser.RedditSubredditLink;
@@ -48,6 +47,7 @@ import me.saket.dank.utils.Optional;
 import me.saket.dank.utils.Pair;
 import me.saket.dank.utils.Urls;
 import me.saket.dank.utils.glide.GlideCircularTransformation;
+import me.thanel.dawn.linkunfurler.LinkMetadata;
 import timber.log.Timber;
 
 import static io.reactivex.schedulers.Schedulers.io;
@@ -150,7 +150,7 @@ public class SubmissionContentLinkUiConstructor {
     Observable<Optional<Drawable>> sharedFaviconStream = fetchFavicon(context, sharedLinkMetadataStream)
         .replay()
         .refCount();
-    Observable<Optional<String>> thumbnailUrlStream = sharedLinkMetadataStream.map(linkMetadata -> Optional.ofNullable(linkMetadata.imageUrl()));
+    Observable<Optional<String>> thumbnailUrlStream = sharedLinkMetadataStream.map(linkMetadata -> Optional.ofNullable(linkMetadata.getImageUrl()));
     Observable<Optional<Drawable>> sharedThumbnailStream = fetchThumbnail(context, redditSuppliedThumbnails, thumbnailUrlStream)
         .replay()
         .refCount();
@@ -261,7 +261,7 @@ public class SubmissionContentLinkUiConstructor {
       titleStream = sharedLinkMetadataStream
           .observeOn(io())
           .map(linkMetadata -> {
-            String submissionPageTitle = linkMetadata.title();
+            String submissionPageTitle = linkMetadata.getTitle();
             if (submissionPageTitle != null) {
               // Reddit prefixes page titles with the linked commentator's name (if any). We don't want that.
               String prefix = "comments on ";
@@ -366,7 +366,7 @@ public class SubmissionContentLinkUiConstructor {
 
   private Observable<String> fetchTitle(ExternalLink link, Observable<LinkMetadata> linkMetadataSingle) {
     return linkMetadataSingle
-        .map(metadata -> metadata.title())
+        .map(LinkMetadata::getTitle)
         .startWith(link.unparsedUrl());
   }
 
@@ -396,7 +396,7 @@ public class SubmissionContentLinkUiConstructor {
               .submit();
           return loadImage(imageTarget);
         })
-        .map(image -> Optional.of(image))
+        .map(Optional::of)
         .startWith(Optional.empty());
   }
 
@@ -404,7 +404,7 @@ public class SubmissionContentLinkUiConstructor {
     //noinspection ConstantConditions
     return linkMetadataStream
         .observeOn(io())
-        .flatMap(metadata -> metadata.hasFavicon() ? Observable.just(metadata.faviconUrl()) : Observable.empty())
+        .flatMap(metadata -> metadata.hasFavicon() ? Observable.just(metadata.getFaviconUrl()) : Observable.empty())
         .flatMap(faviconUrl -> {
           // Keep this context in sync with the one used in loadImage() for clearing this load on dispose.
           FutureTarget<Drawable> iconTarget = Glide.with(context)
@@ -413,7 +413,7 @@ public class SubmissionContentLinkUiConstructor {
               .submit();
           return loadImage(iconTarget);
         })
-        .map(favicon -> Optional.of(favicon))
+        .map(Optional::of)
         .startWith(Optional.empty());
   }
 

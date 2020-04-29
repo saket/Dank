@@ -263,13 +263,12 @@ public class CachePreFiller {
         .map(linkMetadata -> {
           List<String> imagesToDownload = new ArrayList<>(2);
           if (linkMetadata.hasFavicon()) {
-            imagesToDownload.add(linkMetadata.faviconUrl());
+            imagesToDownload.add(linkMetadata.getFaviconUrl());
           }
-          //noinspection ConstantConditions
-          if (linkMetadata.hasImage() && !UrlParser.isGifUrl(linkMetadata.imageUrl())) {
+          if (linkMetadata.hasImage() && !UrlParser.isGifUrl(linkMetadata.getImageUrl())) {
             ImageWithMultipleVariants redditSuppliedImages = ImageWithMultipleVariants.Companion.of(submission.getPreview());
             //noinspection ConstantConditions
-            String thumbnailImageUrl = redditSuppliedImages.findNearestFor(submissionAlbumLinkThumbnailWidth, linkMetadata.imageUrl());
+            String thumbnailImageUrl = redditSuppliedImages.findNearestFor(submissionAlbumLinkThumbnailWidth, linkMetadata.getImageUrl());
             imagesToDownload.add(thumbnailImageUrl);
           }
           return imagesToDownload;

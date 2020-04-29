@@ -116,6 +116,7 @@ task printVersionName {
 
 dependencies {
   implementation project(path: ':markdownhints')
+  implementation project(path: ':linkunfurler')
 
   implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk7:$versions.kotlin"
 
@@ -144,7 +145,7 @@ dependencies {
   implementation "com.jakewharton.timber:timber:$versions.timber"
   implementation "com.jakewharton:butterknife:$versions.butterKnife"
   kapt "com.jakewharton:butterknife-compiler:$versions.butterKnife"
-  implementation 'io.reactivex.rxjava2:rxjava:2.2.16'
+  implementation "io.reactivex.rxjava2:rxjava:$versions.rxjava"
   implementation 'io.reactivex.rxjava2:rxandroid:2.1.1'
   implementation 'io.reactivex.rxjava2:rxkotlin:2.4.0'
   implementation "com.jakewharton.rxbinding2:rxbinding:$versions.rxBindings"
@@ -169,7 +170,7 @@ dependencies {
   implementation 'com.google.android:flexbox:2.0.0'
   implementation 'com.github.zagum:Android-ExpandIcon:1.1.1'
   implementation 'me.saket:better-link-movement-method:2.2.0'
-  implementation 'org.jsoup:jsoup:1.12.1'
+  implementation "org.jsoup:jsoup:$versions.jsoup"
   implementation 'com.github.rahatarmanahmed:circularprogressview:2.5.0'
   implementation 'com.tbruyelle.rxpermissions2:rxpermissions:0.9.5@aar'
   implementation 'it.gilvegliach.android:transparent-text-textview:1.0.3'

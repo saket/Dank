@@ -1,1 +1,1 @@
-include ':app', ':markdownhints'
+include ':app', ':markdownhints', ':linkunfurler'

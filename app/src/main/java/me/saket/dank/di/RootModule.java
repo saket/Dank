@@ -18,6 +18,8 @@ import com.squareup.moshi.Moshi;
 import com.squareup.sqlbrite2.BriteDatabase;
 import com.squareup.sqlbrite2.SqlBrite;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 import javax.inject.Named;
@@ -40,6 +42,10 @@ import me.saket.dank.urlparser.RedditUserLink;
 import me.saket.dank.urlparser.UrlParser;
 import me.saket.dank.utils.DankLinkMovementMethod;
 import me.saket.dank.utils.OkHttpWholesomeAuthIntercepter;
+import me.thanel.dawn.linkunfurler.LinkMetadataReader;
+import me.thanel.dawn.linkunfurler.LinkUnfurler;
+import me.thanel.dawn.linkunfurler.readers.GenericLinkMetadataReader;
+import me.thanel.dawn.linkunfurler.readers.PlayStoreLinkMetadataReader;
 import okhttp3.OkHttpClient;
 import okhttp3.logging.HttpLoggingInterceptor;
 import retrofit2.Retrofit;
@@ -200,5 +206,31 @@ public class RootModule {
   @TargetApi(Build.VERSION_CODES.N_MR1)
   static ShortcutManager shortcutManager(Application appContext) {
     return appContext.getSystemService(ShortcutManager.class);
+  }
+
+  @Provides
+  @Singleton
+  GenericLinkMetadataReader provideGenericLinkMetadataReader() {
+    return new GenericLinkMetadataReader();
+  }
+
+  @Provides
+  @Singleton
+  PlayStoreLinkMetadataReader providePlayStoreLinkMetadataReader() {
+    return new PlayStoreLinkMetadataReader();
+  }
+
+  @Provides
+  @Singleton
+  static List<LinkMetadataReader> provideCustomMetadataReaders(PlayStoreLinkMetadataReader playStoreReader) {
+    ArrayList<LinkMetadataReader> customReaders = new ArrayList<>(1);
+    customReaders.add(playStoreReader);
+    return customReaders;
+  }
+
+  @Provides
+  @Singleton
+  LinkUnfurler provideLinkUnfurler(GenericLinkMetadataReader genericLinkMetadataReader, List<LinkMetadataReader> customMetadataReaders) {
+    return new LinkUnfurler(genericLinkMetadataReader, customMetadataReaders);
   }
 }
