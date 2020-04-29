@@ -1,8 +1,10 @@
 package me.saket.dank.ui.submission.adapter
 
 import android.annotation.SuppressLint
+import android.text.Selection
 import android.text.Spannable
 import android.view.LayoutInflater
+import android.view.MotionEvent
 import android.view.View
 import android.view.ViewGroup
 import android.widget.TextView
@@ -62,6 +64,12 @@ interface SubmissionLocalComment {
 
     lateinit var uiModel: UiModel
 
+    private var hasSelection: Boolean = false
+
+    init {
+      bodyView.setTextIsSelectable(true)
+    }
+
     fun setBodyLinkMovementMethod(movementMethod: DankLinkMovementMethod) {
       bodyView.movementMethod = movementMethod
     }
@@ -74,6 +82,10 @@ interface SubmissionLocalComment {
 
     fun setupClicks(uiEvents: PublishRelay<UiEvent>) {
       itemView.setOnClickListener {
+        if (hasSelection) {
+          return@setOnClickListener
+        }
+
         when (uiModel.comment.pendingSyncReply.state()) {
           PendingSyncReply.State.FAILED -> {
             uiEvents.accept(ReplyRetrySendClickEvent.create(uiModel.comment.pendingSyncReply))
@@ -84,16 +96,39 @@ interface SubmissionLocalComment {
           }
         }
       }
+
+      itemView.setOnLongClickListener { !uiModel.isCollapsed }
     }
 
     @SuppressLint("ClickableViewAccessibility")
     fun forwardTouchEventsToBackground(linkMovementMethod: BetterLinkMovementMethod) {
-      // Bug workaround: TextView with clickable spans consume all touch events. Manually
-      // transfer them to the parent so that the background touch indicator shows up +
-      // click listener works.
       bodyView.setOnTouchListener { _, event ->
-        val handledByMovementMethod = linkMovementMethod.onTouchEvent(bodyView, bodyView.text as Spannable, event)
-        handledByMovementMethod || itemView.onTouchEvent(event)
+        val action = event.action
+        val bodyViewText = bodyView.text
+
+        if (action == MotionEvent.ACTION_DOWN) {
+          // Capture selection state to prevent collapsing if text is still selected
+          val selectionStart = Selection.getSelectionStart(bodyViewText)
+          hasSelection = selectionStart > -1 && selectionStart != Selection.getSelectionEnd(bodyViewText)
+        }
+
+        if (linkMovementMethod.onTouchEvent(bodyView, bodyViewText as Spannable, event)) {
+          // handled by link movement method, stop event propagation
+          return@setOnTouchListener true
+        }
+
+        if (action == MotionEvent.ACTION_DOWN) {
+          // Workaround for "TextView does not support text selection"
+          bodyView.isEnabled = false
+          bodyView.isEnabled = true
+        }
+
+        // Dispatch touch event for both item and textView
+        //  to get both touch ripple and text selection
+        val handledByItem = itemView.onTouchEvent(event)
+        val handledByBody = !uiModel.isCollapsed && bodyView.onTouchEvent(event) // forbid selection when collapsed
+
+        handledByBody || handledByItem
       }
     }
 

@@ -1,8 +1,10 @@
 package me.saket.dank.ui.submission.adapter;
 
 import android.annotation.SuppressLint;
+import android.text.Selection;
 import android.text.Spannable;
 import android.view.LayoutInflater;
+import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
@@ -122,6 +124,8 @@ public interface SubmissionRemoteComment {
     private final TextView bodyView;
     private UiModel uiModel;
 
+    private boolean hasSelection = false;
+
     public static ViewHolder create(LayoutInflater inflater, ViewGroup parent) {
       return new ViewHolder(inflater.inflate(R.layout.list_item_submission_comment, parent, false));
     }
@@ -131,6 +135,8 @@ public interface SubmissionRemoteComment {
       bylineView = itemView.findViewById(R.id.item_comment_byline);
       bodyView = itemView.findViewById(R.id.item_comment_body);
       indentedLayout = itemView.findViewById(R.id.item_comment_indented_container);
+
+      bodyView.setTextIsSelectable(true);
     }
 
     public void setBodyLinkMovementMethod(DankLinkMovementMethod movementMethod) {
@@ -147,19 +153,45 @@ public interface SubmissionRemoteComment {
 
     public void setupCollapseOnClick(Relay<UiEvent> uiEvents) {
       itemView.setOnClickListener(o -> {
+        if (hasSelection) {
+          return;
+        }
+
         boolean willCollapse = !uiModel.isCollapsed();
         uiEvents.accept(CommentClicked.create(uiModel.comment(), getAdapterPosition(), itemView, willCollapse));
       });
+
+      itemView.setOnLongClickListener(o -> !uiModel.isCollapsed());
     }
 
     @SuppressLint("ClickableViewAccessibility")
     public void forwardTouchEventsToBackground(BetterLinkMovementMethod linkMovementMethod) {
-      // Bug workaround: TextView with clickable spans consume all touch events. Manually
-      // transfer them to the parent so that the background touch indicator shows up +
-      // click listener works.
       bodyView.setOnTouchListener((o, event) -> {
-        boolean handledByMovementMethod = linkMovementMethod.onTouchEvent(bodyView, (Spannable) bodyView.getText(), event);
-        return handledByMovementMethod || itemView.onTouchEvent(event);
+        int action = event.getAction();
+        CharSequence bodyViewText = bodyView.getText();
+
+        if (action == MotionEvent.ACTION_DOWN) {
+          // Capture selection state to prevent collapsing if text is still selected
+          int selectionStart = Selection.getSelectionStart(bodyViewText);
+          hasSelection = selectionStart > -1 && selectionStart != Selection.getSelectionEnd(bodyViewText);
+        }
+
+        if (linkMovementMethod.onTouchEvent(bodyView, (Spannable) bodyViewText, event)) {
+          // handled by link movement method, stop event propagation
+          return true;
+        }
+
+        if (action == MotionEvent.ACTION_DOWN) {
+          // Workaround for "TextView does not support text selection"
+          bodyView.setEnabled(false);
+          bodyView.setEnabled(true);
+        }
+
+        // Dispatch touch event for both item and textView
+        //  to get both touch ripple and text selection
+        boolean handledByItem = itemView.onTouchEvent(event);
+        boolean handledByBody = !uiModel.isCollapsed() && bodyView.onTouchEvent(event); // forbid selection when collapsed
+        return handledByBody || handledByItem;
       });
     }
 
