@@ -15,8 +15,7 @@ I have so far been able to clean up some parts of Dank and release them separate
 * [Flick](https://saket.me/flick-dismissible-images/): library for dismissing images with flick gesture
 * [InboxRecyclerView](https://saket.me/inboxrecyclerview/): building expandable descendant navigation, inspired by Google Inbox
 * [FluidKeyboardResize](https://saket.me/smoothly-reacting-to-keyboard/): smoothly reacting to keyboard visibility changes in Android
-
-I’d like to open source Dank’s WYSIWYG markdown editor, but I haven’t been able to find time for it yet. I will appreciate it if someone else can help me with it.
+* [Press](https://saket.me/press/): Dank’s WYSIWYG markdown editor
 
 ### License
 ```
