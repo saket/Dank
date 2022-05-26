@@ -1,7 +1,0 @@
-<?xml version="1.0" encoding="utf-8"?>
-<Button android:id="@+id/item_subreddit_name"
-  style="@style/DankButton.SubredditPicker"
-  xmlns:android="http://schemas.android.com/apk/res/android"
-  xmlns:tools="http://schemas.android.com/tools"
-  android:layout_marginTop="-4dp"
-  tools:text="Frontpage" />

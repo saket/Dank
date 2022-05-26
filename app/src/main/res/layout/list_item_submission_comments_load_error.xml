@@ -1,7 +1,0 @@
-<?xml version="1.0" encoding="utf-8"?>
-<me.saket.dank.widgets.ErrorStateView android:id="@+id/submission_errorstate"
-  xmlns:android="http://schemas.android.com/apk/res/android"
-  android:layout_width="match_parent"
-  android:layout_height="wrap_content"
-  android:elevation="@dimen/elevation_toolbar"
-  android:padding="@dimen/spacing24" />
